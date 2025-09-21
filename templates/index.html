@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Bot Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --primary-green: #059669;
+            --light-green: #10b981;
+            --dark-green: #047857;
+            --primary-orange: #ea580c;
+            --light-orange: #fb923c;
+            --dark-orange: #c2410c;
+            --bg-gradient: linear-gradient(135deg, #f0fdf4 0%, #fef3e7 100%);
+        }
+
+        body {
+            background: var(--bg-gradient);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+        
+        .page-transition {  
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(0);
+            opacity: 1;
+        }
+        
+        .slide-out-left {
+            transform: translateX(-100%);
+            opacity: 0;
+        }
+        
+        .slide-in-right {
+            transform: translateX(100%);
+            opacity: 0;
+        }
+        
+        .main-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        @media (max-width: 480px) {
+            .main-button {
+                width: 100px;
+                height: 100px;
+                font-size: 2rem;
+            }
+        }
+        
+        .main-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.6s;
+        }
+        
+        .main-button:hover::before {
+            left: 100%;
+        }
+        
+        .main-button:hover {
+            transform: translateY(-8px) scale(1.05);
+            box-shadow: 0 30px 60px rgba(16, 185, 129, 0.4);
+        }
+        
+        .main-button:active {
+            transform: translateY(-4px) scale(1.02);
+        }
+        
+        .main-button.recording {
+            background: linear-gradient(135deg, var(--primary-orange), var(--light-orange));
+            animation: pulse-orange 1.5s infinite;
+        }
+        
+        /* Responsive container adjustments */
+        @media (min-width: 768px) {
+            .max-w-md {
+                max-width: 32rem;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            .glass-card {
+                margin-left: 1rem;
+                margin-right: 1rem;
+            }
+        }
+        
+        /* Ensure content doesn't overflow on small screens */
+        .conversation-content {
+            max-height: calc(100vh - 300px);
+            overflow-y: auto;
+        }
+        
+        @keyframes pulse-orange {
+            0%, 100% { 
+                transform: translateY(-4px) scale(1.02);
+                box-shadow: 0 25px 50px rgba(234, 88, 12, 0.4);
+            }
+            50% { 
+                transform: translateY(-6px) scale(1.05);
+                box-shadow: 0 35px 70px rgba(234, 88, 12, 0.5);
+            }
+        }
+        
+        .wave-animation {
+            animation: wave 1.5s ease-in-out infinite;
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-orange));
+        }
+        
+        @keyframes wave {
+            0%, 100% { transform: scaleY(0.5); }
+            50% { transform: scaleY(1.2); }
+        }
+        
+        .conversation-bubble {
+            animation: slideInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .status-indicator {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .status-ready { background: var(--light-green); }
+        .status-listening { background: var(--primary-orange); animation: pulse 1s infinite; }
+        .status-processing { background: var(--primary-green); animation: spin 1s linear infinite; }
+        .status-speaking { background: var(--light-orange); animation: bounce 1s infinite; }
+        .status-error { background: #ef4444; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(234, 88, 12, 0.1));
+            border: 2px solid rgba(16, 185, 129, 0.2);
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="glass-card border-0 shadow-2xl">
+        <div class="max-w-md mx-auto px-6 py-8">
+            <h1 class="text-3xl font-bold text-center bg-gradient-to-r from-green-600 to-orange-500 bg-clip-text text-transparent">
+                Green Sathi
+            </h1>
+            <p class="text-center text-gray-700 mt-3 font-medium">भारतीय भाषाओं में स्वाभाविक वार्तालाप</p>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="max-w-md mx-auto px-4 py-6 pb-32 min-h-screen relative">
+        <!-- Status Bar -->
+        
+
+        <!-- User Info Display (Hidden initially) -->
+        <div id="user-info" class="info-card rounded-2xl p-6 mb-8 hidden page-transition">
+            <h3 class="font-bold text-lg text-green-800 mb-4 flex items-center">
+                <span class="mr-2">👤</span> उपयोगकर्ता जानकारी
+            </h3>
+            <div class="space-y-3 text-gray-800">
+                <p class="flex justify-between"><strong>नाम:</strong> <span id="user-name" class="font-medium text-green-700">-</span></p>
+                <p class="flex justify-between"><strong>फोन:</strong> <span id="user-phone" class="font-medium text-green-700">-</span></p>
+                <p class="flex justify-between"><strong>भाषा:</strong> <span id="user-language" class="font-medium text-green-700">-</span></p>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5 mb-8">
+            <div class="flex items-center justify-center">
+                <span id="status-indicator" class="status-indicator status-ready"></span>
+                <span id="status-text" class="text-base font-semibold text-gray-800">तैयार है शुरू करने के लिए</span>
+            </div>
+        </div>
+        
+        <!-- Main Content Area -->
+        <div id="main-content" class="text-center page-transition">
+            <!-- Action Instruction -->
+            <p id="action-instruction" class="text-lg text-gray-700 font-medium mb-8">
+                आवाज़ सहायक शुरू करने के लिए क्लिक करें
+            </p>
+        </div>
+
+        
+        <!-- Voice Animation Container -->
+        <div id="voice-animation" class="hidden text-center mb-8">
+            <div class="flex justify-center items-end space-x-3">
+                <div class="w-4 h-12 rounded-full wave-animation" style="animation-delay: 0s;"></div>
+                <div class="w-4 h-16 rounded-full wave-animation" style="animation-delay: 0.1s;"></div>
+                <div class="w-4 h-8 rounded-full wave-animation" style="animation-delay: 0.2s;"></div>
+                <div class="w-4 h-14 rounded-full wave-animation" style="animation-delay: 0.3s;"></div>
+                <div class="w-4 h-6 rounded-full wave-animation" style="animation-delay: 0.4s;"></div>
+            </div>
+            <p class="mt-4 text-orange-600 font-semibold animate-pulse">सुन रहा हूँ...</p>
+        </div>
+
+        <!-- Conversation History -->
+        <div id="conversation-container" class="hidden page-transition mt-8">
+            <div class="glass-card rounded-2xl p-6 mb-5">
+                <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="mr-3">💬</span> वार्तालाप
+                </h3>
+                              
+                <div id="conversation-history" class="space-y-4 max-h-80 overflow-y-auto pr-2">
+                    <!-- Conversation bubbles will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="error-message" class="hidden glass-card border-red-200 rounded-2xl p-5 mt-6 page-transition">
+            <div class="flex items-center">
+                <span class="text-red-500 mr-3 text-lg">⚠️</span>
+                <span id="error-text" class="text-red-700 font-medium"></span>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="glass-card rounded-2xl p-8 text-center">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-green-200 border-t-green-600 mx-auto mb-6"></div>
+                <p class="text-gray-800 font-semibold text-lg">प्रसंस्करण...</p>
+            </div>
+        </div>
+    
+        <!-- Fixed Button Containers -->
+        <!-- Main Action Button (Center) -->
+        <div id="center-button-container" class="flex justify-center items-center py-12">
+            <button id="main-action-btn" class="main-button text-white">
+                🎤
+            </button>
+        </div>
+        
+        <!-- Bottom Button Container (Fixed Bottom) -->
+        <div id="bottom-button-container" class="hidden fixed bottom-6 left-0 right-0 z-20 px-4">
+            <div class="max-w-md mx-auto flex justify-center">
+                <button id="bottom-action-btn" class="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white text-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                    🎤
+                </button>
+            </div>
+        </div>
+        
+        <!-- Exit Button (Fixed Bottom Right) -->
+        <div id="exit-container" class="hidden fixed bottom-6 right-6 z-30">
+            <button id="exit-btn" class="w-12 h-12 rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white text-xs font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center">
+                Exit
+            </button>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="audio-player" preload="auto"></audio>
+    <audio id="static-audio" preload="auto"></audio>
+
+    <!-- JavaScript -->
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

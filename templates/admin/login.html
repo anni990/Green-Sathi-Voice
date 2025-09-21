@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Voice Bot Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-green: #059669;
+            --light-green: #10b981;
+            --primary-orange: #ea580c;
+            --light-orange: #fb923c;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0fdf4 0%, #fef3e7 100%);
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-form {
+            transition: all 0.3s ease;
+        }
+
+        .login-form:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group input {
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, var(--primary-green), var(--light-green));
+            transition: all 0.3s ease;
+        }
+
+        .btn-login:hover {
+            background: linear-gradient(135deg, var(--light-green), var(--primary-green));
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        .loading {
+            display: none;
+        }
+
+        .loading.show {
+            display: inline-block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="login-container">
+        <div class="w-full max-w-md px-6">
+            <!-- Logo Section -->
+            <div class="text-center mb-8 fade-in">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-r from-green-500 to-orange-500 mb-4">
+                    <i class="fas fa-shield-alt text-white text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Admin Portal</h1>
+                <p class="text-gray-600">Voice Bot Assistant Management</p>
+            </div>
+
+            <!-- Login Form -->
+            <div class="glass-card rounded-2xl p-8 login-form fade-in">
+                <form id="loginForm" class="space-y-6">
+                    <!-- Username Field -->
+                    <div class="input-group">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-user mr-2 text-green-600"></i>Username
+                        </label>
+                        <input 
+                            type="text" 
+                            id="username" 
+                            name="username"
+                            required
+                            autocomplete="username"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
+                            placeholder="Enter your username"
+                        >
+                    </div>
+
+                    <!-- Password Field -->
+                    <div class="input-group">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-lock mr-2 text-green-600"></i>Password
+                        </label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="password" 
+                                name="password"
+                                required
+                                autocomplete="current-password"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none pr-12"
+                                placeholder="Enter your password"
+                            >
+                            <button 
+                                type="button" 
+                                id="togglePassword"
+                                class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-400 hover:text-gray-600"
+                            >
+                                <i class="fas fa-eye" id="eyeIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Remember Me -->
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded border-gray-300 text-green-600 focus:ring-green-500">
+                            <span class="ml-2 text-sm text-gray-600">Remember me</span>
+                        </label>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="errorMessage" class="hidden bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                            <span class="text-red-700 text-sm" id="errorText"></span>
+                        </div>
+                    </div>
+
+                    <!-- Login Button -->
+                    <button 
+                        type="submit" 
+                        class="w-full btn-login text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline"
+                    >
+                        <span id="loginText">Sign In</span>
+                        <i class="fas fa-spinner fa-spin loading ml-2"></i>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Footer -->
+            <div class="text-center mt-8 fade-in">
+                <p class="text-gray-500 text-sm">
+                    © 2025 Voice Bot Assistant. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class AdminLogin {
+            constructor() {
+                this.form = document.getElementById('loginForm');
+                this.usernameInput = document.getElementById('username');
+                this.passwordInput = document.getElementById('password');
+                this.togglePassword = document.getElementById('togglePassword');
+                this.eyeIcon = document.getElementById('eyeIcon');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.errorText = document.getElementById('errorText');
+                this.loginText = document.getElementById('loginText');
+                this.loading = document.querySelector('.loading');
+
+                this.bindEvents();
+            }
+
+            bindEvents() {
+                this.form.addEventListener('submit', (e) => this.handleLogin(e));
+                this.togglePassword.addEventListener('click', () => this.togglePasswordVisibility());
+                
+                // Enter key handling
+                [this.usernameInput, this.passwordInput].forEach(input => {
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            this.handleLogin(e);
+                        }
+                    });
+                });
+            }
+
+            togglePasswordVisibility() {
+                const type = this.passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                this.passwordInput.setAttribute('type', type);
+                
+                if (type === 'text') {
+                    this.eyeIcon.classList.remove('fa-eye');
+                    this.eyeIcon.classList.add('fa-eye-slash');
+                } else {
+                    this.eyeIcon.classList.remove('fa-eye-slash');
+                    this.eyeIcon.classList.add('fa-eye');
+                }
+            }
+
+            showError(message) {
+                this.errorText.textContent = message;
+                this.errorMessage.classList.remove('hidden');
+            }
+
+            hideError() {
+                this.errorMessage.classList.add('hidden');
+            }
+
+            setLoading(loading) {
+                if (loading) {
+                    this.loginText.textContent = 'Signing In...';
+                    this.loading.classList.add('show');
+                    this.form.querySelector('button[type="submit"]').disabled = true;
+                } else {
+                    this.loginText.textContent = 'Sign In';
+                    this.loading.classList.remove('show');
+                    this.form.querySelector('button[type="submit"]').disabled = false;
+                }
+            }
+
+            async handleLogin(e) {
+                e.preventDefault();
+                
+                const username = this.usernameInput.value.trim();
+                const password = this.passwordInput.value;
+
+                if (!username || !password) {
+                    this.showError('Please enter both username and password');
+                    return;
+                }
+
+                this.hideError();
+                this.setLoading(true);
+
+                try {
+                    const response = await fetch('/admin/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: username,
+                            password: password
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        // Success - redirect to dashboard
+                        window.location.href = '/admin/dashboard';
+                    } else {
+                        this.showError(data.message || 'Login failed');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    this.showError('Network error. Please try again.');
+                } finally {
+                    this.setLoading(false);
+                }
+            }
+        }
+
+        // Initialize login when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new AdminLogin();
+        });
+    </script>
+</body>
+</html>
