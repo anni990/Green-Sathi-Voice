@@ -83,7 +83,7 @@ def generate_response():
     try:
         data = request.get_json()
         user_input = data.get('text', '')
-        language = data.get('language', 'english')
+        language = data.get('language', 'hindi')
         user_id = data.get('user_id')
         session_id = data.get('session_id')
         
@@ -96,9 +96,11 @@ def generate_response():
             conversation_history = db_manager.get_conversation_history(user_id, session_id, limit=10)
         
         # Generate response using Gemini
-        language_code = Config.SUPPORTED_LANGUAGES.get(language, 'en')
+        language_code = Config.SUPPORTED_LANGUAGES.get(language, 'hi')
         response = gemini_service.generate_response(user_input, language, conversation_history)
         
+        response = response.replace("*", "")
+
         # Save conversation to database if user_id provided
         if user_id and response:
             db_manager.create_conversation(user_id, user_input, response, session_id)

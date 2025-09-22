@@ -17,6 +17,9 @@ class Config:
     # Gemini API Configuration
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
     
+    # Dhenu AI Configuration
+    DHENU_API_KEY = os.getenv('DHENU_API_KEY')
+    
     # Audio Configuration
     AUDIO_UPLOAD_FOLDER = os.getenv('AUDIO_UPLOAD_FOLDER', 'temp_audio')
     MAX_AUDIO_SIZE = int(os.getenv('MAX_AUDIO_SIZE', '16777216'))  # 16MB

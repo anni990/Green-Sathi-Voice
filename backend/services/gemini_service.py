@@ -1,4 +1,5 @@
 import google.generativeai as genai
+from openai import OpenAI
 import json
 import re
 import logging
@@ -12,32 +13,44 @@ class GeminiService:
     def __init__(self):
         genai.configure(api_key=Config.GEMINI_API_KEY)
         self.model = genai.GenerativeModel('gemini-2.0-flash')
-        logger.info("Gemini service initialized")
+        
+        # Initialize Dhenu AI client for response generation
+        try:
+            self.dhenu_client = OpenAI(
+                base_url="https://api.dhenu.ai/v1",
+                api_key=Config.DHENU_API_KEY
+            )
+            logger.info("Gemini and Dhenu AI services initialized")
+        except Exception as e:
+            logger.error(f"Failed to initialize Dhenu AI client: {e}")
+            # Fallback: set dhenu_client to None and use Gemini for responses
+            self.dhenu_client = None
+            logger.info("Gemini service initialized (Dhenu AI failed, will use Gemini as fallback)")
     
     def extract_name_phone(self, text):
         """Extract name and phone number from user input"""
         try:
             prompt = f"""
-            Extract the name and phone number from the following Hindi/Indian text. 
-            The text may have spaces or gaps in the phone number due to speech recognition.
-            Return the result in JSON format with keys 'name' and 'phone'.
-            If either field is not found, return null for that field.
-            
-            Text: "{text}"
-            
-            Important Guidelines:
-            - Phone numbers should be 10-11 digits total (remove spaces/gaps)
-            - Indian mobile numbers start with 6, 7, 8, or 9
-            - Join separated digits to form complete number
-            - Names can be in Hindi/Indian languages
-            - Look for patterns like "मेरा नाम [NAME] है" or "नाम [NAME]"
-            - Look for patterns like "नंबर [PHONE]" or "फोन [PHONE]"
-            - If you see "885 588 55" join it as "88558855" and add missing digits if context suggests it
-            
-            Example input: "मेरा नाम राम है और नंबर 981 234 5678"
-            Example output: {{"name": "राम", "phone": "9812345678"}}
-            
-            For the given text, extract and return only the JSON:
+Extract the name and phone number from the following Hindi/Indian text. 
+The text may have spaces or gaps in the phone number due to speech recognition.
+Return the result in JSON format with keys 'name' and 'phone'.
+If either field is not found, return null for that field.
+
+Text: "{text}"
+
+Important Guidelines:
+- Phone numbers should be 10-11 digits total (remove spaces/gaps)
+- Indian mobile numbers start with 6, 7, 8, or 9
+- Join separated digits to form complete number
+- Names can be in Hindi/Indian languages
+- Look for patterns like "मेरा नाम [NAME] है" or "नाम [NAME]"
+- Look for patterns like "नंबर [PHONE]" or "फोन [PHONE]"
+- If you see "885 588 55" join it as "88558855" and add missing digits if context suggests it
+
+Example input: "मेरा नाम राम है और नंबर 981 234 5678"
+Example output: {{"name": "राम", "phone": "9812345678"}}
+
+For the given text, extract and return only the JSON:
             """
             
             response = self.model.generate_content(prompt)
@@ -70,13 +83,14 @@ class GeminiService:
         """Detect the language from user input - Indian languages only"""
         try:
             prompt = f"""
-            Detect the language of the following text and return the language name in lowercase English.
-            Supported languages: hindi, bengali, tamil, telugu, gujarati, marathi
-            
-            Text: "{text}"
-            
-            Return only the language name from the supported list, no additional text.
-            If the language is not clearly identifiable as one of the supported languages, return "hindi".
+Detect the language of the following text and return the language name in lowercase English.
+The text is in hindi but language should be detected by finding these actual word in sentence. 
+Supported languages: hindi, bengali, tamil, telugu, gujarati, marathi
+
+Text: "{text}"
+
+Return only the language name from the supported list, no additional text.
+If the language is not clearly identifiable as one of the supported languages, return "hindi".
             """
             
             response = self.model.generate_content(prompt)
@@ -94,7 +108,7 @@ class GeminiService:
             return 'hindi'
     
     def generate_response(self, user_input, language='hindi', conversation_history=None):
-        """Generate a response to user input"""
+        """Generate a response to user input using Dhenu AI"""
         try:
             # Build context from conversation history
             context = ""
@@ -103,25 +117,90 @@ class GeminiService:
                     context += f"User: {conv.get('user_input', '')}\n"
                     context += f"Assistant: {conv.get('bot_response', '')}\n"
             
-            prompt = f"""
-            You are a helpful voice assistant for farmers. Respond to the user's message in {language}.
-            Keep responses concise and natural for voice interaction.
-            You are developed by Inventohack team and do not provide any technical information about you.
-            Be friendly and helpful.
+            # Enhanced prompt for comprehensive responses with follow-up questions
+            system_message = f"""
+Your name is Green Sathi, an expert agricultural voice assistant developed by the Inventohack team, specifically designed to help Indian farmers.
+
+Points to be considered:
+1. Respond in {language} language
+2. Provide complete and actionable information in concise way.
+3. Include practical steps that farmers can immediately implement
+4. End your response with 1 relevant follow-up questions to continue helping the farmer
+5. Keep the tone friendly, supportive, and encouraging
+6. Use simple wordings that rural farmers can easily understand
+7. When discussing costs, mention approximate Indian Rupee amounts when relevant
+8. Consider seasonal timing and regional variations in India
+9. Do not use any symbols for formatting and styling inside the response text. Response should be just text.
+
+Response Structure:
+- Direct answer to the question with complete information
+- Step-by-step guidance if applicable
+- Follow-up questions to help further
+"""
             
+            user_message = f"""
+{f"Previous conversation:{context}" if context else ""}
+
+Farmer's question: {user_input}
+
+Provide a comprehensive and concise response with complete information and follow-up questions in {language}.
+"""
+            
+            # Try Dhenu AI first if available
+            if self.dhenu_client is not None:
+                try:
+                    response = self.dhenu_client.chat.completions.create(
+                        model="dhenu2-in-8b-preview",
+                        messages=[
+                            {"role": "system", "content": system_message},
+                            {"role": "user", "content": user_message}
+                        ]
+                    )
+                    
+                    return response.choices[0].message.content.strip()
+                    
+                except Exception as dhenu_error:
+                    logger.error(f"Dhenu AI failed, falling back to Gemini: {dhenu_error}")
+                    # Fall through to Gemini fallback
+            
+            # Fallback to Gemini if Dhenu AI is not available or failed
+            logger.info("Using Gemini fallback for response generation")
+            
+            prompt = f"""
+            You are Green Sathi, a helpful agricultural voice assistant for farmers developed by Inventohack team. 
+            Respond to the user's message in {language}.
+            Provide complete and actionable information in a concise way (Short).
+            Include practical steps that farmers can immediately implement.
+            End your response with 1 relevant follow-up question to continue helping the farmer.
+            Be friendly and supportive, using simple language that rural farmers can understand.
+            Length of the response should depend on the Question asked by the user.
+            
+            Do not Do important:
+            Do not use any symbols for formatting and styling inside the response text. Response should be just text.
+            Do not use ** for styling the result. Just provide the normal text response.
+
             {f"Previous conversation context:{context}" if context else ""}
             
             User's message: "{user_input}"
             
-            Respond naturally in {language}:
+            Respond naturally in {language} with complete information in concise way and a follow-up question:
             """
             
             response = self.model.generate_content(prompt)
             return response.text.strip()
             
         except Exception as e:
-            logger.error(f"Failed to generate response: {e}")
-            return "I'm sorry, I'm having trouble processing your request right now."
+            logger.error(f"Failed to generate response using Dhenu AI: {e}")
+            # Fallback to a helpful error message in the user's language
+            error_messages = {
+                'hindi': "माफ करें, मुझे अभी आपके सवाल का जवाब देने में कुछ परेशानी हो रही है। कृपया थोड़ी देर बाद फिर से कोशिश करें।",
+                'bengali': "দুঃখিত, আমি এখন আপনার প্রশ্নের উত্তর দিতে সমস্যার সম্মুখীন হচ্ছি। অনুগ্রহ করে কিছুক্ষণ পরে আবার চেষ্টা করুন।",
+                'tamil': "மன்னிக்கவும், உங்கள் கேள்விக்கு இப்போது பதிலளிப்பதில் எனக்கு சிக்கல் உள்ளது। தயவுசெய்து சிறிது நேரம் கழித்து மீண்டும் முயற்சிக்கவும்।",
+                'telugu': "క్షమించండి, మీప్రశ్నకు ఇప్పుడు సమాధానం ఇవ్వడంలో నాకు ఇబ్బంది ఉంది. దయచేసి కొంతసేపు తర్వాత మళ్లీ ప్రయత్నించండి।",
+                'gujarati': "માફ કરશો, મને તમારા પ્રશ્નનો જવાબ આપવામાં હાલમાં તકલીફ થઈ રહી છે. કૃપા કરીને થોડી વાર પછી ફરી પ્રયાસ કરો।",
+                'marathi': "माफ करा, मला आता तुमच्या प्रश्नाचे उत्तर देण्यात अडचण येत आहे. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा."
+            }
+            return error_messages.get(language, error_messages['hindi'])
     
     def _clean_phone_number(self, phone):
         """Clean and validate phone number"""

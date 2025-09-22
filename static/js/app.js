@@ -4,6 +4,7 @@ class VoiceBotApp {
         this.mediaRecorder = null;
         this.audioChunks = [];
         this.isRecording = false;
+        this.isAudioPlaying = false;
         this.autoRecordAfterAudio = false;
         this.userInfo = {
             user_id: null,
@@ -83,9 +84,11 @@ class VoiceBotApp {
                 this.startNamePhoneCollection();
                 break;
             case 'name_phone':
+                this.stopAllAudio();
                 this.startRecording();
                 break;
             case 'conversation':
+                this.stopAllAudio();
                 this.startRecording();
                 break;
         }
@@ -158,7 +161,40 @@ class VoiceBotApp {
     
     handleConversationRecording() {
         if (this.currentStep === 'conversation') {
+            // Stop any playing audio before starting recording
+            this.stopAllAudio();
             this.startRecording();
+        }
+    }
+    
+    stopAllAudio() {
+        let audioWasStopped = false;
+        
+        // Stop audio player if playing
+        if (this.audioPlayer && !this.audioPlayer.paused) {
+            this.audioPlayer.pause();
+            this.audioPlayer.currentTime = 0;
+            audioWasStopped = true;
+            console.log('Stopped audio player for recording');
+        }
+        
+        // Stop static audio if playing
+        if (this.staticAudio && !this.staticAudio.paused) {
+            this.staticAudio.pause();
+            this.staticAudio.currentTime = 0;
+            audioWasStopped = true;
+            console.log('Stopped static audio for recording');
+        }
+        
+        // Reset audio playing flag
+        this.isAudioPlaying = false;
+        
+        // Cancel auto-record flag if set
+        this.autoRecordAfterAudio = false;
+        
+        // Provide user feedback if audio was interrupted
+        if (audioWasStopped && this.currentStep === 'conversation') {
+            console.log('Audio interrupted by user - starting recording');
         }
     }
     
@@ -187,6 +223,9 @@ class VoiceBotApp {
     
     async startRecording() {
         try {
+            // Stop any playing audio immediately when recording starts
+            this.stopAllAudio();
+            
             this.updateStatus('listening', 'सुन रहा हूँ...');
             this.showVoiceAnimation(true);
             this.isRecording = true;
@@ -216,12 +255,12 @@ class VoiceBotApp {
             
             this.mediaRecorder.start();
             
-            // Auto-stop after 8 seconds
+            // Auto-stop after 12 seconds
             setTimeout(() => {
                 if (this.isRecording) {
                     this.stopRecording();
                 }
-            }, 8000);
+            }, 12000);
             
         } catch (error) {
             this.showError('रिकॉर्डिंग शुरू करने में विफल: ' + error.message);
@@ -453,6 +492,7 @@ class VoiceBotApp {
     async playResponse(text, language) {
         try {
             this.updateStatus('speaking', 'Speaking...');
+            this.isAudioPlaying = true;
             
             const response = await fetch('/api/voice/text_to_speech', {
                 method: 'POST',
@@ -469,28 +509,60 @@ class VoiceBotApp {
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
                 this.audioPlayer.src = audioUrl;
+                
+                // Add event listeners for audio state tracking
+                this.audioPlayer.onplay = () => {
+                    this.isAudioPlaying = true;
+                };
+                
+                this.audioPlayer.onended = () => {
+                    this.isAudioPlaying = false;
+                };
+                
+                this.audioPlayer.onpause = () => {
+                    this.isAudioPlaying = false;
+                };
+                
                 await this.audioPlayer.play();
             }
             
         } catch (error) {
             console.error('Error playing response:', error);
+            this.isAudioPlaying = false;
             this.updateStatus('ready', 'Ready for next message');
         }
     }
     
     async playStaticAudio(promptType, language) {
         try {
+            this.isAudioPlaying = true;
+            
             const response = await fetch(`/api/voice/static_audio/${promptType}/${language}`);
             
             if (response.ok) {
                 const audioBlob = await response.blob();
                 const audioUrl = URL.createObjectURL(audioBlob);
                 this.staticAudio.src = audioUrl;
+                
+                // Add event listeners for static audio state tracking
+                this.staticAudio.onplay = () => {
+                    this.isAudioPlaying = true;
+                };
+                
+                this.staticAudio.onended = () => {
+                    this.isAudioPlaying = false;
+                };
+                
+                this.staticAudio.onpause = () => {
+                    this.isAudioPlaying = false;
+                };
+                
                 await this.staticAudio.play();
             }
             
         } catch (error) {
             console.error('Error playing static audio:', error);
+            this.isAudioPlaying = false;
         }
     }
     
@@ -535,6 +607,7 @@ class VoiceBotApp {
     }
     
     onAudioEnded() {
+        this.isAudioPlaying = false;
         if (this.currentStep === 'conversation') {
             this.updateStatus('ready', 'अगले संदेश के लिए तैयार');
         } else {
@@ -544,6 +617,7 @@ class VoiceBotApp {
     
     onStaticAudioEnded() {
         // Static audio finished playing
+        this.isAudioPlaying = false;
         console.log('Static audio ended');
         
         // Auto-start recording if flag is set
