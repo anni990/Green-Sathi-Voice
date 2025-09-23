@@ -14,18 +14,6 @@ class GeminiService:
         genai.configure(api_key=Config.GEMINI_API_KEY)
         self.model = genai.GenerativeModel('gemini-2.0-flash')
         
-        # Initialize Dhenu AI client for response generation
-        try:
-            self.dhenu_client = OpenAI(
-                base_url="https://api.dhenu.ai/v1",
-                api_key=Config.DHENU_API_KEY
-            )
-            logger.info("Gemini and Dhenu AI services initialized")
-        except Exception as e:
-            logger.error(f"Failed to initialize Dhenu AI client: {e}")
-            # Fallback: set dhenu_client to None and use Gemini for responses
-            self.dhenu_client = None
-            logger.info("Gemini service initialized (Dhenu AI failed, will use Gemini as fallback)")
     
     def extract_name_phone(self, text):
         """Extract name and phone number from user input"""
@@ -116,55 +104,6 @@ If the language is not clearly identifiable as one of the supported languages, r
                 for conv in conversation_history[-5:]:  # Last 5 exchanges
                     context += f"User: {conv.get('user_input', '')}\n"
                     context += f"Assistant: {conv.get('bot_response', '')}\n"
-            
-            # Enhanced prompt for comprehensive responses with follow-up questions
-            system_message = f"""
-Your name is Green Sathi, an expert agricultural voice assistant developed by the Inventohack team, specifically designed to help Indian farmers.
-
-Points to be considered:
-1. Respond in {language} language
-2. Provide complete and actionable information in concise way.
-3. Include practical steps that farmers can immediately implement
-4. End your response with 1 relevant follow-up questions to continue helping the farmer
-5. Keep the tone friendly, supportive, and encouraging
-6. Use simple wordings that rural farmers can easily understand
-7. When discussing costs, mention approximate Indian Rupee amounts when relevant
-8. Consider seasonal timing and regional variations in India
-9. Do not use any symbols for formatting and styling inside the response text. Response should be just text.
-
-Response Structure:
-- Direct answer to the question with complete information
-- Step-by-step guidance if applicable
-- Follow-up questions to help further
-"""
-            
-            user_message = f"""
-{f"Previous conversation:{context}" if context else ""}
-
-Farmer's question: {user_input}
-
-Provide a comprehensive and concise response with complete information and follow-up questions in {language}.
-"""
-            
-            # Try Dhenu AI first if available
-            if self.dhenu_client is not None:
-                try:
-                    response = self.dhenu_client.chat.completions.create(
-                        model="dhenu2-in-8b-preview",
-                        messages=[
-                            {"role": "system", "content": system_message},
-                            {"role": "user", "content": user_message}
-                        ]
-                    )
-                    
-                    return response.choices[0].message.content.strip()
-                    
-                except Exception as dhenu_error:
-                    logger.error(f"Dhenu AI failed, falling back to Gemini: {dhenu_error}")
-                    # Fall through to Gemini fallback
-            
-            # Fallback to Gemini if Dhenu AI is not available or failed
-            logger.info("Using Gemini fallback for response generation")
             
             prompt = f"""
             You are Green Sathi, a helpful agricultural voice assistant for farmers developed by Inventohack team. 

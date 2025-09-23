@@ -18,13 +18,23 @@ class VoiceBotApp {
         this.bindEvents();
         this.setupInitialState();
         this.checkMicrophonePermission();
+        
+        // Log keyboard shortcuts for developers
+        console.log('🎤 Voice Bot Keyboard Shortcuts:');
+        console.log('• Enter: Start/Continue Recording');
+        console.log('• Backspace: Exit (only in conversation mode)');
+        console.log('• All buttons are also clickable with mouse');
     }
     
     initializeElements() {
         // Main elements
         this.mainBtn = document.getElementById('main-action-btn');
+        this.desktopMainBtn = document.getElementById('desktop-main-action-btn');
         this.bottomBtn = document.getElementById('bottom-action-btn');
+        this.desktopBottomBtn = document.getElementById('desktop-bottom-action-btn');
+        this.mobileConversationBtn = document.getElementById('mobile-conversation-btn');
         this.exitBtn = document.getElementById('exit-btn');
+        this.desktopExitBtn = document.getElementById('desktop-exit-btn');
         this.centerButtonContainer = document.getElementById('center-button-container');
         this.bottomButtonContainer = document.getElementById('bottom-button-container');
         this.exitContainer = document.getElementById('exit-container');
@@ -36,6 +46,10 @@ class VoiceBotApp {
         this.loadingSpinner = document.getElementById('loading-spinner');
         this.errorMessage = document.getElementById('error-message');
         this.errorText = document.getElementById('error-text');
+        
+        // Keyboard shortcuts info
+        this.keyboardShortcutsMobile = document.getElementById('keyboard-shortcuts-mobile');
+        this.keyboardShortcutsDesktop = document.getElementById('keyboard-shortcuts-desktop');
         
         // User info elements
         this.userInfoDiv = document.getElementById('user-info');
@@ -54,18 +68,147 @@ class VoiceBotApp {
     
     bindEvents() {
         this.mainBtn.addEventListener('click', () => this.handleMainAction());
+        this.desktopMainBtn?.addEventListener('click', () => this.handleMainAction());
         this.bottomBtn.addEventListener('click', () => this.handleConversationRecording());
+        this.desktopBottomBtn?.addEventListener('click', () => this.handleConversationRecording());
+        this.mobileConversationBtn?.addEventListener('click', () => this.handleConversationRecording());
         this.exitBtn.addEventListener('click', () => this.exitSession());
+        this.desktopExitBtn?.addEventListener('click', () => this.exitSession());
+        
+        // Keyboard event listeners
+        document.addEventListener('keydown', (e) => this.handleKeyboardInput(e));
         
         // Audio event listeners
         this.audioPlayer.addEventListener('ended', () => this.onAudioEnded());
         this.staticAudio.addEventListener('ended', () => this.onStaticAudioEnded());
     }
     
+    handleKeyboardInput(event) {
+        // Prevent keyboard actions when recording is in progress or audio is being processed
+        if (this.isRecording) {
+            return;
+        }
+        
+        // Prevent default browser behavior for these keys
+        if (event.key === 'Enter' || event.key === 'Backspace') {
+            // Don't prevent backspace in input fields (though we don't have any currently)
+            if (event.key === 'Backspace' && event.target.tagName === 'INPUT') {
+                return;
+            }
+        }
+        
+        // Handle Enter key for main action buttons
+        if (event.key === 'Enter' || event.keyCode === 13) {
+            event.preventDefault();
+            
+            // Determine which button action to trigger based on current step
+            if (this.currentStep === 'conversation') {
+                // In conversation mode, use desktop main button on desktop, mobile conversation button on mobile
+                if (window.innerWidth >= 1024 && this.desktopMainBtn && !this.desktopMainBtn.classList.contains('hidden')) {
+                    console.log('Enter pressed - triggering desktop conversation recording');
+                    this.handleMainAction(); // Desktop main button uses handleMainAction
+                } else if (this.mobileConversationBtn && !this.conversationContainer.classList.contains('hidden')) {
+                    console.log('Enter pressed - triggering mobile conversation recording');
+                    this.handleConversationRecording();
+                }
+            } else {
+                // In other modes, use main button
+                if (!this.centerButtonContainer.classList.contains('hidden')) {
+                    console.log('Enter pressed - triggering main action');
+                    this.handleMainAction();
+                }
+            }
+        }
+        
+        // Handle Backspace key for exit button (only in conversation mode)
+        else if ((event.key === 'Backspace' || event.keyCode === 8) && this.currentStep === 'conversation') {
+            // Only trigger exit if we're in conversation mode and exit button is visible
+            if (!this.exitContainer.classList.contains('hidden')) {
+                event.preventDefault(); // Prevent browser back navigation
+                console.log('Backspace pressed - exiting conversation and refreshing page');
+                this.exitSession();
+                // Refresh page after a short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            }
+        }
+    }
+    
     setupInitialState() {
         this.updateStatus('ready', 'तैयार है शुरू करने के लिए');
-        this.mainBtn.innerHTML = '🎤';
-        this.actionInstruction.textContent = 'आवाज़ सहायक शुरू करने के लिए क्लिक करें';
+        this.mainBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        this.actionInstruction.textContent = 'आवाज़ सहायक शुरू करने के लिए क्लिक करें (Enter दबाएं)';
+        this.setupButtonAccessibility();
+    }
+    
+    setupButtonAccessibility() {
+        // Make buttons keyboard accessible
+        this.mainBtn.setAttribute('tabindex', '0');
+        this.bottomBtn.setAttribute('tabindex', '0');
+        this.desktopBottomBtn?.setAttribute('tabindex', '0');
+        this.mobileConversationBtn?.setAttribute('tabindex', '0');
+        this.exitBtn.setAttribute('tabindex', '0');
+        this.desktopExitBtn?.setAttribute('tabindex', '0');
+        
+        // Add ARIA labels for better accessibility
+        this.mainBtn.setAttribute('aria-label', 'मुख्य रिकॉर्डिंग बटन - Enter दबाएं');
+        this.desktopMainBtn?.setAttribute('aria-label', 'मुख्य रिकॉर्डिंग बटन - Enter दबाएं');
+        this.bottomBtn.setAttribute('aria-label', 'बातचीत रिकॉर्डिंग बटन - Enter दबाएं');
+        this.desktopBottomBtn?.setAttribute('aria-label', 'बातचीत रिकॉर्डिंग बटन - Enter दबाएं');
+        this.mobileConversationBtn?.setAttribute('aria-label', 'बातचीत रिकॉर्डिंग बटन - Enter दबाएं');
+        this.exitBtn.setAttribute('aria-label', 'बाहर निकलें - Backspace दबाएं');
+        this.desktopExitBtn?.setAttribute('aria-label', 'बाहर निकलें - Backspace दबाएं');
+        
+        // Add keyboard event listeners directly to buttons as backup
+        this.mainBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                this.handleMainAction();
+            }
+        });
+        
+        this.desktopMainBtn?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                this.handleMainAction();
+            }
+        });
+        
+        this.bottomBtn.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                this.handleConversationRecording();
+            }
+        });
+        
+        this.desktopBottomBtn?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                this.handleConversationRecording();
+            }
+        });
+        
+        this.mobileConversationBtn?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.keyCode === 13) {
+                e.preventDefault();
+                this.handleConversationRecording();
+            }
+        });
+        
+        this.exitBtn.addEventListener('keydown', (e) => {
+            if ((e.key === 'Enter' || e.keyCode === 13) || (e.key === 'Backspace' || e.keyCode === 8)) {
+                e.preventDefault();
+                this.exitSession();
+            }
+        });
+        
+        this.desktopExitBtn?.addEventListener('keydown', (e) => {
+            if ((e.key === 'Enter' || e.keyCode === 13) || (e.key === 'Backspace' || e.keyCode === 8)) {
+                e.preventDefault();
+                this.exitSession();
+            }
+        });
     }
     
     async checkMicrophonePermission() {
@@ -88,6 +231,7 @@ class VoiceBotApp {
                 this.startRecording();
                 break;
             case 'conversation':
+                // For conversation, desktop main button should work
                 this.stopAllAudio();
                 this.startRecording();
                 break;
@@ -108,6 +252,8 @@ class VoiceBotApp {
         // Hide all sections
         this.userInfoDiv.classList.add('hidden');
         this.conversationContainer.classList.add('hidden');
+        this.keyboardShortcutsMobile?.classList.add('hidden');
+        this.keyboardShortcutsDesktop?.classList.add('hidden');
         this.resetToInitialLayout();
         
         // Reset UI
@@ -115,12 +261,17 @@ class VoiceBotApp {
         
         // Clear conversation
         this.conversationHistory.innerHTML = '';
+        
+        // Refresh page after exit
+        setTimeout(() => {
+            window.location.reload();
+        }, 300);
     }
     
     async startNamePhoneCollection() {
         this.currentStep = 'name_phone';
         this.updateStatus('processing', 'ऑडियो चला रहा है...');
-        this.actionInstruction.textContent = 'कृपया अपना नाम और फोन नंबर बताएं';
+        this.actionInstruction.textContent = 'कृपया अपना नाम और फोन नंबर बताएं (Enter दबाकर रिकॉर्ड करें)';
         this.mainBtn.classList.add('recording');
         
         // Set flag to auto-record after audio ends
@@ -145,15 +296,31 @@ class VoiceBotApp {
     async startConversation() {
         this.currentStep = 'conversation';
         
-        // Hide center button and show conversation container
+        // Hide mobile buttons and show conversation container
         this.centerButtonContainer.classList.add('hidden');
+        this.bottomButtonContainer.classList.add('hidden');
         this.conversationContainer.classList.remove('hidden');
-        this.bottomButtonContainer.classList.remove('hidden');
         this.showExitButton();
         
-        this.mainContent.innerHTML = '<p class="text-lg text-gray-700 font-medium text-center">आपकी जानकारी सहेज ली गई है</p>';
+        // Show desktop main button for conversation on desktop
+        if (window.innerWidth >= 1024 && this.desktopMainBtn) {
+            this.desktopMainBtn.classList.remove('hidden');
+        }
         
-        this.updateStatus('ready', 'बातचीत शुरू! नीचे बटन दबाकर बोलें');
+        // Show keyboard shortcuts for mobile and desktop
+        this.keyboardShortcutsDesktop?.classList.remove('hidden');
+        
+        this.mainContent.innerHTML = `
+            <div class="text-center">
+                <p class="text-base lg:text-lg text-gray-700 font-medium mb-4">आपकी जानकारी सहेज ली गई है</p>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 lg:hidden">
+                    <p class="font-semibold mb-2 flex items-center"><i class="fas fa-check-circle mr-2"></i>तैयार!</p>
+                    <p class="text-xs">अब आप बात कर सकते हैं।</p>
+                </div>
+            </div>
+        `;
+        
+        this.updateStatus('ready', 'बातचीत शुरू! रिकॉर्ड बटन दबाकर बोलें');
         
         // Play conversation start audio in user's language
         await this.playStaticAudio('conversation_start', this.userInfo.language || 'hi');
@@ -192,8 +359,9 @@ class VoiceBotApp {
         // Cancel auto-record flag if set
         this.autoRecordAfterAudio = false;
         
-        // Provide user feedback if audio was interrupted
-        if (audioWasStopped && this.currentStep === 'conversation') {
+        // Update status immediately when audio is stopped for recording
+        if (audioWasStopped) {
+            this.updateStatus('listening', 'सुन रहा हूँ...');
             console.log('Audio interrupted by user - starting recording');
         }
     }
@@ -207,15 +375,27 @@ class VoiceBotApp {
     }
     
     resetToInitialLayout() {
-        // Show center button, hide others
+        // Reset step and show appropriate buttons
+        this.currentStep = 'welcome';
         this.centerButtonContainer.classList.remove('hidden');
         this.bottomButtonContainer.classList.add('hidden');
         this.hideExitButton();
         
+        // Hide desktop main button on reset
+        if (this.desktopMainBtn) {
+            this.desktopMainBtn.classList.add('hidden');
+        }
+        
+        // Remove any dynamically created buttons
+        const desktopSidebarButton = document.getElementById('desktop-sidebar-button');
+        if (desktopSidebarButton) {
+            desktopSidebarButton.remove();
+        }
+        
         // Reset main content
         this.mainContent.innerHTML = `
-            <p id="action-instruction" class="text-lg text-gray-700 font-medium mb-8">
-                आवाज़ सहायक शुरू करने के लिए क्लिक करें
+            <p id="action-instruction" class="text-base lg:text-lg text-gray-700 font-medium mb-6 lg:mb-8">
+                आवाज़ सहायक शुरू करने के लिए क्लिक करें (Enter दबाएं)
             </p>
         `;
         this.actionInstruction = document.getElementById('action-instruction');
@@ -233,11 +413,24 @@ class VoiceBotApp {
             
             // Update button state based on current step
             if (this.currentStep === 'conversation') {
-                this.bottomBtn.classList.add('recording');
-                this.bottomBtn.innerHTML = '🔴';
+                // For conversation, use desktop main button on desktop, mobile conversation button on mobile
+                if (window.innerWidth >= 1024 && this.desktopMainBtn) {
+                    this.desktopMainBtn.classList.add('recording');
+                    this.desktopMainBtn.innerHTML = '<i class="fas fa-stop-circle text-red-500"></i>';
+                } else {
+                    if (this.mobileConversationBtn) {
+                        this.mobileConversationBtn.classList.add('recording');
+                        this.mobileConversationBtn.innerHTML = '<i class="fas fa-stop-circle text-red-500"></i>';
+                    }
+                }
             } else {
+                // For other steps, use main button
                 this.mainBtn.classList.add('recording');
-                this.mainBtn.innerHTML = '🔴';
+                this.mainBtn.innerHTML = '<i class="fas fa-stop-circle text-red-500"></i>';
+                if (this.desktopMainBtn) {
+                    this.desktopMainBtn.classList.add('recording');
+                    this.desktopMainBtn.innerHTML = '<i class="fas fa-stop-circle text-red-500"></i>';
+                }
             }
             
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -281,13 +474,29 @@ class VoiceBotApp {
     }
     
     resetButtonState() {
+        // Remove recording class from all buttons
         this.mainBtn.classList.remove('recording');
+        this.desktopMainBtn?.classList.remove('recording');
         this.bottomBtn.classList.remove('recording');
+        this.desktopBottomBtn?.classList.remove('recording');
+        this.mobileConversationBtn?.classList.remove('recording');
         
         if (this.currentStep === 'conversation') {
-            this.bottomBtn.innerHTML = '🎤';
+            // For conversation, reset appropriate button based on screen size
+            if (window.innerWidth >= 1024 && this.desktopMainBtn) {
+                this.desktopMainBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            } else {
+                this.bottomBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                if (this.mobileConversationBtn) {
+                    this.mobileConversationBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                }
+            }
         } else {
-            this.mainBtn.innerHTML = '🎤';
+            // For other steps, reset main buttons
+            this.mainBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            if (this.desktopMainBtn) {
+                this.desktopMainBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            }
         }
     }
     
@@ -475,13 +684,12 @@ class VoiceBotApp {
                 // Add bot response to conversation
                 this.addMessageToConversation(data.response, 'bot');
                 
-                // Convert to speech and play
+                // Convert to speech and play (status will be managed by playResponse method)
                 await this.playResponse(data.response, data.language);
             } else {
                 this.showError('Could not generate response. Please try again.');
+                this.updateStatus('ready', 'अगले संदेश के लिए तैयार - Enter दबाएं');
             }
-            
-            this.updateStatus('ready', 'Ready for next message');
             
         } catch (error) {
             this.showError('Error in conversation: ' + error.message);
@@ -491,8 +699,8 @@ class VoiceBotApp {
     
     async playResponse(text, language) {
         try {
-            this.updateStatus('speaking', 'Speaking...');
-            this.isAudioPlaying = true;
+            // Show processing status while waiting for TTS response
+            this.updateStatus('processing', 'आवाज़ तैयार कर रहा है...');
             
             const response = await fetch('/api/voice/text_to_speech', {
                 method: 'POST',
@@ -510,32 +718,55 @@ class VoiceBotApp {
                 const audioUrl = URL.createObjectURL(audioBlob);
                 this.audioPlayer.src = audioUrl;
                 
-                // Add event listeners for audio state tracking
+                // Add event listeners for proper status management
+                this.audioPlayer.onloadstart = () => {
+                    this.updateStatus('speaking', 'बोल रहा है... (Enter दबाकर रोकें)');
+                };
+                
                 this.audioPlayer.onplay = () => {
                     this.isAudioPlaying = true;
+                    this.updateStatus('speaking', 'बोल रहा है... (Enter दबाकर रोकें)');
                 };
                 
                 this.audioPlayer.onended = () => {
                     this.isAudioPlaying = false;
+                    if (this.currentStep === 'conversation') {
+                        this.updateStatus('ready', 'अगले संदेश के लिए तैयार - Enter दबाएं');
+                    } else {
+                        this.updateStatus('ready', 'तैयार - Enter दबाएं');
+                    }
                 };
                 
                 this.audioPlayer.onpause = () => {
                     this.isAudioPlaying = false;
+                    if (this.currentStep === 'conversation') {
+                        this.updateStatus('ready', 'अगले संदेश के लिए तैयार - Enter दबाएं');
+                    } else {
+                        this.updateStatus('ready', 'तैयार - Enter दबाएं');
+                    }
+                };
+                
+                this.audioPlayer.onerror = () => {
+                    this.isAudioPlaying = false;
+                    this.updateStatus('error', 'आवाज़ चलाने में त्रुटि');
                 };
                 
                 await this.audioPlayer.play();
+            } else {
+                this.updateStatus('error', 'आवाज़ तैयार करने में त्रुटि');
             }
             
         } catch (error) {
             console.error('Error playing response:', error);
             this.isAudioPlaying = false;
-            this.updateStatus('ready', 'Ready for next message');
+            this.updateStatus('error', 'आवाज़ चलाने में त्रुटि');
         }
     }
     
     async playStaticAudio(promptType, language) {
         try {
-            this.isAudioPlaying = true;
+            // Don't change status for static audio during initial setup
+            // Status is already managed by the calling method
             
             const response = await fetch(`/api/voice/static_audio/${promptType}/${language}`);
             
@@ -547,14 +778,27 @@ class VoiceBotApp {
                 // Add event listeners for static audio state tracking
                 this.staticAudio.onplay = () => {
                     this.isAudioPlaying = true;
+                    // Only update status if we're in conversation mode
+                    if (this.currentStep === 'conversation') {
+                        this.updateStatus('speaking', 'बोल रहा है...');
+                    }
                 };
                 
                 this.staticAudio.onended = () => {
                     this.isAudioPlaying = false;
+                    // Status will be managed by onStaticAudioEnded method
                 };
                 
                 this.staticAudio.onpause = () => {
                     this.isAudioPlaying = false;
+                    if (this.currentStep === 'conversation') {
+                        this.updateStatus('ready', 'अगले संदेश के लिए तैयार - Enter दबाएं');
+                    }
+                };
+                
+                this.staticAudio.onerror = () => {
+                    this.isAudioPlaying = false;
+                    this.updateStatus('error', 'आवाज़ चलाने में त्रुटि');
                 };
                 
                 await this.staticAudio.play();
@@ -563,15 +807,18 @@ class VoiceBotApp {
         } catch (error) {
             console.error('Error playing static audio:', error);
             this.isAudioPlaying = false;
+            this.updateStatus('error', 'आवाज़ चलाने में त्रुटि');
         }
     }
+    
+
     
     addMessageToConversation(message, type) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `conversation-bubble flex ${type === 'user' ? 'justify-end' : 'justify-start'} mb-4`;
         
         const bubble = document.createElement('div');
-        bubble.className = `max-w-xs lg:max-w-md px-5 py-3 rounded-2xl font-medium ${
+        bubble.className = `max-w-xs lg:max-w-md px-4 lg:px-5 py-2 lg:py-3 rounded-2xl font-medium text-sm lg:text-base ${
             type === 'user' 
                 ? 'bg-gradient-to-r from-green-500 to-green-600 text-white rounded-br-md shadow-md' 
                 : 'bg-gradient-to-r from-orange-100 to-orange-200 text-gray-800 rounded-bl-md border border-orange-300'
@@ -607,12 +854,10 @@ class VoiceBotApp {
     }
     
     onAudioEnded() {
+        // This method is now handled by the audio event listeners in playResponse
+        // Keep it for compatibility but don't duplicate status updates
         this.isAudioPlaying = false;
-        if (this.currentStep === 'conversation') {
-            this.updateStatus('ready', 'अगले संदेश के लिए तैयार');
-        } else {
-            this.updateStatus('ready', 'तैयार');
-        }
+        console.log('Audio ended - status managed by audio event listeners');
     }
     
     onStaticAudioEnded() {
