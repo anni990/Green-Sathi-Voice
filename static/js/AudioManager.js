@@ -74,32 +74,12 @@ class AudioManager {
             this.app.uiController.updateStatus('listening', 'सुन रहा हूँ...');
             this.app.uiController.showVoiceAnimation(true);
             this.isRecording = true;
-            this.audioChunks = [];
             
             // Update button state based on current step
             this.updateRecordingButtonState(true);
             
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.mediaRecorder = new MediaRecorder(stream);
-            
-            this.mediaRecorder.ondataavailable = (event) => {
-                if (event.data.size > 0) {
-                    this.audioChunks.push(event.data);
-                }
-            };
-            
-            this.mediaRecorder.onstop = () => {
-                this.processRecording();
-            };
-            
-            this.mediaRecorder.start();
-            
-            // Auto-stop after 12 seconds
-            setTimeout(() => {
-                if (this.isRecording) {
-                    this.stopRecording();
-                }
-            }, 12000);
+            // Use Azure Speech Services for real-time speech recognition
+            await this.processAzureSpeechRecognition();
             
         } catch (error) {
             this.app.uiController.showError('रिकॉर्डिंग शुरू करने में विफल: ' + error.message);
@@ -109,9 +89,7 @@ class AudioManager {
     }
     
     stopRecording() {
-        if (this.mediaRecorder && this.isRecording) {
-            this.mediaRecorder.stop();
-            this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        if (this.isRecording) {
             this.isRecording = false;
             this.app.uiController.showVoiceAnimation(false);
             this.app.uiController.updateStatus('processing', 'प्रसंस्करण...');
@@ -177,7 +155,90 @@ class AudioManager {
         this.updateRecordingButtonState(false);
     }
     
-    async processRecording() {
+    async processAzureSpeechRecognition() {
+        try {
+            // Use Azure Speech Manager for real-time recognition
+            const recognizedText = await this.app.azureSpeechManager.startRealTimeSpeechRecognition();
+            
+            // Reset recording state
+            this.isRecording = false;
+            this.resetButtonState();
+            
+            if (recognizedText) {
+                await this.app.handleTranscribedText(recognizedText);
+            } else {
+                // Try fallback to traditional recording if Azure fails
+                if (!this.app.azureSpeechManager.isAzureAvailable) {
+                    console.log('Azure not available, falling back to traditional recording...');
+                    await this.startTraditionalRecording();
+                } else {
+                    this.app.uiController.showError('Could not understand the audio. Please try again.');
+                    this.app.uiController.updateStatus('error', 'Processing failed');
+                }
+            }
+            
+        } catch (error) {
+            this.isRecording = false;
+            this.resetButtonState();
+            
+            // Try fallback to traditional recording
+            console.log('Azure speech recognition failed, trying traditional recording...');
+            await this.startTraditionalRecording();
+        }
+    }
+    
+    async startTraditionalRecording() {
+        try {
+            // Fallback to traditional audio recording when Azure is not available
+            this.app.uiController.updateStatus('listening', 'सुन रहा हूँ... (पारंपरिक रिकॉर्डिंग)');
+            this.app.uiController.showVoiceAnimation(true);
+            this.isRecording = true;
+            this.audioChunks = [];
+            
+            // Update button state
+            this.updateRecordingButtonState(true);
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.mediaRecorder = new MediaRecorder(stream);
+            
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.audioChunks.push(event.data);
+                }
+            };
+            
+            this.mediaRecorder.onstop = () => {
+                this.processTraditionalRecording();
+            };
+            
+            this.mediaRecorder.start();
+            
+            // Auto-stop after 12 seconds
+            setTimeout(() => {
+                if (this.isRecording && this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                    this.stopTraditionalRecording();
+                }
+            }, 12000);
+            
+        } catch (error) {
+            this.app.uiController.showError('रिकॉर्डिंग शुरू करने में विफल: ' + error.message);
+            this.app.uiController.updateStatus('error', 'रिकॉर्डिंग विफल');
+            this.resetButtonState();
+        }
+    }
+    
+    stopTraditionalRecording() {
+        if (this.mediaRecorder && this.isRecording) {
+            this.mediaRecorder.stop();
+            this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+            this.isRecording = false;
+            this.app.uiController.showVoiceAnimation(false);
+            this.app.uiController.updateStatus('processing', 'प्रसंस्करण...');
+            this.resetButtonState();
+        }
+    }
+    
+    async processTraditionalRecording() {
         try {
             const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
             const formData = new FormData();
@@ -187,7 +248,7 @@ class AudioManager {
             const currentLanguage = this.app.stateManager.userInfo.language || 'hindi';
             formData.append('language', currentLanguage);
             
-            // Send audio for processing
+            // Send audio for processing using traditional method
             const response = await fetch('/api/voice/process_audio', {
                 method: 'POST',
                 body: formData
@@ -210,10 +271,33 @@ class AudioManager {
     
     async playResponse(text, language) {
         try {
+            // Try Azure TTS first, fallback to traditional TTS if needed
+            if (this.app.azureSpeechManager.isAzureAvailable) {
+                const audioBlob = await this.app.azureSpeechManager.synthesizeSpeech(text, language, true);
+                
+                if (audioBlob) {
+                    await this.app.azureSpeechManager.playAudioBlob(audioBlob);
+                    return;
+                }
+            }
+            
+            // Fallback to traditional TTS
+            console.log('Azure TTS not available, falling back to traditional TTS...');
+            await this.playTraditionalTTS(text, language);
+            
+        } catch (error) {
+            console.error('Error playing response:', error);
+            // Try traditional TTS as final fallback
+            await this.playTraditionalTTS(text, language);
+        }
+    }
+    
+    async playTraditionalTTS(text, language) {
+        try {
             const elements = this.app.elementManager.getAll();
             
             // Show processing status while waiting for TTS response
-            this.app.uiController.updateStatus('processing', 'आवाज़ तैयार कर रहा है...');
+            this.app.uiController.updateStatus('processing', 'आवाज़ तैयार कर रहा है... (पारंपरिक TTS)');
             
             const response = await fetch('/api/voice/text_to_speech', {
                 method: 'POST',
@@ -248,6 +332,7 @@ class AudioManager {
                     } else {
                         this.app.uiController.updateStatus('ready', 'तैयार - Enter दबाएं');
                     }
+                    URL.revokeObjectURL(audioUrl);
                 };
                 
                 elements.audioPlayer.onpause = () => {
@@ -262,6 +347,7 @@ class AudioManager {
                 elements.audioPlayer.onerror = () => {
                     this.isAudioPlaying = false;
                     this.app.uiController.updateStatus('error', 'आवाज़ चलाने में त्रुटि');
+                    URL.revokeObjectURL(audioUrl);
                 };
                 
                 await elements.audioPlayer.play();
@@ -270,7 +356,7 @@ class AudioManager {
             }
             
         } catch (error) {
-            console.error('Error playing response:', error);
+            console.error('Error playing traditional TTS:', error);
             this.isAudioPlaying = false;
             this.app.uiController.updateStatus('error', 'आवाज़ चलाने में त्रुटि');
         }

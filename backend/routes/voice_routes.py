@@ -114,6 +114,69 @@ def generate_response():
         logger.error(f"Error generating response: {e}")
         return jsonify({'error': 'Internal server error'}), 500
 
+@voice_bp.route('/azure_speech_to_text', methods=['POST'])
+def azure_speech_to_text():
+    """Start Azure real-time speech recognition (no audio upload needed)"""
+    try:
+        data = request.get_json()
+        language = data.get('language', 'hindi')
+        
+        # Convert language name to Azure language code
+        language_code = Config.SPEECH_RECOGNITION_LANGUAGES.get(language, 'hi-IN')
+        
+        # Use Azure real-time speech recognition
+        text = speech_service.azure_real_time_speech_to_text(language_code)
+        
+        if text:
+            return jsonify({'text': text})
+        else:
+            return jsonify({'error': 'Could not recognize speech'}), 400
+            
+    except Exception as e:
+        logger.error(f"Error in Azure speech recognition: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
+@voice_bp.route('/azure_text_to_speech', methods=['POST'])
+def azure_text_to_speech():
+    """Convert text to speech using Azure Speech Services"""
+    try:
+        data = request.get_json()
+        text = data.get('text', '')
+        language = data.get('language', 'hindi')
+        return_audio = data.get('return_audio', False)
+        
+        if not text:
+            return jsonify({'error': 'No text provided'}), 400
+        
+        # Convert language name to Azure language code
+        language_code = Config.SPEECH_RECOGNITION_LANGUAGES.get(language, 'hi-IN')
+        
+        if return_audio:
+            # Generate audio file and return it
+            output_path = os.path.join(
+                Config.AUDIO_UPLOAD_FOLDER, 
+                f"azure_tts_{hash(text)}_{language}.wav"
+            )
+            
+            audio_path = speech_service.azure_text_to_speech(text, language_code, output_path)
+            
+            if audio_path and os.path.exists(audio_path):
+                return send_file(audio_path, as_attachment=True, download_name='response.wav')
+            else:
+                return jsonify({'error': 'Could not generate audio'}), 500
+        else:
+            # Play directly to speakers (for backend testing)
+            success = speech_service.azure_text_to_speech(text, language_code)
+            
+            if success:
+                return jsonify({'success': True, 'message': 'Speech played successfully'})
+            else:
+                return jsonify({'error': 'Could not play speech'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error in Azure text-to-speech: {e}")
+        return jsonify({'error': 'Internal server error'}), 500
+
 @voice_bp.route('/text_to_speech', methods=['POST'])
 def text_to_speech():
     """Convert text to speech"""

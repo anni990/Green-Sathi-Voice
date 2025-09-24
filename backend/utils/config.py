@@ -20,6 +20,10 @@ class Config:
     # Dhenu AI Configuration
     DHENU_API_KEY = os.getenv('DHENU_API_KEY')
     
+    # Azure Speech Services Configuration
+    AZURE_SPEECH_KEY = os.getenv('AZURE_SPEECH_KEY')
+    AZURE_SPEECH_REGION = os.getenv('AZURE_SPEECH_REGION', 'centralindia')
+    
     # Audio Configuration
     AUDIO_UPLOAD_FOLDER = os.getenv('AUDIO_UPLOAD_FOLDER', 'temp_audio')
     MAX_AUDIO_SIZE = int(os.getenv('MAX_AUDIO_SIZE', '16777216'))  # 16MB
@@ -45,6 +49,17 @@ class Config:
         'telugu': 'te-IN',
         'gujarati': 'gu-IN',
         'marathi': 'mr-IN'
+    }
+    
+    # Azure Speech Service voice mapping
+    AZURE_VOICES = {
+        'en-IN': 'en-IN-NeerjaNeural',
+        'hi-IN': 'hi-IN-SwaraNeural',
+        'ta-IN': 'ta-IN-PallaviNeural',
+        'te-IN': 'te-IN-ShrutiNeural',
+        'bn-IN': 'bn-IN-TanishaaNeural',
+        'gu-IN': 'gu-IN-DhwaniNeural',
+        'mr-IN': 'mr-IN-AarohiNeural'
     }
     
     # Language prompts in Indian languages

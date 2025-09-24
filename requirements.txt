@@ -16,7 +16,7 @@ openai
 # Speech Processing
 pydub==0.25.1
 gTTS==2.4.0
-
+azure-cognitiveservices-speech
 
 # Utilities
 requests==2.31.00
