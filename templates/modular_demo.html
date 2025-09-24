@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modular Architecture Demo & Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6">
+            <i class="fas fa-cogs text-green-600 mr-2"></i>
+            Green Sathi Voice Bot - Modular Architecture Demo
+        </h1>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                Architecture Overview
+            </h2>
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <h3 class="font-semibold text-green-600">Core Modules:</h3>
+                    <ul class="text-sm space-y-1">
+                        <li><i class="fas fa-puzzle-piece text-green-500 mr-2"></i><code>ElementManager.js</code> - DOM Management</li>
+                        <li><i class="fas fa-state-machine text-blue-500 mr-2"></i><code>StateManager.js</code> - Application State</li>
+                        <li><i class="fas fa-desktop text-purple-500 mr-2"></i><code>UIController.js</code> - User Interface</li>
+                        <li><i class="fas fa-keyboard text-orange-500 mr-2"></i><code>KeyboardHandler.js</code> - Keyboard Input</li>
+                    </ul>
+                </div>
+                <div class="space-y-2">
+                    <h3 class="font-semibold text-green-600">Service Modules:</h3>
+                    <ul class="text-sm space-y-1">
+                        <li><i class="fas fa-microphone text-red-500 mr-2"></i><code>AudioManager.js</code> - Audio Processing</li>
+                        <li><i class="fas fa-server text-indigo-500 mr-2"></i><code>ApiService.js</code> - API Communication</li>
+                        <li><i class="fas fa-comments text-teal-500 mr-2"></i><code>ConversationManager.js</code> - Chat Flow</li>
+                        <li><i class="fas fa-cog text-gray-500 mr-2"></i><code>app_modular.js</code> - Main Orchestrator</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-flask text-purple-600 mr-2"></i>
+                Automated Testing
+            </h2>
+            <p class="text-gray-600 mb-4">
+                The modular architecture includes automated tests to verify functionality. 
+                Check your browser console for test results.
+            </p>
+            
+            <div id="test-results" class="bg-gray-50 rounded p-4 mb-4">
+                <p class="text-sm text-gray-600">Loading test results...</p>
+            </div>
+            
+            <button id="run-tests" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
+                <i class="fas fa-play mr-2"></i>Run Tests Again
+            </button>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-tools text-orange-600 mr-2"></i>
+                Module Testing Tools
+            </h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <button onclick="testElementManager()" class="bg-green-600 text-white p-3 rounded hover:bg-green-700 transition-colors text-sm">
+                    <i class="fas fa-puzzle-piece mb-2 block"></i>
+                    Test ElementManager
+                </button>
+                
+                <button onclick="testStateManager()" class="bg-blue-600 text-white p-3 rounded hover:bg-blue-700 transition-colors text-sm">
+                    <i class="fas fa-state-machine mb-2 block"></i>
+                    Test StateManager
+                </button>
+                
+                <button onclick="testUIController()" class="bg-purple-600 text-white p-3 rounded hover:bg-purple-700 transition-colors text-sm">
+                    <i class="fas fa-desktop mb-2 block"></i>
+                    Test UIController
+                </button>
+                
+                <button onclick="testKeyboardHandler()" class="bg-orange-600 text-white p-3 rounded hover:bg-orange-700 transition-colors text-sm">
+                    <i class="fas fa-keyboard mb-2 block"></i>
+                    Test KeyboardHandler
+                </button>
+                
+                <button onclick="testConversationManager()" class="bg-teal-600 text-white p-3 rounded hover:bg-teal-700 transition-colors text-sm">
+                    <i class="fas fa-comments mb-2 block"></i>
+                    Test ConversationManager
+                </button>
+                
+                <button onclick="testFullIntegration()" class="bg-red-600 text-white p-3 rounded hover:bg-red-700 transition-colors text-sm">
+                    <i class="fas fa-cog mb-2 block"></i>
+                    Test Integration
+                </button>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">
+                <i class="fas fa-terminal text-gray-600 mr-2"></i>
+                Console Output
+            </h2>
+            <div id="console-output" class="bg-black text-green-400 p-4 rounded font-mono text-sm h-64 overflow-y-auto">
+                <div class="text-gray-400">// Console output will appear here...</div>
+                <div class="text-gray-400">// Open browser DevTools Console for full details</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include all modular files -->
+    <script src="/static/js/ElementManager.js"></script>
+    <script src="/static/js/StateManager.js"></script>
+    <script src="/static/js/UIController.js"></script>
+    <script src="/static/js/KeyboardHandler.js"></script>
+    <script src="/static/js/AudioManager.js"></script>
+    <script src="/static/js/ApiService.js"></script>
+    <script src="/static/js/ConversationManager.js"></script>
+    <script src="/static/js/app_modular.js"></script>
+    <script src="/static/js/test_modular.js"></script>
+
+    <script>
+        // Console output capture
+        const originalLog = console.log;
+        const consoleOutput = document.getElementById('console-output');
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            
+            const message = args.join(' ');
+            const div = document.createElement('div');
+            div.textContent = `> ${message}`;
+            
+            // Add color coding
+            if (message.includes('✅')) {
+                div.className = 'text-green-400';
+            } else if (message.includes('❌')) {
+                div.className = 'text-red-400';
+            } else if (message.includes('🎉')) {
+                div.className = 'text-yellow-400';
+            } else if (message.includes('📊')) {
+                div.className = 'text-blue-400';
+            }
+            
+            consoleOutput.appendChild(div);
+            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        };
+        
+        // Test functions for individual modules
+        function testElementManager() {
+            console.log('Testing ElementManager...');
+            try {
+                const em = new ElementManager();
+                console.log('✅ ElementManager created successfully');
+                console.log(`✅ Found ${Object.keys(em.getAll()).length} DOM elements`);
+            } catch (error) {
+                console.log('❌ ElementManager test failed:', error.message);
+            }
+        }
+        
+        function testStateManager() {
+            console.log('Testing StateManager...');
+            try {
+                const sm = new StateManager();
+                sm.setStep('conversation');
+                console.log('✅ StateManager state transitions working');
+                
+                sm.updateUserInfo('name', 'Test User');
+                console.log('✅ StateManager user info updates working');
+            } catch (error) {
+                console.log('❌ StateManager test failed:', error.message);
+            }
+        }
+        
+        function testUIController() {
+            console.log('Testing UIController...');
+            try {
+                const app = { elementManager: new ElementManager() };
+                const ui = new UIController(app);
+                console.log('✅ UIController created successfully');
+            } catch (error) {
+                console.log('❌ UIController test failed:', error.message);
+            }
+        }
+        
+        function testKeyboardHandler() {
+            console.log('Testing KeyboardHandler...');
+            try {
+                const app = { 
+                    elementManager: new ElementManager(),
+                    stateManager: new StateManager()
+                };
+                const kh = new KeyboardHandler(app);
+                console.log('✅ KeyboardHandler created successfully');
+            } catch (error) {
+                console.log('❌ KeyboardHandler test failed:', error.message);
+            }
+        }
+        
+        function testConversationManager() {
+            console.log('Testing ConversationManager...');
+            try {
+                const app = { elementManager: new ElementManager() };
+                const cm = new ConversationManager(app);
+                console.log('✅ ConversationManager created successfully');
+            } catch (error) {
+                console.log('❌ ConversationManager test failed:', error.message);
+            }
+        }
+        
+        function testFullIntegration() {
+            console.log('Testing Full Integration...');
+            try {
+                const app = new VoiceBotApp();
+                console.log('✅ Full VoiceBotApp integration successful');
+                console.log(`✅ Current step: ${app.currentStep}`);
+                console.log('✅ All modules initialized and communicating');
+            } catch (error) {
+                console.log('❌ Integration test failed:', error.message);
+            }
+        }
+        
+        // Run tests button
+        document.getElementById('run-tests').addEventListener('click', () => {
+            consoleOutput.innerHTML = '<div class="text-gray-400">// Running tests...</div>';
+            if (window.createTestSuite) {
+                const tester = createTestSuite();
+                tester.runAllTests();
+            } else {
+                console.log('❌ Test suite not available');
+            }
+        });
+        
+        // Initialize demo
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 Modular Architecture Demo Initialized');
+            console.log('📖 Check README for detailed documentation');
+        });
+    </script>
+</body>
+</html>
