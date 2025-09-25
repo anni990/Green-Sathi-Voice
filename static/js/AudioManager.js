@@ -92,7 +92,7 @@ class AudioManager {
         if (this.isRecording) {
             this.isRecording = false;
             this.app.uiController.showVoiceAnimation(false);
-            this.app.uiController.updateStatus('processing', 'प्रसंस्करण...');
+            this.app.uiController.updateStatus('processing', 'प्रक्रिया जारी...');
             this.resetButtonState();
         }
     }
@@ -233,7 +233,7 @@ class AudioManager {
             this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
             this.isRecording = false;
             this.app.uiController.showVoiceAnimation(false);
-            this.app.uiController.updateStatus('processing', 'प्रसंस्करण...');
+            this.app.uiController.updateStatus('processing', 'प्रक्रिया जारी...');
             this.resetButtonState();
         }
     }

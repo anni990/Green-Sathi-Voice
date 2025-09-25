@@ -46,7 +46,7 @@ class AzureSpeechManager {
             this.app.uiController.showVoiceAnimation(false);
             
             if (response.ok && data.text) {
-                this.app.uiController.updateStatus('processing', 'प्रसंस्करण...');
+                this.app.uiController.updateStatus('processing', 'प्रक्रिया जारी...');
                 // Mark Azure as available since it worked
                 this.isAzureAvailable = true;
                 return data.text;
