@@ -3,14 +3,14 @@ import os
 import uuid
 import logging
 from backend.services.speech_service import speech_service
-from backend.services.llm_service import gemini_service, vertex_service, openai_service, azure_openai_service
+from backend.services.llm_service import gemini_service, openai_service, azure_openai_service
 from backend.models.database import db_manager
 from backend.utils.config import Config
 
 logger = logging.getLogger(__name__)
 voice_bp = Blueprint('voice', __name__)
 
-llm_service = gemini_service
+llm_service = azure_openai_service
 
 @voice_bp.route('/process_audio', methods=['POST'])
 def process_audio():

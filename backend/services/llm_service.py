@@ -563,6 +563,6 @@ def fallback_extract_name_phone(text):
 # ============================================================
 
 gemini_service = GeminiService()
-vertex_service = VertexGeminiService()
+vertex_service = VertexGeminiService() if Config.VERTEX_PROJECT_ID and Config.VERTEX_PROJECT_ID != 'none' and Config.VERTEX_LOCATION and Config.VERTEX_LOCATION != 'none' else None
 openai_service = OpenAIService()
 azure_openai_service = AzureOpenAIService()
