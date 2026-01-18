@@ -17,6 +17,20 @@ class Config:
     # Gemini API Configuration
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
     
+    # Vertex AI Configuration
+    VERTEX_PROJECT_ID = os.getenv('VERTEX_PROJECT_ID')
+    VERTEX_LOCATION = os.getenv('VERTEX_LOCATION')
+
+    # OpenAI Configuration
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+    # Azure OpenAI Configuration
+    AZURE_OPENAI_API_KEY = os.getenv('AZURE_OPENAI_API_KEY')
+    AZURE_OPENAI_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
+    AZURE_OPENAI_API_VERSION = os.getenv('AZURE_OPENAI_API_VERSION')
+    AZURE_OPENAI_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
+
+    
     # Dhenu AI Configuration
     DHENU_API_KEY = os.getenv('DHENU_API_KEY')
     

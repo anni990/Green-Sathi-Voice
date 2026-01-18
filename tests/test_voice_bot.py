@@ -16,7 +16,7 @@ import io
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from backend.utils.config import Config
-from backend.services.gemini_service import GeminiService
+from backend.services.llm_service import GeminiService
 from backend.models.database import DatabaseManager
 
 class TestConfig(unittest.TestCase):
