@@ -196,5 +196,5 @@ class VoiceBotApp {
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new VoiceBotApp();
+    window.app = new VoiceBotApp();
 });
