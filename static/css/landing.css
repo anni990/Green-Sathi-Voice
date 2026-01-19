@@ -1,0 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+
+#landing-page {
+    font-family: 'Outfit', sans-serif;
+    background: linear-gradient(-45deg, #f0fdf4, #fffbeb, #fff7ed, #f0fdf4);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+}
+
+@keyframes gradientBG {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    50% {
+        background-position: 100% 50%;
+    }
+
+    100% {
+        background-position: 0% 50%;
+    }
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+}
+
+/* Continuous Pulse Animation */
+.pulse-ring {
+    position: relative;
+    width: 180px;
+    height: 180px;
+    background: #22c55e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.5);
+    animation: pulse-green 2.5s infinite;
+}
+
+@keyframes pulse-green {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.6);
+    }
+
+    70% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 50px rgba(34, 197, 94, 0);
+    }
+
+    100% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
+    }
+}
+
+.wave-container {
+    display: flex;
+    align-items: flex-end;
+    gap: 5px;
+    height: 45px;
+}
+
+.bar {
+    width: 8px;
+    background: white;
+    border-radius: 10px;
+    animation: sound 0.8s infinite alternate;
+}
+
+@keyframes sound {
+    0% {
+        height: 8px;
+        opacity: 0.5;
+    }
+
+    100% {
+        height: 40px;
+        opacity: 1;
+    }
+}
+
+.leaf-float {
+    animation: floating 8s ease-in-out infinite;
+}
+
+@keyframes floating {
+    0% {
+        transform: translate(0, 0px) rotate(0deg);
+    }
+
+    33% {
+        transform: translate(10px, 15px) rotate(10deg);
+    }
+
+    66% {
+        transform: translate(-10px, 10px) rotate(-5deg);
+    }
+
+    100% {
+        transform: translate(0, 0px) rotate(0deg);
+    }
+}
+
+/* Active state for touch (replaces hover) */
+.touch-active:active {
+    transform: scale(0.96);
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+/* Subtle float for cards to keep UI "alive" */
+.card-float {
+    animation: cardFloat 5s ease-in-out infinite;
+}
+
+@keyframes cardFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
