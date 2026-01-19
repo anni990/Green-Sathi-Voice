@@ -42,19 +42,10 @@ def clean_phone_number(phone):
 
 
 # ============================================================
-# GEMINI SERVICE (Direct API)
+# SHARED PROMPTS
 # ============================================================
 
-class GeminiService:
-    """Handles Gemini AI API interactions"""
-
-    def __init__(self):
-        genai.configure(api_key=Config.GEMINI_API_KEY)
-        self.model = genai.GenerativeModel("gemini-2.0-flash")
-
-    def extract_name_phone(self, text):
-        try:
-            prompt = f"""
+extract_name_phone_prompt = """
 Extract the name and phone number from the following Hindi/Indian text.
 The text may contain spaces or gaps in phone numbers due to speech recognition.
 
@@ -67,10 +58,69 @@ Rules:
 - Join separated digits
 - Names may be Hindi or Indian languages
 
-Text: "{text}"
-
 Return ONLY valid JSON.
-            """
+"""
+
+detect_language_prompt = """
+Detect the language of the following text.
+Supported languages:
+hindi, bengali, tamil, telugu, gujarati, marathi
+
+Return only the language name.
+Default to hindi.
+"""
+
+generate_response_prompt = """
+You are Green Sathi, a helpful agricultural voice assistant for Indian farmers.
+
+Rules:
+- Simple, rural-friendly language
+- Actionable steps
+- No symbols or formatting
+- End with exactly ONE follow-up question
+"""
+
+# ============================================================
+# SHARED ERROR MESSAGES
+# ============================================================
+
+def get_localized_error(language):
+    """Return error message in user's language"""
+    return {
+        "hindi": "माफ करें, अभी जवाब देने में समस्या हो रही है।",
+        "bengali": "দুঃখিত, এই মুহূর্তে উত্তর দিতে পারছি না।",
+        "tamil": "மன்னிக்கவும், இப்போது பதில் அளிக்க முடியவில்லை।",
+        "telugu": "క్షమించండి, ప్రస్తుతం సమాధానం ఇవ్వలేకపోతున్నాను।",
+        "gujarati": "માફ કરશો, હાલમાં જવાબ આપી શકતો નથી।",
+        "marathi": "माफ करा, सध्या उत्तर देता येत नाही."
+    }.get(language, "माफ करें, समस्या हो रही है।")
+
+
+def build_conversation_context(conversation_history):
+    """Build conversation context string from history"""
+    if not conversation_history:
+        return ""
+    
+    context = ""
+    for conv in conversation_history[-5:]:
+        context += f"User: {conv.get('user_input', '')}"
+        context += f"Assistant: {conv.get('bot_response', '')}"
+    return context
+
+# ============================================================
+# GEMINI SERVICE (Direct API)
+# ============================================================
+
+class GeminiService:
+    """Handles Gemini AI API interactions"""
+
+    def __init__(self):
+        genai.configure(api_key=Config.GEMINI_API_KEY)
+        self.model = genai.GenerativeModel("gemini-2.0-flash")
+
+    def extract_name_phone(self, text):
+        try:
+            prompt = extract_name_phone_prompt + f'Text: "{text}"'
 
             response = self.model.generate_content(prompt)
             response_text = strip_code_blocks(response.text.strip())
@@ -83,7 +133,7 @@ Return ONLY valid JSON.
 
         except json.JSONDecodeError as e:
             logger.warning(f"Gemini JSON decode error: {e}")
-            return self._extract_name_phone_fallback(text)
+            return fallback_extract_name_phone(text)
 
         except Exception as e:
             logger.error(f"Gemini extract_name_phone failed: {e}")
@@ -91,16 +141,7 @@ Return ONLY valid JSON.
 
     def detect_language(self, text):
         try:
-            prompt = f"""
-Detect the language of the following text.
-Supported languages:
-hindi, bengali, tamil, telugu, gujarati, marathi
-
-Text: "{text}"
-
-Return only the language name.
-Default to hindi.
-            """
+            prompt = detect_language_prompt + f'\n\nText: "{text}"'
 
             response = self.model.generate_content(prompt)
             lang = response.text.strip().lower()
@@ -113,26 +154,12 @@ Default to hindi.
 
     def generate_response(self, user_input, language="hindi", conversation_history=None):
         try:
-            context = ""
-            if conversation_history:
-                for conv in conversation_history[-5:]:
-                    context += f"User: {conv.get('user_input', '')}"
-                    context += f"Assistant: {conv.get('bot_response', '')}"
+            context = build_conversation_context(conversation_history)
 
-            prompt = f"""
-You are Green Sathi, a helpful agricultural voice assistant for Indian farmers.
-
-Rules:
-- Respond strictly in {language}
-- Simple, rural-friendly language
-- Actionable steps
-- No symbols or formatting
-- End with exactly ONE follow-up question
-
-{f"Previous conversation context:{context}" if context else ""}
-
-User message:
-"{user_input}"
+            prompt = f"""Respond strictly in {language}
+                {f"Previous conversation context:{context}" if context else ""}""" + generate_response_prompt + f"""
+                User message:
+                "{user_input}"
             """
 
             response = self.model.generate_content(prompt)
@@ -140,20 +167,7 @@ User message:
 
         except Exception as e:
             logger.error(f"Gemini generate_response failed: {e}")
-            return self._localized_error(language)
-
-    def _localized_error(self, language):
-        return {
-            "hindi": "माफ करें, अभी जवाब देने में समस्या हो रही है।",
-            "bengali": "দুঃখিত, এই মুহূর্তে উত্তর দিতে পারছি না।",
-            "tamil": "மன்னிக்கவும், இப்போது பதில் அளிக்க முடியவில்லை।",
-            "telugu": "క్షమించండి, ప్రస్తుతం సమాధానం ఇవ్వలేకపోతున్నాను।",
-            "gujarati": "માફ કરશો, હાલમાં જવાબ આપી શકતો નથી।",
-            "marathi": "माफ करा, सध्या उत्तर देता येत नाही."
-        }.get(language, "माफ करें, समस्या हो रही है।")
-
-    def _extract_name_phone_fallback(self, text):
-        return fallback_extract_name_phone(text)
+            return get_localized_error(language)
 
 
 # ============================================================
@@ -172,19 +186,7 @@ class VertexGeminiService:
 
     def extract_name_phone(self, text):
         try:
-            prompt = f"""
-Extract the name and phone number from the following Hindi/Indian text.
-Return JSON with keys "name" and "phone".
-
-Text: "{text}"
-
-Rules:
-- 10–11 digit Indian mobile
-- Join separated digits
-- Return null if missing
-
-Return ONLY JSON.
-            """
+            prompt = extract_name_phone_prompt + f'\n\nText: "{text}"\n\nReturn ONLY valid JSON.'
 
             response = self.model.generate_content(prompt)
             response_text = strip_code_blocks(response.text.strip())
@@ -197,7 +199,7 @@ Return ONLY JSON.
 
         except json.JSONDecodeError as e:
             logger.warning(f"Vertex JSON decode error: {e}")
-            return self._extract_name_phone_fallback(text)
+            return fallback_extract_name_phone(text)
 
         except Exception as e:
             logger.error(f"Vertex extract_name_phone failed: {e}")
@@ -205,13 +207,7 @@ Return ONLY JSON.
 
     def detect_language(self, text):
         try:
-            prompt = f"""
-Detect the language of the following text.
-Supported languages:
-hindi, bengali, tamil, telugu, gujarati, marathi
-
-Text: "{text}"
-            """
+            prompt = detect_language_prompt + f'\n\nText: "{text}"'
 
             response = self.model.generate_content(prompt)
             lang = response.text.strip().lower()
@@ -224,26 +220,12 @@ Text: "{text}"
 
     def generate_response(self, user_input, language="hindi", conversation_history=None):
         try:
-            context = ""
-            if conversation_history:
-                for conv in conversation_history[-5:]:
-                    context += f"User: {conv.get('user_input', '')}"
-                    context += f"Assistant: {conv.get('bot_response', '')}"
+            context = build_conversation_context(conversation_history)
 
-            prompt = f"""
-You are Green Sathi, a helpful agricultural voice assistant.
-
-Rules:
-- Respond in {language}
-- Simple language
-- Actionable
-- No formatting
-- End with one follow-up question
-
-{f"Context:{context}" if context else ""}
-
-User:
-"{user_input}"
+            prompt = f"""Respond strictly in {language}
+                {f"Previous conversation context:{context}" if context else ""}""" + generate_response_prompt + f"""
+                User message:
+                "{user_input}"
             """
 
             response = self.model.generate_content(prompt)
@@ -251,13 +233,7 @@ User:
 
         except Exception as e:
             logger.error(f"Vertex generate_response failed: {e}")
-            return self._localized_error(language)
-
-    def _localized_error(self, language):
-        return GeminiService()._localized_error(language)
-
-    def _extract_name_phone_fallback(self, text):
-        return fallback_extract_name_phone(text)
+            return get_localized_error(language)
 
 
 # ============================================================
@@ -272,29 +248,17 @@ class OpenAIService:
         self.model = "gpt-4o-mini"
 
     def extract_name_phone(self, text):
-        response_text = ""  # critical fix
+        response_text = ""
         try:
-            prompt = f"""
-Extract the name and phone number from the following Hindi/Indian text.
-Return JSON with keys "name" and "phone".
+            prompt = extract_name_phone_prompt + f'\n\nText: "{text}"\n\nReturn ONLY valid JSON.'
 
-Text: "{text}"
-
-Rules:
-- 10–11 digit Indian mobile
-- Join separated digits
-- Return null if missing
-
-Return ONLY JSON.
-            """
-
-            response = self.client.responses.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
-                input=prompt,
+                messages=[{"role": "user", "content": prompt}],
                 temperature=0
             )
 
-            response_text = strip_code_blocks(response.output_text.strip())
+            response_text = strip_code_blocks(response.choices[0].message.content.strip())
             result = json.loads(response_text)
 
             return {
@@ -304,7 +268,7 @@ Return ONLY JSON.
 
         except json.JSONDecodeError as e:
             logger.warning(f"OpenAI JSON decode error: {e}, response: {response_text}")
-            return self._extract_name_phone_fallback(text)
+            return fallback_extract_name_phone(text)
 
         except Exception as e:
             logger.error(f"OpenAI extract_name_phone failed: {e}")
@@ -312,21 +276,15 @@ Return ONLY JSON.
 
     def detect_language(self, text):
         try:
-            prompt = f"""
-Detect the language of the following text.
-Supported languages:
-hindi, bengali, tamil, telugu, gujarati, marathi
+            prompt = detect_language_prompt + f'\n\nText: "{text}"'
 
-Text: "{text}"
-            """
-
-            response = self.client.responses.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
-                input=prompt,
+                messages=[{"role": "user", "content": prompt}],
                 temperature=0
             )
 
-            lang = response.output_text.strip().lower()
+            lang = response.choices[0].message.content.strip().lower()
             return lang if lang in Config.SUPPORTED_LANGUAGES else "hindi"
 
         except Exception as e:
@@ -335,42 +293,25 @@ Text: "{text}"
 
     def generate_response(self, user_input, language="hindi", conversation_history=None):
         try:
-            context = ""
-            if conversation_history:
-                for conv in conversation_history[-5:]:
-                    context += f"User: {conv.get('user_input', '')}"
-                    context += f"Assistant: {conv.get('bot_response', '')}"
+            context = build_conversation_context(conversation_history)
 
-            prompt = f"""
-You are Green Sathi, a helpful agricultural voice assistant.
-
-Rules:
-- Respond in {language}
-- Simple language
-- Actionable
-- No formatting
-- End with one follow-up question
-
-{f"Context:{context}" if context else ""}
-
-User:
-"{user_input}"
+            prompt = f"""Respond strictly in {language}
+                {f"Previous conversation context:{context}" if context else ""}""" + generate_response_prompt + f"""
+                User message:
+                "{user_input}"
             """
 
-            response = self.client.responses.create(
+            response = self.client.chat.completions.create(
                 model=self.model,
-                input=prompt,
+                messages=[{"role": "user", "content": prompt}],
                 temperature=0.4
             )
 
-            return response.output_text.strip()
+            return response.choices[0].message.content.strip()
 
         except Exception as e:
             logger.error(f"OpenAI generate_response failed: {e}")
-            return GeminiService()._localized_error(language)
-
-    def _extract_name_phone_fallback(self, text):
-        return fallback_extract_name_phone(text)
+            return get_localized_error(language)
 
 
 # ============================================================
@@ -397,33 +338,17 @@ class AzureOpenAIService:
 
     def extract_name_phone(self, text):
         """Extract name and phone number from Hindi / Indian speech-style text"""
-        response_text = ""  # critical for safe logging
+        response_text = ""
         try:
-            prompt = f"""
-Extract the name and phone number from the following Hindi/Indian text.
-The text may have spaces or gaps in the phone number due to speech recognition.
+            prompt = extract_name_phone_prompt + f'\n\nText: "{text}"\n\nReturn ONLY valid JSON.'
 
-Return the result in JSON format with keys "name" and "phone".
-If either field is not found, return null.
-
-Rules:
-- Phone numbers must be 10–11 digits
-- Indian mobile numbers start with 6–9
-- Join separated digits
-- Names may be Hindi or Indian languages
-
-Text: "{text}"
-
-Return ONLY valid JSON.
-            """
-
-            response = self.client.responses.create(
+            response = self.client.chat.completions.create(
                 model=self.deployment,
-                input=prompt,
+                messages=[{"role": "user", "content": prompt}],
                 temperature=0
             )
 
-            response_text = strip_code_blocks(response.output_text.strip())
+            response_text = strip_code_blocks(response.choices[0].message.content.strip())
             result = json.loads(response_text)
 
             return {
@@ -444,24 +369,15 @@ Return ONLY valid JSON.
     def detect_language(self, text):
         """Detect Indian language from constrained supported set"""
         try:
-            prompt = f"""
-Detect the language of the following text.
-Supported languages:
-hindi, bengali, tamil, telugu, gujarati, marathi
+            prompt = detect_language_prompt + f'\n\nText: "{text}"'
 
-Text: "{text}"
-
-Return only the language name.
-If unclear, return "hindi".
-            """
-
-            response = self.client.responses.create(
+            response = self.client.chat.completions.create(
                 model=self.deployment,
-                input=prompt,
+                messages=[{"role": "user", "content": prompt}],
                 temperature=0
             )
 
-            language = response.output_text.strip().lower()
+            language = response.choices[0].message.content.strip().lower()
             return language if language in Config.SUPPORTED_LANGUAGES else "hindi"
 
         except Exception as e:
@@ -471,57 +387,25 @@ If unclear, return "hindi".
     def generate_response(self, user_input, language="hindi", conversation_history=None):
         """Generate a farmer-friendly, context-aware response as Green Sathi"""
         try:
-            context = ""
-            if conversation_history:
-                for conv in conversation_history[-5:]:
-                    context += f"User: {conv.get('user_input', '')}"
-                    context += f"Assistant: {conv.get('bot_response', '')}"
+            context = build_conversation_context(conversation_history)
 
-            prompt = f"""
-You are Green Sathi, a helpful agricultural voice assistant for Indian farmers.
-
-Rules:
-- Respond strictly in {language}
-- Use simple, rural-friendly language
-- Keep responses short but complete and actionable
-- Include steps farmers can immediately implement
-- Do NOT use symbols, bullets, markdown, or formatting
-- End with exactly ONE relevant follow-up question
-- Be friendly and supportive
-
-{f"Previous conversation context:{context}" if context else ""}
-
-User message:
-"{user_input}"
-
-Respond naturally in {language}.
+            prompt = f"""Respond strictly in {language}
+                {f"Previous conversation context:{context}" if context else ""}""" + generate_response_prompt + f"""
+                User message:
+                "{user_input}"
             """
 
-            response = self.client.responses.create(
+            response = self.client.chat.completions.create(
                 model=self.deployment,
-                input=prompt,
+                messages=[{"role": "user", "content": prompt}],
                 temperature=0.4
             )
 
-            return response.output_text.strip()
+            return response.choices[0].message.content.strip()
 
         except Exception as e:
             logger.error(f"Azure OpenAI generate_response failed: {e}")
-            return self._localized_error(language)
-
-    # ------------------------------------------------------------------
-    # HELPERS
-    # ------------------------------------------------------------------
-
-    def _localized_error(self, language):
-        return {
-            "hindi": "माफ करें, मुझे अभी आपके सवाल का जवाब देने में परेशानी हो रही है। कृपया थोड़ी देर बाद फिर से कोशिश करें।",
-            "bengali": "দুঃখিত, এই মুহূর্তে আপনার প্রশ্নের উত্তর দিতে সমস্যা হচ্ছে।",
-            "tamil": "மன்னிக்கவும், உங்கள் கேள்விக்கு இப்போது பதிலளிக்க முடியவில்லை।",
-            "telugu": "క్షమించండి, ప్రస్తుతం మీ ప్రశ్నకు సమాధానం ఇవ్వలేకపోతున్నాను।",
-            "gujarati": "માફ કરશો, હાલમાં તમારા પ્રશ્નનો જવાબ આપી શકતો નથી।",
-            "marathi": "माफ करा, सध्या तुमच्या प्रश्नाचे उत्तर देता येत नाही."
-        }.get(language, "माफ करें, समस्या हो रही है।")
+            return get_localized_error(language)
 
 
 # ============================================================

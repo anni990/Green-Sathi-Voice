@@ -4,8 +4,17 @@ import uuid
 import logging
 from backend.services.speech_service import speech_service
 from backend.services.llm_service import gemini_service, openai_service, azure_openai_service
-from backend.models.database import db_manager
 from backend.utils.config import Config
+from backend.models.database import db_manager
+
+llm_services = {
+    'gemini': gemini_service,
+    'openai': openai_service,
+    'azure_openai': azure_openai_service,
+}
+
+current_llm_service = llm_services.get(Config.DEFAULT_LLM_SERVICE, azure_openai_service)
+
 
 logger = logging.getLogger(__name__)
 voice_bp = Blueprint('voice', __name__)
@@ -52,7 +61,7 @@ def extract_user_info():
             return jsonify({'error': 'No text provided'}), 400
         
         # Extract name and phone using Gemini
-        info = azure_openai_service.extract_name_phone(text)
+        info = current_llm_service.extract_name_phone(text)
         
         return jsonify(info)
         
@@ -71,7 +80,7 @@ def detect_language():
             return jsonify({'error': 'No text provided'}), 400
         
         # Detect language using Gemini
-        language = azure_openai_service.detect_language(text)
+        language = current_llm_service.detect_language(text)
         
         return jsonify({'language': language})
         
@@ -99,7 +108,7 @@ def generate_response():
         
         # Generate response using Gemini
         language_code = Config.SUPPORTED_LANGUAGES.get(language, 'hi')
-        response = azure_openai_service.generate_response(user_input, language, conversation_history)
+        response = current_llm_service.generate_response(user_input, language, conversation_history)
         
         response = response.replace("*", "")
 
