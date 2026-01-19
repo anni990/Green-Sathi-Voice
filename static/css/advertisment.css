@@ -124,3 +124,14 @@ body {
         transform: translateX(0);
     }
 }
+
+/* Hide advertisements on mobile devices */
+@media (max-width: 768px) {
+    #left-ad, #right-ad {
+        display: none !important;
+    }
+    body {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+}

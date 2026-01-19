@@ -15,115 +15,127 @@
 
 <body class="min-h-screen">
     <!-- Landing Page (Initially Visible) -->
-    <div id="landing-page" class="flex flex-col items-center justify-between px-12 py-6 text-slate-800 min-h-screen">
+    <div id="landing-page"
+        class="flex flex-col items-center justify-between px-4 sm:px-[50px] py-6 text-slate-800 min-h-screen w-full box-border overflow-x-hidden">
 
-        <!-- Top Navigation -->
-        <header class="w-full flex justify-between items-center animate__animated animate__fadeInDown">
+        <header
+            class="w-full flex flex-col md:flex-row justify-between items-center gap-6 animate__animated animate__fadeInDown">
             <div class="flex items-center gap-4">
                 <img src="../static/images/logo.png" alt="Green Sathi Logo"
-                    class="w-14 h-14 rounded-full object-contain">
+                    class="w-12 h-12 md:w-14 md:h-14 rounded-full object-contain">
                 <div>
-                    <h1 class="text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-green-700 leading-none">Green<span class="text-orange-500">Sathi</span></h1>
-                    <p class="text-xs font-bold text-green-600 tracking-widest uppercase mt-1">AI Farming Companion</p>
+                    <h1
+                        class="text-xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-green-700 leading-none">
+                        Green<span class="text-orange-500">Sathi</span></h1>
+                    <p class="text-[10px] md:text-xs font-bold text-green-600 tracking-widest uppercase mt-1">AI Farming
+                        Companion</p>
                 </div>
             </div>
-            <div class="flex gap-4">
-                <button class="px-8 py-3 rounded-full bg-white shadow-md font-bold border-2 border-orange-100 flex items-center gap-3 touch-active transition-all">
-                    <span class="text-xl">🌐</span> English / हिंदी
+            <div class="flex gap-2 md:gap-4 w-full md:w-auto justify-center">
+                <button
+                    class="px-4 py-2 md:px-8 md:py-3 text-sm md:text-base rounded-full bg-white shadow-md font-bold border-2 border-orange-100 flex items-center gap-2 transition-all">
+                    <span class="text-lg">🌐</span> Eng / हिं
                 </button>
-                <button class="px-8 py-3 rounded-full bg-yellow-400 shadow-lg shadow-yellow-200 font-bold touch-active transition-all">
+                <button
+                    class="px-4 py-2 md:px-8 md:py-3 text-sm md:text-base rounded-full bg-yellow-400 shadow-lg shadow-yellow-200 font-bold transition-all">
                     Help / मदद
                 </button>
             </div>
         </header>
 
-        <!-- Main Content Area (Optimized for 1366x768) -->
-        <main class="flex-1 w-full grid grid-cols-2 gap-12 items-center max-h-[500px]">
+        <main class="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center my-8 md:max-h-[500px]">
 
-            <!-- Left Side: Welcome Text -->
-            <div class="space-y-8 animate__animated animate__fadeInLeft">
+            <div class="space-y-6 md:space-y-8 animate__animated animate__fadeInLeft text-center md:text-left">
                 <div class="space-y-2">
-                    <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight">नमस्ते, <br><span class="text-green-600 mb-12">I am listening.</span></h2>
-                    <p class="text-sm md:text-md lg:text-lg text-slate-600 leading-relaxed max-w-lg font-light">
+                    <h2 class="text-2xl md:text-3xl lg:text-4xl font-extrabold leading-tight">नमस्ते, <br><span
+                            class="text-green-600">I am listening.</span></h2>
+                    <p class="text-sm md:text-lg text-slate-600 leading-relaxed max-w-lg font-light mx-auto md:mx-0">
                         आज मैं आपकी कैसे मदद कर सकता हूँ? बस बटन पर टैप करें और अपनी भाषा में अपना प्रश्न बोलें।
                     </p>
                 </div>
 
-                <div class="flex gap-4">
-                    <div class="glass-card p-5 flex items-center gap-4 border-l-8 border-yellow-400 card-float shadow-lg flex-1">
-                        <div class="text-4xl">🌦️</div>
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">मौसम</p>
-                            <p class="text-lg font-bold">28°C • धूप</p>
+                <div class="flex flex-row gap-3 md:gap-4">
+                    <div
+                        class="glass-card p-3 md:p-5 flex items-center gap-3 md:gap-4 border-l-4 md:border-l-8 border-yellow-400 shadow-lg flex-1">
+                        <div class="text-2xl md:text-4xl">🌦️</div>
+                        <div class="text-left">
+                            <p class="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase">मौसम</p>
+                            <p class="text-sm md:text-lg font-bold">28°C • धूप</p>
                         </div>
                     </div>
-                    <div class="glass-card p-5 flex items-center gap-4 border-l-8 border-green-400 card-float shadow-lg flex-1" style="animation-delay: 1s;">
-                        <div class="text-4xl">📉</div>
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">मंडी मूल्य</p>
-                            <p class="text-lg font-bold">गेहूं: ₹2,125</p>
+                    <div
+                        class="glass-card p-3 md:p-5 flex items-center gap-3 md:gap-4 border-l-4 md:border-l-8 border-green-400 shadow-lg flex-1">
+                        <div class="text-2xl md:text-4xl">📉</div>
+                        <div class="text-left">
+                            <p class="text-[8px] md:text-[10px] font-bold text-slate-400 uppercase">मंडी मूल्य</p>
+                            <p class="text-sm md:text-lg font-bold">गेहूं: ₹2,125</p>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Right Side: Interaction Zone -->
-            <div class="flex flex-col items-center justify-center animate__animated animate__zoomIn">
-                <div class="relative cursor-pointer touch-active" onclick="startVoiceBot()">
-                    <!-- Floating Decorative Leaves -->
-                    <div class="absolute -top-12 -left-12 text-5xl leaf-float" style="animation-delay: 0.5s">🍃</div>
-                    <div class="absolute -bottom-12 -right-12 text-5xl leaf-float">🌱</div>
-                    <div class="absolute top-0 -right-16 text-4xl leaf-float opacity-30" style="animation-delay: 2s">🌿</div>
+            <div class="flex flex-col items-center justify-center animate__animated animate__zoomIn py-10 md:py-0">
+                <div class="relative cursor-pointer group" onclick="startVoiceBot()">
 
-                    <div id="landing-mic-container" class="pulse-ring scale-110 transition-all duration-500 ml-20">
-                        <div id="landing-mic-icon" class="flex flex-col items-center">
-                            <svg id="landing-svg-mic" xmlns="http://www.w3.org/2000/svg" width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
-                            <!-- <div id="landing-wave-ui" class="wave-container hidden">
-                                <div class="bar" style="animation-delay: 0.1s"></div>
-                                <div class="bar" style="animation-delay: 0.3s"></div>
-                                <div class="bar" style="animation-delay: 0.2s"></div>
-                                <div class="bar" style="animation-delay: 0.4s"></div>
-                                <div class="bar" style="animation-delay: 0.5s"></div>
-                                <div class="bar" style="animation-delay: 0.2s"></div>
-                            </div> -->
+                    <div class="absolute -top-10 -left-10 text-4xl md:text-5xl leaf-float opacity-80">🍃</div>
+                    <div class="absolute -bottom-10 -right-10 text-4xl md:text-5xl leaf-float opacity-80"
+                        style="animation-delay: 1s">🌱</div>
+
+                    <div id="landing-mic-container" class="relative flex items-center justify-center">
+                        <div class="absolute inset-0 rounded-full bg-green-200 animate-ping opacity-20 scale-125"></div>
+
+                        <div id="landing-mic-icon"
+                            class="relative z-10 flex items-center justify-center bg-green-600 w-24 h-24 md:w-32 md:h-32 rounded-full shadow-2xl transition-transform duration-300 group-hover:scale-105 active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 md:w-14 md:h-14"
+                                viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                                <line x1="12" x2="12" y1="19" y2="22" />
+                            </svg>
                         </div>
                     </div>
 
-                    <div class="mt-12 text-center">
-                        <p id="landing-mic-status" class="text-lg md:text-xl lg:text-2xl font-black text-green-700 animate-pulse tracking-wide">शुरू करने के लिए ENTER दबाएं</p>
-                        <p class="text-slate-400 mt-2 font-medium">"आज मंडी का भाव क्या है?"</p>
+                    <div class="mt-10 md:mt-14 text-center">
+                        <p id="landing-mic-status"
+                            class="text-xl md:text-2xl font-black text-green-700 tracking-wide uppercase">
+                            शुरू करने के लिए ENTER दबाएं
+                        </p>
+                        <p class="hidden md:block text-slate-400 mt-2 font-semibold text-sm md:text-lg italic">
+                            "आज मंडी का भाव क्या है?"
+                        </p>
                     </div>
                 </div>
             </div>
         </main>
 
         <footer class="w-full pb-2 animate__animated animate__fadeInUp">
-            <div class="grid grid-cols-3 gap-6">
-                <div class="glass-card p-6 border-b-8 border-yellow-400 touch-active transition-all group flex items-start gap-4">
-                    <div class="bg-yellow-100 p-3 rounded-xl text-3xl">🚜</div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="glass-card p-4 md:p-6 border-b-4 md:border-b-8 border-yellow-400 flex items-start gap-4">
+                    <div class="bg-yellow-100 p-2 md:p-3 rounded-xl text-2xl md:text-3xl">🚜</div>
                     <div>
-                        <h4 class="text-base md:text-lg font-bold">योजनाएं</h4>
-                        <p class="text-xs md:text-sm text-slate-500">पीएम किसान और सब्सिडी</p>
+                        <h4 class="text-sm md:text-lg font-bold">योजनाएं</h4>
+                        <p class="text-[10px] md:text-sm text-slate-500">पीएम किसान सब्सिडी</p>
                     </div>
                 </div>
-                <div class="glass-card p-6 border-b-8 border-green-500 touch-active transition-all group flex items-start gap-4">
-                    <div class="bg-green-100 p-3 rounded-xl text-3xl">🐛</div>
+                <div class="glass-card p-4 md:p-6 border-b-4 md:border-b-8 border-green-500 flex items-start gap-4">
+                    <div class="bg-green-100 p-2 md:p-3 rounded-xl text-2xl md:text-3xl">🐛</div>
                     <div>
-                        <h4 class="text-base md:text-lg font-bold">कीट नियंत्रण</h4>
-                        <p class="text-xs md:text-sm text-slate-500">तत्काल AI निदान</p>
+                        <h4 class="text-sm md:text-lg font-bold">कीट नियंत्रण</h4>
+                        <p class="text-[10px] md:text-sm text-slate-500">AI निदान</p>
                     </div>
                 </div>
-                <div class="glass-card p-6 border-b-8 border-orange-400 touch-active transition-all group flex items-start gap-4">
-                    <div class="bg-orange-100 p-3 rounded-xl text-3xl">💧</div>
+                <div class="glass-card p-4 md:p-6 border-b-4 md:border-b-8 border-orange-400 flex items-start gap-4">
+                    <div class="bg-orange-100 p-2 md:p-3 rounded-xl text-2xl md:text-3xl">💧</div>
                     <div>
-                        <h4 class="text-base md:text-lg font-bold">सिंचाई</h4>
-                        <p class="text-xs md:text-sm text-slate-500">स्मार्ट पानी अलर्ट</p>
+                        <h4 class="text-sm md:text-lg font-bold">सिंचाई</h4>
+                        <p class="text-[10px] md:text-sm text-slate-500">स्मार्ट अलर्ट</p>
                     </div>
                 </div>
             </div>
 
-            <div class="mt-6 flex justify-center text-slate-400 text-xs font-bold tracking-[0.2em] uppercase">
-                kiosk 18.5" के लिए डिज़ाइन किया गया • GreenSathi v2.0
+            <div class="mt-6 text-center text-slate-400 text-[8px] md:text-xs font-bold tracking-widest uppercase">
+                Kiosk 18.5" & Mobile Optimized • GreenSathi v2.0
             </div>
         </footer>
     </div>
@@ -165,87 +177,148 @@
             </div>
         </div>
 
-    </header>
+        </header>
 
-    <!-- Responsive Main Layout -->
-    <div class="desktop-layout mobile-layout">
-        <!-- Desktop Sidebar / Mobile Stacked Content -->
-        <div class="desktop-sidebar lg:flex lg:flex-col lg:mt-4 lg:ml-4 lg:mb-4 lg:rounded-lg">
-            <div class="desktop-sidebar-content lg:flex-1 px-4 py-4 pb-32 lg:pb-0">
+        <!-- Responsive Main Layout -->
+        <div class="desktop-layout mobile-layout">
+            <!-- Desktop Sidebar / Mobile Stacked Content -->
+            <div class="desktop-sidebar lg:flex lg:flex-col lg:mt-4 lg:ml-4 lg:mb-4 lg:rounded-lg">
+                <div class="desktop-sidebar-content lg:flex-1 px-4 py-4 pb-32 lg:pb-0">
 
-                <!-- Status Bar -->
-                <div class="glass-card rounded-2xl p-4 lg:p-5 mb-6 lg:mb-8">
-                    <div class="flex items-center justify-center">
-                        <span id="status-indicator" class="status-indicator status-ready"></span>
-                        <span id="status-text" class="text-sm lg:text-base font-semibold text-gray-800">तैयार है शुरू
-                            करने के लिए</span>
+                    <!-- Status Bar -->
+                    <div class="glass-card rounded-2xl p-4 lg:p-5 mb-6 lg:mb-8">
+                        <div class="flex items-center justify-center">
+                            <span id="status-indicator" class="status-indicator status-ready"></span>
+                            <span id="status-text" class="text-sm lg:text-base font-semibold text-gray-800">तैयार है
+                                शुरू
+                                करने के लिए</span>
+                        </div>
+                    </div>
+
+                    <!-- User Info Display (Hidden initially) -->
+                    <div id="user-info" class="info-card rounded-2xl p-4 lg:p-6 mb-6 lg:mb-8 hidden page-transition">
+                        <h3 class="font-bold text-lg text-green-800 mb-4 flex items-center">
+                            <i class="fas fa-user mr-2"></i> उपयोगकर्ता जानकारी
+                        </h3>
+                        <div class="space-y-3 text-gray-800 text-sm lg:text-base">
+                            <p class="flex justify-between"><strong>नाम:</strong> <span id="user-name"
+                                    class="font-medium text-green-700">-</span></p>
+                            <p class="flex justify-between"><strong>फोन:</strong> <span id="user-phone"
+                                    class="font-medium text-green-700">-</span></p>
+                            <p class="flex justify-between"><strong>भाषा:</strong> <span id="user-language"
+                                    class="font-medium text-green-700">-</span></p>
+                        </div>
+                    </div>
+
+                    <!-- Main Content Area -->
+                    <div id="main-content" class="text-center page-transition">
+                        <!-- Action Instruction -->
+                        <p id="action-instruction" class="text-base lg:text-lg text-gray-700 font-medium mb-6 lg:mb-8">
+                            आवाज़ सहायक शुरू करने के लिए क्लिक करें
+                        </p>
+                    </div>
+
+                    <!-- Voice Animation Container -->
+                    <div id="voice-animation" class="hidden text-center mb-6 lg:mb-8">
+                        <div class="flex justify-center items-end space-x-2 lg:space-x-3">
+                            <div class="w-3 lg:w-4 h-8 lg:h-12 rounded-full wave-animation"
+                                style="animation-delay: 0s;">
+                            </div>
+                            <div class="w-3 lg:w-4 h-12 lg:h-16 rounded-full wave-animation"
+                                style="animation-delay: 0.1s;">
+                            </div>
+                            <div class="w-3 lg:w-4 h-6 lg:h-8 rounded-full wave-animation"
+                                style="animation-delay: 0.2s;">
+                            </div>
+                            <div class="w-3 lg:w-4 h-10 lg:h-14 rounded-full wave-animation"
+                                style="animation-delay: 0.3s;">
+                            </div>
+                            <div class="w-3 lg:w-4 h-4 lg:h-6 rounded-full wave-animation"
+                                style="animation-delay: 0.4s;">
+                            </div>
+                        </div>
+                        <p class="mt-3 lg:mt-4 text-orange-600 font-semibold animate-pulse text-sm lg:text-base">सुन रहा
+                            हूँ...</p>
+                    </div>
+
+                    <!-- Keyboard Shortcuts Info (Mobile) -->
+                    <div id="keyboard-shortcuts-mobile"
+                        class="lg:hidden bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 -mb-20 mt-3">
+                        <p class="font-semibold mb-2 flex items-center"><i class="fas fa-keyboard mr-2"></i>कीबोर्ड
+                            शॉर्टकट:
+                        </p>
+                        <p class="mb-2">• <kbd class="bg-blue-100 px-2 py-1 rounded text-xs">Enter</kbd> = वार्तालाप
+                            शुरू
+                            करें</p>
+                        <p>• <kbd class="bg-blue-100 px-2 py-1 rounded text-xs">Backspace</kbd> = बाहर निकलें</p>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="error-message"
+                        class="hidden glass-card border-red-200 rounded-2xl p-4 lg:p-5 mb-6 page-transition">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+                            <span id="error-text" class="text-red-700 font-medium text-sm lg:text-base"></span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- User Info Display (Hidden initially) -->
-                <div id="user-info" class="info-card rounded-2xl p-4 lg:p-6 mb-6 lg:mb-8 hidden page-transition">
-                    <h3 class="font-bold text-lg text-green-800 mb-4 flex items-center">
-                        <i class="fas fa-user mr-2"></i> उपयोगकर्ता जानकारी
-                    </h3>
-                    <div class="space-y-3 text-gray-800 text-sm lg:text-base">
-                        <p class="flex justify-between"><strong>नाम:</strong> <span id="user-name"
-                                class="font-medium text-green-700">-</span></p>
-                        <p class="flex justify-between"><strong>फोन:</strong> <span id="user-phone"
-                                class="font-medium text-green-700">-</span></p>
-                        <p class="flex justify-between"><strong>भाषा:</strong> <span id="user-language"
-                                class="font-medium text-green-700">-</span></p>
-                    </div>
-                </div>
-
-                <!-- Main Content Area -->
-                <div id="main-content" class="text-center page-transition">
-                    <!-- Action Instruction -->
-                    <p id="action-instruction" class="text-base lg:text-lg text-gray-700 font-medium mb-6 lg:mb-8">
-                        आवाज़ सहायक शुरू करने के लिए क्लिक करें
-                    </p>
-                </div>
-
-                <!-- Voice Animation Container -->
-                <div id="voice-animation" class="hidden text-center mb-6 lg:mb-8">
-                    <div class="flex justify-center items-end space-x-2 lg:space-x-3">
-                        <div class="w-3 lg:w-4 h-8 lg:h-12 rounded-full wave-animation" style="animation-delay: 0s;">
-                        </div>
-                        <div class="w-3 lg:w-4 h-12 lg:h-16 rounded-full wave-animation" style="animation-delay: 0.1s;">
-                        </div>
-                        <div class="w-3 lg:w-4 h-6 lg:h-8 rounded-full wave-animation" style="animation-delay: 0.2s;">
-                        </div>
-                        <div class="w-3 lg:w-4 h-10 lg:h-14 rounded-full wave-animation" style="animation-delay: 0.3s;">
-                        </div>
-                        <div class="w-3 lg:w-4 h-4 lg:h-6 rounded-full wave-animation" style="animation-delay: 0.4s;">
-                        </div>
-                    </div>
-                    <p class="mt-3 lg:mt-4 text-orange-600 font-semibold animate-pulse text-sm lg:text-base">सुन रहा
-                        हूँ...</p>
-                </div>
-
-                <!-- Keyboard Shortcuts Info (Mobile) -->
-                <div id="keyboard-shortcuts-mobile"
-                    class="lg:hidden bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800 -mb-20 mt-3">
-                    <p class="font-semibold mb-2 flex items-center"><i class="fas fa-keyboard mr-2"></i>कीबोर्ड शॉर्टकट:
-                    </p>
-                    <p class="mb-2">• <kbd class="bg-blue-100 px-2 py-1 rounded text-xs">Enter</kbd> = वार्तालाप शुरू
-                        करें</p>
-                    <p>• <kbd class="bg-blue-100 px-2 py-1 rounded text-xs">Backspace</kbd> = बाहर निकलें</p>
-                </div>
-
-                <!-- Error Message -->
-                <div id="error-message"
-                    class="hidden glass-card border-red-200 rounded-2xl p-4 lg:p-5 mb-6 page-transition">
-                    <div class="flex items-center">
-                        <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
-                        <span id="error-text" class="text-red-700 font-medium text-sm lg:text-base"></span>
-                    </div>
+                <!-- Desktop Action Button Area -->
+                <div class="desktop-sidebar-button hidden lg:flex justify-center items-center">
+                    <button id="desktop-main-action-btn" class="main-button text-white" tabindex="0"
+                        aria-label="मुख्य रिकॉर्डिंग बटन - Enter या click करें"
+                        title="आवाज़ रिकॉर्डिंग शुरू करने के लिए Enter दबाएं या click करें">
+                        <i class="fas fa-microphone"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Desktop Action Button Area -->
-            <div class="desktop-sidebar-button hidden lg:flex justify-center items-center">
-                <button id="desktop-main-action-btn" class="main-button text-white" tabindex="0"
+            <!-- Desktop Main Content / Mobile Conversation -->
+            <div class="desktop-main lg:flex lg:flex-col">
+                <!-- Conversation Area -->
+                <div class="desktop-conversation lg:flex-1 lg:overflow-y-auto">
+                    <div id="conversation-container" class=" page-transition lg:h-full pb-24 lg:pb-0 lg:-m-3">
+                        <div
+                            class="glass-card rounded-none lg:rounded-2xl lg:m-6 lg:h-[calc(100%-3rem)] flex flex-col p-4 lg:p-6 min-h-[200px] lg:min-h-0">
+                            <h3 class="text-lg lg:text-xl font-bold text-gray-800 mb-4 lg:mb-6 flex items-center">
+                                <i class="fas fa-comments mr-3"></i> वार्तालाप
+                            </h3>
+
+                            <div id="conversation-history" class="flex-1 space-y-4 conversation-scroll pr-2 mb-4">
+                                <!-- Conversation bubbles will be added here -->
+                            </div>
+
+                            <!-- Mobile Conversation Button -->
+                            <div class="lg:hidden flex justify-center pt-4 border-t border-gray-200">
+                                <button id="mobile-conversation-btn"
+                                    class="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white text-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                                    tabindex="0" aria-label="बातचीत रिकॉर्डिंग बटन - Enter या click करें"
+                                    title="बात करने के लिए Enter दबाएं या click करें">
+                                    <i class="fas fa-microphone"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loading-spinner"
+            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="glass-card rounded-2xl p-6 lg:p-8 text-center">
+                <div
+                    class="animate-spin rounded-full h-10 lg:h-12 w-10 lg:w-12 border-4 border-green-200 border-t-green-600 mx-auto mb-4 lg:mb-6">
+                </div>
+                <p class="text-gray-800 font-semibold text-base lg:text-lg">प्रसंस्करण...</p>
+            </div>
+        </div>
+
+        <!-- Responsive Button Containers -->
+        <!-- Mobile Main Action Button (Fixed Bottom) -->
+        <div id="center-button-container" class="lg:hidden fixed bottom-6 left-0 right-0 z-30 px-6">
+            <div class="flex justify-center">
+                <button id="main-action-btn" class="main-button text-white shadow-2xl" tabindex="0"
                     aria-label="मुख्य रिकॉर्डिंग बटन - Enter या click करें"
                     title="आवाज़ रिकॉर्डिंग शुरू करने के लिए Enter दबाएं या click करें">
                     <i class="fas fa-microphone"></i>
@@ -253,65 +326,24 @@
             </div>
         </div>
 
-        <!-- Desktop Main Content / Mobile Conversation -->
-        <div class="desktop-main lg:flex lg:flex-col">
-            <!-- Conversation Area -->
-            <div class="desktop-conversation lg:flex-1 lg:overflow-y-auto">
-                <div id="conversation-container" class=" page-transition lg:h-full pb-24 lg:pb-0 lg:-m-3">
-                    <div
-                        class="glass-card rounded-none lg:rounded-2xl lg:m-6 lg:h-[calc(100%-3rem)] flex flex-col p-4 lg:p-6 min-h-[200px] lg:min-h-0">
-                        <h3 class="text-lg lg:text-xl font-bold text-gray-800 mb-4 lg:mb-6 flex items-center">
-                            <i class="fas fa-comments mr-3"></i> वार्तालाप
-                        </h3>
-
-                        <div id="conversation-history" class="flex-1 space-y-4 conversation-scroll pr-2 mb-4">
-                            <!-- Conversation bubbles will be added here -->
-                        </div>
-
-                        <!-- Mobile Conversation Button -->
-                        <div class="lg:hidden flex justify-center pt-4 border-t border-gray-200">
-                            <button id="mobile-conversation-btn"
-                                class="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white text-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                                tabindex="0" aria-label="बातचीत रिकॉर्डिंग बटन - Enter या click करें"
-                                title="बात करने के लिए Enter दबाएं या click करें">
-                                <i class="fas fa-microphone"></i>
-                            </button>
-                        </div>
-                    </div>
+        <!-- Bottom Button Container (Mobile Fixed, Desktop Inline) -->
+        <div id="bottom-button-container" class="hidden">
+            <!-- Mobile Bottom Button -->
+            <div class="lg:hidden fixed bottom-4 left-0 right-0 z-20 px-4">
+                <div class="flex justify-center">
+                    <button id="bottom-action-btn"
+                        class="w-14 h-14 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white text-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                        tabindex="0" aria-label="बातचीत रिकॉर्डिंग बटन - Enter या click करें"
+                        title="बात करने के लिए Enter दबाएं या click करें">
+                        <i class="fas fa-microphone"></i>
+                    </button>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Loading Spinner -->
-    <div id="loading-spinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="glass-card rounded-2xl p-6 lg:p-8 text-center">
-            <div
-                class="animate-spin rounded-full h-10 lg:h-12 w-10 lg:w-12 border-4 border-green-200 border-t-green-600 mx-auto mb-4 lg:mb-6">
-            </div>
-            <p class="text-gray-800 font-semibold text-base lg:text-lg">प्रसंस्करण...</p>
-        </div>
-    </div>
-
-    <!-- Responsive Button Containers -->
-    <!-- Mobile Main Action Button (Fixed Bottom) -->
-    <div id="center-button-container" class="lg:hidden fixed bottom-6 left-0 right-0 z-30 px-6">
-        <div class="flex justify-center">
-            <button id="main-action-btn" class="main-button text-white shadow-2xl" tabindex="0"
-                aria-label="मुख्य रिकॉर्डिंग बटन - Enter या click करें"
-                title="आवाज़ रिकॉर्डिंग शुरू करने के लिए Enter दबाएं या click करें">
-                <i class="fas fa-microphone"></i>
-            </button>
-        </div>
-    </div>
-
-    <!-- Bottom Button Container (Mobile Fixed, Desktop Inline) -->
-    <div id="bottom-button-container" class="hidden">
-        <!-- Mobile Bottom Button -->
-        <div class="lg:hidden fixed bottom-4 left-0 right-0 z-20 px-4">
-            <div class="flex justify-center">
-                <button id="bottom-action-btn"
-                    class="w-14 h-14 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white text-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+            <!-- Desktop Bottom Button -->
+            <div class="hidden lg:flex justify-center py-6">
+                <button id="desktop-bottom-action-btn"
+                    class="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white text-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                     tabindex="0" aria-label="बातचीत रिकॉर्डिंग बटन - Enter या click करें"
                     title="बात करने के लिए Enter दबाएं या click करें">
                     <i class="fas fa-microphone"></i>
@@ -319,30 +351,19 @@
             </div>
         </div>
 
-        <!-- Desktop Bottom Button -->
-        <div class="hidden lg:flex justify-center py-6">
-            <button id="desktop-bottom-action-btn"
-                class="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-green-600 text-white text-2xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                tabindex="0" aria-label="बातचीत रिकॉर्डिंग बटन - Enter या click करें"
-                title="बात करने के लिए Enter दबाएं या click करें">
-                <i class="fas fa-microphone"></i>
+        <!-- Mobile Exit Button (Fixed Bottom Right) -->
+        <div id="exit-container" class="hidden lg:hidden fixed bottom-4 right-4 z-30">
+            <button id="exit-btn"
+                class="w-10 h-10 rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center"
+                tabindex="0" aria-label="बाहर निकलें - Backspace या click करें"
+                title="बाहर निकलने के लिए Backspace दबाएं या click करें">
+                <i class="fas fa-times text-xs"></i>
             </button>
         </div>
-    </div>
 
-    <!-- Mobile Exit Button (Fixed Bottom Right) -->
-    <div id="exit-container" class="hidden lg:hidden fixed bottom-4 right-4 z-30">
-        <button id="exit-btn"
-            class="w-10 h-10 rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center"
-            tabindex="0" aria-label="बाहर निकलें - Backspace या click करें"
-            title="बाहर निकलने के लिए Backspace दबाएं या click करें">
-            <i class="fas fa-times text-xs"></i>
-        </button>
-    </div>
-
-    <!-- Audio Elements -->
-    <audio id="audio-player" preload="auto"></audio>
-    <audio id="static-audio" preload="auto"></audio>
+        <!-- Audio Elements -->
+        <audio id="audio-player" preload="auto"></audio>
+        <audio id="static-audio" preload="auto"></audio>
     </div>
 
     <!-- Left Side Advertisement Area -->
@@ -357,13 +378,15 @@
     <!-- Right Side Advertisement Area -->
     <div id="right-ad" class="fixed right-0 top-0 h-screen bg-gray-100 border-l border-gray-300 z-10">
         <!-- Top Half: QR Code and Title -->
-        <div class="h-1/2 flex flex-col items-center justify-center p-4 ad-qr bg-gradient-to-b from-green-50 to-green-100">
+        <div
+            class="h-1/2 flex flex-col items-center justify-center p-4 ad-qr bg-gradient-to-b from-green-50 to-green-100">
             <img src="../static/images/qr-code.png" alt="QR Code" class="w-20 h-20 mb-3 rounded-lg shadow-md">
             <h4 class="text-sm font-bold text-center text-gray-800 mb-2">Scan to Download App</h4>
             <p class="text-xs text-center text-gray-600">Get instant farming advice on your phone</p>
         </div>
         <!-- Bottom Half: Professional Advertisement -->
-        <div class="h-1/2 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-yellow-50 to-orange-50 ad-text">
+        <div
+            class="h-1/2 flex flex-col items-center justify-center p-4 bg-gradient-to-b from-yellow-50 to-orange-50 ad-text">
             <div class="text-center">
                 <h5 class="text-lg font-bold text-orange-600 mb-2">Premium Seeds</h5>
                 <p class="text-sm text-gray-700 mb-3">High-yield, disease-resistant seeds for better harvest</p>
@@ -371,7 +394,8 @@
                     <p class="text-xs font-semibold text-orange-800">🌱 20% OFF Today!</p>
                     <p class="text-xs text-orange-700">Limited time offer</p>
                 </div>
-                <button class="mt-3 px-4 py-2 bg-orange-500 text-white text-xs font-bold rounded-full hover:bg-orange-600 transition-colors">
+                <button
+                    class="mt-3 px-4 py-2 bg-orange-500 text-white text-xs font-bold rounded-full hover:bg-orange-600 transition-colors">
                     Shop Now
                 </button>
             </div>
@@ -383,7 +407,7 @@
         let landingPageActive = true;
 
         // Add keyboard listener for landing page
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function (event) {
             if (landingPageActive && (event.key === 'Enter' || event.keyCode === 13)) {
                 event.preventDefault();
                 startVoiceBot();
