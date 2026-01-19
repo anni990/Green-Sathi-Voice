@@ -10,7 +10,7 @@ from backend.utils.config import Config
 logger = logging.getLogger(__name__)
 voice_bp = Blueprint('voice', __name__)
 
-llm_service = azure_openai_service
+# azure_openai_service = azure_openai_service
 
 @voice_bp.route('/process_audio', methods=['POST'])
 def process_audio():
@@ -52,7 +52,7 @@ def extract_user_info():
             return jsonify({'error': 'No text provided'}), 400
         
         # Extract name and phone using Gemini
-        info = llm_service.extract_name_phone(text)
+        info = azure_openai_service.extract_name_phone(text)
         
         return jsonify(info)
         
@@ -71,7 +71,7 @@ def detect_language():
             return jsonify({'error': 'No text provided'}), 400
         
         # Detect language using Gemini
-        language = llm_service.detect_language(text)
+        language = azure_openai_service.detect_language(text)
         
         return jsonify({'language': language})
         
@@ -99,7 +99,7 @@ def generate_response():
         
         # Generate response using Gemini
         language_code = Config.SUPPORTED_LANGUAGES.get(language, 'hi')
-        response = llm_service.generate_response(user_input, language, conversation_history)
+        response = azure_openai_service.generate_response(user_input, language, conversation_history)
         
         response = response.replace("*", "")
 

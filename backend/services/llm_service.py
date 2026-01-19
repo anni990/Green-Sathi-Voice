@@ -116,8 +116,8 @@ Default to hindi.
             context = ""
             if conversation_history:
                 for conv in conversation_history[-5:]:
-                    context += f"User: {conv.get('user_input', '')}\n"
-                    context += f"Assistant: {conv.get('bot_response', '')}\n"
+                    context += f"User: {conv.get('user_input', '')}"
+                    context += f"Assistant: {conv.get('bot_response', '')}"
 
             prompt = f"""
 You are Green Sathi, a helpful agricultural voice assistant for Indian farmers.
@@ -129,7 +129,7 @@ Rules:
 - No symbols or formatting
 - End with exactly ONE follow-up question
 
-{f"Previous conversation context:\n{context}" if context else ""}
+{f"Previous conversation context:{context}" if context else ""}
 
 User message:
 "{user_input}"
@@ -227,8 +227,8 @@ Text: "{text}"
             context = ""
             if conversation_history:
                 for conv in conversation_history[-5:]:
-                    context += f"User: {conv.get('user_input', '')}\n"
-                    context += f"Assistant: {conv.get('bot_response', '')}\n"
+                    context += f"User: {conv.get('user_input', '')}"
+                    context += f"Assistant: {conv.get('bot_response', '')}"
 
             prompt = f"""
 You are Green Sathi, a helpful agricultural voice assistant.
@@ -240,7 +240,7 @@ Rules:
 - No formatting
 - End with one follow-up question
 
-{f"Context:\n{context}" if context else ""}
+{f"Context:{context}" if context else ""}
 
 User:
 "{user_input}"
@@ -338,8 +338,8 @@ Text: "{text}"
             context = ""
             if conversation_history:
                 for conv in conversation_history[-5:]:
-                    context += f"User: {conv.get('user_input', '')}\n"
-                    context += f"Assistant: {conv.get('bot_response', '')}\n"
+                    context += f"User: {conv.get('user_input', '')}"
+                    context += f"Assistant: {conv.get('bot_response', '')}"
 
             prompt = f"""
 You are Green Sathi, a helpful agricultural voice assistant.
@@ -351,7 +351,7 @@ Rules:
 - No formatting
 - End with one follow-up question
 
-{f"Context:\n{context}" if context else ""}
+{f"Context:{context}" if context else ""}
 
 User:
 "{user_input}"
@@ -474,8 +474,8 @@ If unclear, return "hindi".
             context = ""
             if conversation_history:
                 for conv in conversation_history[-5:]:
-                    context += f"User: {conv.get('user_input', '')}\n"
-                    context += f"Assistant: {conv.get('bot_response', '')}\n"
+                    context += f"User: {conv.get('user_input', '')}"
+                    context += f"Assistant: {conv.get('bot_response', '')}"
 
             prompt = f"""
 You are Green Sathi, a helpful agricultural voice assistant for Indian farmers.
@@ -489,7 +489,7 @@ Rules:
 - End with exactly ONE relevant follow-up question
 - Be friendly and supportive
 
-{f"Previous conversation context:\n{context}" if context else ""}
+{f"Previous conversation context:{context}" if context else ""}
 
 User message:
 "{user_input}"

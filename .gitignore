@@ -112,6 +112,3 @@ config.json
 # Static audio files (will be generated)
 static/audio/*.mp3
 static/audio/*.wav
-
-# Notes
-Notes
