@@ -43,6 +43,11 @@ def create_app():
     def index():
         return render_template('index.html')
     
+    # VAD Tuning Tool
+    @app.route('/vad-tuning')
+    def vad_tuning():
+        return render_template('vad_tuning.html')
+    
     @app.errorhandler(404)
     def not_found(error):
         return jsonify({'error': 'Not found'}), 404

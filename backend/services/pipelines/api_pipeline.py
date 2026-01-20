@@ -52,12 +52,12 @@ class APIPipeline(BasePipeline):
             # Configure language
             self.azure_speech_config.speech_recognition_language = language
             
-            # Set silence timeout (3 seconds)
+            # Set silence timeout (2 seconds for faster response)
             self.azure_speech_config.set_property(
-                speechsdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "3000"
+                speechsdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "5000"
             )
             self.azure_speech_config.set_property(
-                speechsdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, "3000"
+                speechsdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, "2000"
             )
             
             # Handle different audio input types
