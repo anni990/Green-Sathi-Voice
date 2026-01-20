@@ -3,8 +3,8 @@ import os
 import uuid
 import logging
 from backend.services.speech_service import speech_service
-from backend.services.llm_service import gemini_service, openai_service, azure_openai_service
 from backend.services.pipeline_service import pipeline_service
+from backend.services.llm_service import gemini_service, openai_service, azure_openai_service, vertex_service
 from backend.services.device_auth_service import device_auth_required
 from backend.utils.config import Config
 from backend.models.database import db_manager
@@ -13,6 +13,7 @@ llm_services = {
     'gemini': gemini_service,
     'openai': openai_service,
     'azure_openai': azure_openai_service,
+    'vertex_gemini': vertex_service
 }
 
 current_llm_service = llm_services.get(Config.DEFAULT_LLM_SERVICE, azure_openai_service)
