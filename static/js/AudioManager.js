@@ -212,16 +212,68 @@ class AudioManager {
             
             const data = await response.json();
             
-            if (data.text) {
+            // Check if STT succeeded
+            if (data.text && data.stt_success !== false) {
+                // STT successful - proceed with text processing
                 await this.app.handleTranscribedText(data.text);
+            } else if (data.fallback || data.stt_success === false) {
+                // STT failed - trigger step-specific fallback
+                await this.handleSTTFailure();
             } else {
+                // Generic error
                 this.app.uiController.showError('Could not understand the audio. Please try again.');
                 this.app.uiController.updateStatus('error', 'Processing failed');
+                this.resetButtonState();
             }
             
         } catch (error) {
-            this.app.uiController.showError('Error processing audio: ' + error.message);
-            this.app.uiController.updateStatus('error', 'Processing error');
+            console.error('Error processing audio:', error);
+            // On network/exception error, also trigger fallback
+            await this.handleSTTFailure();
+        }
+    }
+    
+    async handleSTTFailure() {
+        const currentStep = this.app.stateManager.getCurrentStep();
+        
+        console.log(`STT failed at step: ${currentStep}`);
+        
+        switch (currentStep) {
+            case 'name_phone':
+                // STT failed during name/phone collection - show manual entry popup
+                console.log('Triggering phone input fallback due to STT failure');
+                this.app.uiController.updateStatus('processing', 'ऑडियो समझ नहीं आया...');
+                await this.app.apiService.handleExtractionFallback('');
+                break;
+                
+            case 'language_detection':
+                // STT failed during language detection - trigger retry
+                console.log('Triggering language detection retry due to STT failure');
+                const attempt = this.app.apiService.languageDetectionAttempt || 1;
+                
+                if (attempt < 3) {
+                    // Retry with audio prompt
+                    await this.app.apiService.handleLanguageDetectionRetry(attempt);
+                } else {
+                    // Max retries reached - default to Hindi
+                    this.app.uiController.showError('भाषा पहचानना नहीं हो सकी। डिफ़ॉल्ट हिंदी का उपयोग किया जा रहा है।');
+                    this.app.stateManager.updateUserInfo('language', 'hindi');
+                    this.app.elementManager.setElementContent('userLanguage', 'hindi');
+                    await this.app.apiService.registerUser();
+                    this.app.uiController.showUserInfoDisplay();
+                }
+                break;
+                
+            case 'conversation':
+                // STT failed during conversation - just show retry message
+                this.app.uiController.showError('ऑडियो समझ नहीं आया। कृपया पुन: प्रयास करें।');
+                this.app.uiController.updateStatus('ready', 'अगले संदेश के लिए तैयार - Enter दबाएं');
+                break;
+                
+            default:
+                this.app.uiController.showError('Could not understand the audio. Please try again.');
+                this.app.uiController.updateStatus('error', 'Processing failed');
+                this.resetButtonState();
         }
     }
     
@@ -341,6 +393,39 @@ class AudioManager {
             this.isAudioPlaying = false;
             this.app.uiController.updateStatus('error', 'आवाज़ चलाने में त्रुटि');
         }
+    }
+    
+    async playAudioFromUrl(url) {
+        return new Promise((resolve, reject) => {
+            try {
+                const elements = this.app.elementManager.getAll();
+                const audio = elements.staticAudio || new Audio();
+                
+                audio.src = url;
+                
+                audio.onplay = () => {
+                    this.isAudioPlaying = true;
+                };
+                
+                audio.onended = () => {
+                    this.isAudioPlaying = false;
+                    resolve();
+                };
+                
+                audio.onerror = (error) => {
+                    this.isAudioPlaying = false;
+                    console.error('Error playing audio:', error);
+                    reject(error);
+                };
+                
+                audio.play().catch(reject);
+                
+            } catch (error) {
+                console.error('Error in playAudioFromUrl:', error);
+                this.isAudioPlaying = false;
+                reject(error);
+            }
+        });
     }
     
     onAudioEnded() {

@@ -57,13 +57,25 @@ def process_audio():
             text = speech_service.process_uploaded_audio(audio_file.read(), filename, language)
         
         if text:
-            return jsonify({'text': text})
+            return jsonify({'text': text, 'stt_success': True})
         else:
-            return jsonify({'error': 'Could not process audio'}), 400
+            # STT failed - return fallback indicator
+            logger.warning("Speech-to-text failed: Could not understand audio")
+            return jsonify({
+                'error': 'Could not understand the audio',
+                'text': '',
+                'stt_success': False,
+                'fallback': True
+            }), 200
             
     except Exception as e:
         logger.error(f"Error processing audio: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({
+            'error': 'Internal server error',
+            'text': '',
+            'stt_success': False,
+            'fallback': True
+        }), 200
 
 @voice_bp.route('/extract_info', methods=['POST'])
 def extract_user_info():
@@ -74,7 +86,7 @@ def extract_user_info():
         device_id = data.get('device_id')  # Optional device ID
         
         if not text:
-            return jsonify({'error': 'No text provided'}), 400
+            return jsonify({'error': 'No text provided', 'fallback': True}), 400
         
         # Use pipeline service if device_id is provided
         if device_id:
@@ -88,11 +100,30 @@ def extract_user_info():
             # Legacy path - use default LLM service
             info = current_llm_service.extract_name_phone(text)
         
-        return jsonify(info)
+        # Check if extraction was successful
+        if not info.get('phone'):
+            # Failed to extract phone - trigger fallback
+            logger.warning(f"Failed to extract phone from text: {text}")
+            return jsonify({
+                'name': info.get('name', ''),
+                'phone': '',
+                'fallback': True,
+                'message': 'Could not extract phone number'
+            })
+        
+        return jsonify({
+            'name': info.get('name', ''),
+            'phone': info.get('phone', ''),
+            'fallback': False
+        })
         
     except Exception as e:
         logger.error(f"Error extracting user info: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({
+            'error': str(e),
+            'fallback': True,
+            'message': 'Error processing request'
+        }), 200
 
 @voice_bp.route('/detect_language', methods=['POST'])
 def detect_language():
@@ -101,9 +132,14 @@ def detect_language():
         data = request.get_json()
         text = data.get('text', '')
         device_id = data.get('device_id')  # Optional device ID
+        attempt = data.get('attempt', 1)  # Track retry attempts
         
         if not text:
-            return jsonify({'error': 'No text provided'}), 400
+            return jsonify({
+                'error': 'No text provided',
+                'retry': True,
+                'attempt': attempt
+            }), 400
         
         # Use pipeline service if device_id is provided
         if device_id:
@@ -117,11 +153,31 @@ def detect_language():
             # Legacy path - use default LLM service
             language = current_llm_service.detect_language(text)
         
-        return jsonify({'language': language})
+        # Validate language is in supported list
+        if language and language.lower() in [lang.lower() for lang in Config.SUPPORTED_LANGUAGES.keys()]:
+            return jsonify({
+                'language': language,
+                'retry': False,
+                'attempt': attempt
+            })
+        else:
+            # Language detection failed - allow retry
+            logger.warning(f"Language detection failed for text: {text}, attempt: {attempt}")
+            return jsonify({
+                'language': '',
+                'retry': True,
+                'attempt': attempt,
+                'message': 'Could not detect language'
+            })
         
     except Exception as e:
         logger.error(f"Error detecting language: {e}")
-        return jsonify({'error': 'Internal server error'}), 500
+        return jsonify({
+            'error': str(e),
+            'retry': True,
+            'attempt': attempt,
+            'message': 'Error processing request'
+        }), 200
 
 @voice_bp.route('/generate_response', methods=['POST'])
 @device_auth_required
@@ -202,25 +258,45 @@ def text_to_speech():
 def get_static_audio(prompt_type, language):
     """Get pre-generated static audio prompts"""
     try:
-        # Get text for the prompt type and language
-        prompts = Config.LANGUAGE_PROMPTS.get(prompt_type, {})
-        text = prompts.get(language)
+        # Map language variations
+        language_map = {
+            'hindi': 'hi',
+            'bengali': 'bn',
+            'tamil': 'ta',
+            'telugu': 'te',
+            'gujarati': 'gu',
+            'marathi': 'mr'
+        }
         
-        if not text:
-            return jsonify({'error': 'Prompt not found'}), 404
+        # Convert full language name to abbreviation if needed
+        lang_code = language_map.get(language.lower(), language.lower())
         
-        # Check if static audio already exists
-        filename = f"static_{prompt_type}_{language}.mp3"
+        # Check if static audio already exists with abbreviation
+        filename = f"static_{prompt_type}_{lang_code}.mp3"
         audio_path = os.path.join('static', 'audio', filename)
         
+        # If not found, try with full language name
         if not os.path.exists(audio_path):
-            # Generate static audio
-            audio_path = speech_service.create_static_audio(text, language, filename)
+            filename = f"static_{prompt_type}_{language}.mp3"
+            audio_path = os.path.join('static', 'audio', filename)
         
-        if audio_path and os.path.exists(audio_path):
-            return send_file(audio_path, as_attachment=True, download_name=f'{prompt_type}_{language}.mp3')
-        else:
-            return jsonify({'error': 'Could not generate static audio'}), 500
+        # If file exists, serve it
+        if os.path.exists(audio_path):
+            return send_file(audio_path, mimetype='audio/mpeg')
+        
+        # File doesn't exist - try to get text and generate it
+        prompts = Config.LANGUAGE_PROMPTS.get(prompt_type, {})
+        text = prompts.get(language) or prompts.get(lang_code)
+        
+        if text:
+            # Generate static audio on the fly
+            audio_path = speech_service.create_static_audio(text, lang_code, filename)
+            if audio_path and os.path.exists(audio_path):
+                return send_file(audio_path, mimetype='audio/mpeg')
+        
+        # If all else fails, return error
+        logger.error(f"Static audio not found: {prompt_type}/{language} (tried: {filename})")
+        return jsonify({'error': f'Static audio not found: {prompt_type}/{language}'}), 404
             
     except Exception as e:
         logger.error(f"Error getting static audio: {e}")
