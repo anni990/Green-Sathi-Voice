@@ -14,18 +14,20 @@ class DatabaseManager:
             self.db = self.client[Config.DB_NAME]
             self.users = self.db.users
             self.conversations = self.db.conversations
+            self.devices = self.db.devices
             logger.info("Connected to MongoDB successfully")
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             raise
     
-    def create_user(self, name, phone, language):
+    def create_user(self, name, phone, language, device_id=None):
         """Create a new user record"""
         try:
             user_data = {
                 'name': name,
                 'phone': phone,
                 'language': language,
+                'device_id': device_id,
                 'created_at': datetime.utcnow(),
                 'updated_at': datetime.utcnow()
             }
@@ -39,6 +41,7 @@ class DatabaseManager:
                     {'$set': {
                         'name': name,
                         'language': language,
+                        'device_id': device_id,
                         'updated_at': datetime.utcnow()
                     }}
                 )
@@ -59,11 +62,12 @@ class DatabaseManager:
             logger.error(f"Failed to get user: {e}")
             return None
     
-    def create_conversation(self, user_id, user_input, bot_response, session_id=None):
+    def create_conversation(self, user_id, user_input, bot_response, device_id=None, session_id=None):
         """Save conversation turn to database"""
         try:
             conversation_data = {
                 'user_id': user_id,
+                'device_id': device_id,
                 'session_id': session_id,
                 'user_input': user_input,
                 'bot_response': bot_response,
@@ -227,6 +231,96 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to search users: {e}")
             return []
+    
+    # ===== Device Management Methods =====
+    
+    def get_next_device_id(self):
+        """Get the next available device ID (auto-increment starting from 1201)"""
+        try:
+            # Find the highest device_id
+            last_device = self.devices.find_one(
+                sort=[('device_id', -1)]
+            )
+            
+            if last_device and 'device_id' in last_device:
+                return last_device['device_id'] + 1
+            else:
+                # No devices yet, start from configured start value
+                return Config.DEVICE_ID_START
+        except Exception as e:
+            logger.error(f"Failed to get next device ID: {e}")
+            return Config.DEVICE_ID_START
+    
+    def create_device(self, device_id, device_name, password_hash, access_token, refresh_token):
+        """Create a new device record"""
+        try:
+            device_data = {
+                'device_id': device_id,
+                'device_name': device_name,
+                'password_hash': password_hash,
+                'access_token': access_token,
+                'refresh_token': refresh_token,
+                'created_at': datetime.utcnow(),
+                'last_login': datetime.utcnow()
+            }
+            
+            result = self.devices.insert_one(device_data)
+            return result.inserted_id
+        except Exception as e:
+            logger.error(f"Failed to create device: {e}")
+            raise
+    
+    def get_device_by_id(self, device_id):
+        """Get device by device_id"""
+        try:
+            return self.devices.find_one({'device_id': device_id})
+        except Exception as e:
+            logger.error(f"Failed to get device: {e}")
+            return None
+    
+    def get_device_by_token(self, token, token_type='access'):
+        """Get device by access or refresh token"""
+        try:
+            field = f'{token_type}_token'
+            return self.devices.find_one({field: token})
+        except Exception as e:
+            logger.error(f"Failed to get device by token: {e}")
+            return None
+    
+    def update_device_tokens(self, device_id, access_token, refresh_token):
+        """Update device tokens (called on login or token refresh)"""
+        try:
+            result = self.devices.update_one(
+                {'device_id': device_id},
+                {
+                    '$set': {
+                        'access_token': access_token,
+                        'refresh_token': refresh_token,
+                        'last_login': datetime.utcnow()
+                    }
+                }
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Failed to update device tokens: {e}")
+            return False
+    
+    def invalidate_device_tokens(self, device_id):
+        """Invalidate device tokens (called on logout)"""
+        try:
+            result = self.devices.update_one(
+                {'device_id': device_id},
+                {
+                    '$set': {
+                        'access_token': None,
+                        'refresh_token': None
+                    }
+                }
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Failed to invalidate device tokens: {e}")
+            return False
     
     def close_connection(self):
         """Close database connection"""

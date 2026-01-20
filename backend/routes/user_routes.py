@@ -2,11 +2,13 @@ from flask import Blueprint, request, jsonify
 import uuid
 import logging
 from backend.models.database import db_manager
+from backend.services.device_auth_service import device_auth_required
 
 logger = logging.getLogger(__name__)
 user_bp = Blueprint('user', __name__)
 
 @user_bp.route('/register', methods=['POST'])
+@device_auth_required
 def register_user():
     """Register a new user with name, phone, and language"""
     try:
@@ -14,12 +16,13 @@ def register_user():
         name = data.get('name', '').strip()
         phone = data.get('phone', '').strip()
         language = data.get('language', 'english').strip().lower()
+        device_id = request.device_id  # From device_auth_required decorator
         
         if not name or not phone:
             return jsonify({'error': 'Name and phone are required'}), 400
         
-        # Create user in database
-        user_id = db_manager.create_user(name, phone, language)
+        # Create user in database with device_id
+        user_id = db_manager.create_user(name, phone, language, device_id)
         
         # Generate session ID
         session_id = str(uuid.uuid4())
@@ -30,6 +33,7 @@ def register_user():
             'name': name,
             'phone': phone,
             'language': language,
+            'device_id': device_id,
             'message': 'User registered successfully'
         })
         
@@ -38,19 +42,25 @@ def register_user():
         return jsonify({'error': 'Internal server error'}), 500
 
 @user_bp.route('/profile/<phone>', methods=['GET'])
+@device_auth_required
 def get_user_profile(phone):
     """Get user profile by phone number"""
     try:
+        device_id = request.device_id
         user = db_manager.get_user(phone)
         
         if user:
-            return jsonify({
-                'user_id': str(user['_id']),
-                'name': user['name'],
-                'phone': user['phone'],
-                'language': user['language'],
-                'created_at': user['created_at'].isoformat()
-            })
+            # Only return user if it belongs to the requesting device
+            if user.get('device_id') == device_id or user.get('device_id') is None:
+                return jsonify({
+                    'user_id': str(user['_id']),
+                    'name': user['name'],
+                    'phone': user['phone'],
+                    'language': user['language'],
+                    'created_at': user['created_at'].isoformat()
+                })
+            else:
+                return jsonify({'error': 'User not found'}), 404
         else:
             return jsonify({'error': 'User not found'}), 404
             
@@ -59,6 +69,7 @@ def get_user_profile(phone):
         return jsonify({'error': 'Internal server error'}), 500
 
 @user_bp.route('/conversation_history/<user_id>', methods=['GET'])
+@device_auth_required
 def get_conversation_history(user_id):
     """Get conversation history for a user"""
     try:
@@ -86,6 +97,7 @@ def get_conversation_history(user_id):
         return jsonify({'error': 'Internal server error'}), 500
 
 @user_bp.route('/session/<user_id>', methods=['POST'])
+@device_auth_required
 def create_new_session(user_id):
     """Create a new conversation session for user"""
     try:

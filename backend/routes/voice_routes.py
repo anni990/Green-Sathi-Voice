@@ -4,6 +4,7 @@ import uuid
 import logging
 from backend.services.speech_service import speech_service
 from backend.services.llm_service import gemini_service, openai_service, azure_openai_service
+from backend.services.device_auth_service import device_auth_required
 from backend.utils.config import Config
 from backend.models.database import db_manager
 
@@ -89,6 +90,7 @@ def detect_language():
         return jsonify({'error': 'Internal server error'}), 500
 
 @voice_bp.route('/generate_response', methods=['POST'])
+@device_auth_required
 def generate_response():
     """Generate AI response to user input"""
     try:
@@ -97,6 +99,7 @@ def generate_response():
         language = data.get('language', 'hindi')
         user_id = data.get('user_id')
         session_id = data.get('session_id')
+        device_id = request.device_id  # From device_auth_required decorator
         
         if not user_input:
             return jsonify({'error': 'No text provided'}), 400
@@ -112,9 +115,9 @@ def generate_response():
         
         response = response.replace("*", "")
 
-        # Save conversation to database if user_id provided
+        # Save conversation to database if user_id provided (with device_id)
         if user_id and response:
-            db_manager.create_conversation(user_id, user_input, response, session_id)
+            db_manager.create_conversation(user_id, user_input, response, device_id, session_id)
         
         return jsonify({
             'response': response,
