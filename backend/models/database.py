@@ -251,7 +251,7 @@ class DatabaseManager:
             logger.error(f"Failed to get next device ID: {e}")
             return Config.DEVICE_ID_START
     
-    def create_device(self, device_id, device_name, password_hash, access_token, refresh_token):
+    def create_device(self, device_id, device_name, password_hash, access_token, refresh_token, pipeline_type='library', llm_service='gemini'):
         """Create a new device record"""
         try:
             device_data = {
@@ -260,6 +260,8 @@ class DatabaseManager:
                 'password_hash': password_hash,
                 'access_token': access_token,
                 'refresh_token': refresh_token,
+                'pipeline_type': pipeline_type,  # 'library' or 'api'
+                'llm_service': llm_service,  # 'gemini', 'openai', 'azure_openai', 'vertex'
                 'created_at': datetime.utcnow(),
                 'last_login': datetime.utcnow()
             }
@@ -320,6 +322,44 @@ class DatabaseManager:
             return result.modified_count > 0
         except Exception as e:
             logger.error(f"Failed to invalidate device tokens: {e}")
+            return False
+    
+    def get_device_pipeline_config(self, device_id):
+        """Get pipeline configuration for a device"""
+        try:
+            device = self.devices.find_one(
+                {'device_id': device_id},
+                {'pipeline_type': 1, 'llm_service': 1, '_id': 0}
+            )
+            if device:
+                return {
+                    'pipeline_type': device.get('pipeline_type', 'library'),
+                    'llm_service': device.get('llm_service', 'gemini')
+                }
+            return None
+        except Exception as e:
+            logger.error(f"Failed to get device pipeline config: {e}")
+            return None
+    
+    def update_device_pipeline_config(self, device_id, pipeline_type=None, llm_service=None):
+        """Update pipeline configuration for a device"""
+        try:
+            update_data = {}
+            if pipeline_type is not None:
+                update_data['pipeline_type'] = pipeline_type
+            if llm_service is not None:
+                update_data['llm_service'] = llm_service
+            
+            if not update_data:
+                return False
+            
+            result = self.devices.update_one(
+                {'device_id': device_id},
+                {'$set': update_data}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Failed to update device pipeline config: {e}")
             return False
     
     def close_connection(self):

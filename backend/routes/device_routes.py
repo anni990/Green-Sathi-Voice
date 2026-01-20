@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify, render_template
 import logging
 from backend.services.device_auth_service import device_auth_service, device_auth_required
 from backend.models.database import db_manager
+from backend.services.pipeline_service import pipeline_service
+from backend.utils.config import Config
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,11 @@ def register_page():
 def login_page():
     """Render device login page"""
     return render_template('device_login.html')
+
+@device_bp.route('/settings', methods=['GET'])
+def settings_page():
+    """Render device settings page"""
+    return render_template('device_settings.html')
 
 @device_bp.route('/api/device/suggest_id', methods=['GET'])
 def suggest_device_id():
@@ -42,6 +49,8 @@ def register_device():
         device_name = data.get('device_name', '').strip()
         password = data.get('password', '')
         confirm_password = data.get('confirm_password', '')
+        pipeline_type = data.get('pipeline_type', Config.DEFAULT_PIPELINE_TYPE)
+        llm_service = data.get('llm_service', Config.DEFAULT_LLM_SERVICE_TYPE)
         
         # Validate inputs
         if not device_name:
@@ -59,8 +68,17 @@ def register_device():
         if password != confirm_password:
             return jsonify({'error': 'Passwords do not match'}), 400
         
-        # Register device
-        result, error = device_auth_service.register_device(device_name, password)
+        # Validate pipeline configuration
+        if pipeline_type not in Config.VALID_PIPELINE_TYPES:
+            return jsonify({'error': f'Invalid pipeline type. Must be one of: {Config.VALID_PIPELINE_TYPES}'}), 400
+        
+        if llm_service not in Config.VALID_LLM_SERVICES:
+            return jsonify({'error': f'Invalid LLM service. Must be one of: {Config.VALID_LLM_SERVICES}'}), 400
+        
+        # Register device with pipeline configuration
+        result, error = device_auth_service.register_device(
+            device_name, password, pipeline_type, llm_service
+        )
         
         if error:
             return jsonify({'error': error}), 400
@@ -70,6 +88,8 @@ def register_device():
             'message': 'Device registered successfully',
             'device_id': result['device_id'],
             'device_name': result['device_name'],
+            'pipeline_type': result.get('pipeline_type', pipeline_type),
+            'llm_service': result.get('llm_service', llm_service),
             'access_token': result['access_token'],
             'refresh_token': result['refresh_token']
         }), 201
@@ -219,3 +239,83 @@ def validate_token():
     except Exception as e:
         logger.error(f"Token validation error: {e}")
         return jsonify({'valid': False, 'error': 'Validation failed'}), 500
+
+@device_bp.route('/api/device/config', methods=['GET'])
+@device_auth_required
+def get_pipeline_config():
+    """Get current device pipeline configuration"""
+    try:
+        device_id = request.device_id
+        config = pipeline_service.get_device_config_info(device_id)
+        
+        if config:
+            return jsonify({
+                'success': True,
+                'config': config
+            }), 200
+        else:
+            return jsonify({'error': 'Configuration not found'}), 404
+        
+    except Exception as e:
+        logger.error(f"Get pipeline config error: {e}")
+        return jsonify({'error': 'Failed to get configuration'}), 500
+
+@device_bp.route('/api/device/config', methods=['PUT'])
+@device_auth_required
+def update_pipeline_config():
+    """Update device pipeline configuration"""
+    try:
+        device_id = request.device_id
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        pipeline_type = data.get('pipeline_type')
+        llm_service = data.get('llm_service')
+        
+        # Validate inputs
+        if pipeline_type and pipeline_type not in Config.VALID_PIPELINE_TYPES:
+            return jsonify({
+                'error': f'Invalid pipeline type. Must be one of: {Config.VALID_PIPELINE_TYPES}'
+            }), 400
+        
+        if llm_service and llm_service not in Config.VALID_LLM_SERVICES:
+            return jsonify({
+                'error': f'Invalid LLM service. Must be one of: {Config.VALID_LLM_SERVICES}'
+            }), 400
+        
+        # Update configuration
+        success = db_manager.update_device_pipeline_config(
+            device_id, pipeline_type, llm_service
+        )
+        
+        if success:
+            # Clear pipeline cache for this device
+            pipeline_service.clear_pipeline_cache(device_id)
+            
+            return jsonify({
+                'success': True,
+                'message': 'Configuration updated successfully'
+            }), 200
+        else:
+            return jsonify({'error': 'Failed to update configuration'}), 500
+        
+    except Exception as e:
+        logger.error(f"Update pipeline config error: {e}")
+        return jsonify({'error': 'Failed to update configuration'}), 500
+
+@device_bp.route('/api/device/available_options', methods=['GET'])
+def get_available_options():
+    """Get available pipeline and LLM options"""
+    return jsonify({
+        'success': True,
+        'options': {
+            'pipeline_types': Config.VALID_PIPELINE_TYPES,
+            'llm_services': Config.VALID_LLM_SERVICES,
+            'defaults': {
+                'pipeline_type': Config.DEFAULT_PIPELINE_TYPE,
+                'llm_service': Config.DEFAULT_LLM_SERVICE_TYPE
+            }
+        }
+    }), 200

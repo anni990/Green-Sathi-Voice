@@ -13,6 +13,22 @@ class SpeechService:
     
     def __init__(self):
         self.recognizer = sr.Recognizer()
+        
+        # Initialize Azure Speech Services if credentials are available
+        self.azure_speech_config = None
+        if Config.AZURE_SPEECH_KEY and Config.AZURE_SPEECH_REGION:
+            try:
+                self.azure_speech_config = speechsdk.SpeechConfig(
+                    subscription=Config.AZURE_SPEECH_KEY,
+                    region=Config.AZURE_SPEECH_REGION
+                )
+                logger.info("Azure Speech Services initialized successfully")
+            except Exception as e:
+                logger.warning(f"Failed to initialize Azure Speech Services: {e}")
+                self.azure_speech_config = None
+        else:
+            logger.info("Azure Speech Services not configured (missing credentials)")
+        
         logger.info("Speech service initialized")
     
     def azure_real_time_speech_to_text(self, language='hi-IN'):
