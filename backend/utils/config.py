@@ -37,6 +37,13 @@ class Config:
     # Default LLM Service
     DEFAULT_LLM_SERVICE = os.getenv('DEFAULT_LLM_SERVICE', 'azure_openai')
     
+    # Device Authentication Configuration
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
+    ACCESS_TOKEN_EXPIRY = int(os.getenv('ACCESS_TOKEN_EXPIRY', '3600'))  # 1 hour in seconds
+    REFRESH_TOKEN_EXPIRY = int(os.getenv('REFRESH_TOKEN_EXPIRY', '86400'))  # 24 hours in seconds
+    DEVICE_ID_START = int(os.getenv('DEVICE_ID_START', '1201'))  # Starting device ID
+    DEFAULT_DEVICE_ID = int(os.getenv('DEFAULT_DEVICE_ID', '1200'))  # For existing data migration
+    
     # Audio Configuration
     AUDIO_UPLOAD_FOLDER = os.getenv('AUDIO_UPLOAD_FOLDER', 'temp_audio')
     MAX_AUDIO_SIZE = int(os.getenv('MAX_AUDIO_SIZE', '16777216'))  # 16MB

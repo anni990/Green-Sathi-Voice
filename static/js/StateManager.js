@@ -11,8 +11,17 @@ class StateManager {
             session_id: null,
             name: null,
             phone: null,
-            language: null
+            language: null,
+            device_id: null,
+            device_name: null
         };
+        
+        // Load device info from deviceAuth if available
+        if (window.deviceAuth) {
+            const deviceInfo = window.deviceAuth.getDeviceInfo();
+            this.userInfo.device_id = deviceInfo.deviceId;
+            this.userInfo.device_name = deviceInfo.deviceName;
+        }
     }
     
     setStep(step) {
@@ -36,12 +45,18 @@ class StateManager {
     }
     
     resetUserInfo() {
+        // Keep device info when resetting
+        const deviceId = this.userInfo.device_id;
+        const deviceName = this.userInfo.device_name;
+        
         this.userInfo = {
             user_id: null,
             session_id: null,
             name: null,
             phone: null,
-            language: null
+            language: null,
+            device_id: deviceId,
+            device_name: deviceName
         };
     }
     

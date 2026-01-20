@@ -1,6 +1,6 @@
 /**
  * ApiService.js
- * Handles all API calls and data processing
+ * Handles all API calls and data processing with device authentication
  */
 
 class ApiService {
@@ -8,15 +8,55 @@ class ApiService {
         this.app = app;
     }
     
+    /**
+     * Get authorization headers
+     */
+    getAuthHeaders() {
+        const headers = {
+            'Content-Type': 'application/json'
+        };
+        
+        if (window.deviceAuth && window.deviceAuth.getAccessToken()) {
+            headers['Authorization'] = `Bearer ${window.deviceAuth.getAccessToken()}`;
+        }
+        
+        return headers;
+    }
+    
+    /**
+     * Handle API errors including token expiration
+     */
+    async handleApiError(response, retryFn) {
+        if (response.status === 401) {
+            // Token expired, try to refresh
+            if (window.deviceAuth) {
+                const refreshed = await window.deviceAuth.refreshAccessToken();
+                if (refreshed && retryFn) {
+                    // Retry the original request with new token
+                    return await retryFn();
+                } else {
+                    // Refresh failed, redirect to login
+                    window.deviceAuth.redirectToLogin();
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+    
     async extractUserInfo(text) {
         try {
             const response = await fetch('/api/voice/extract_info', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ text: text })
             });
+            
+            // Handle 401 errors
+            if (response.status === 401) {
+                await this.handleApiError(response, () => this.extractUserInfo(text));
+                return;
+            }
             
             const data = await response.json();
             
@@ -51,11 +91,15 @@ class ApiService {
         try {
             const response = await fetch('/api/voice/detect_language', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({ text: text })
             });
+            
+            // Handle 401 errors
+            if (response.status === 401) {
+                await this.handleApiError(response, () => this.detectLanguage(text));
+                return;
+            }
             
             const data = await response.json();
             
@@ -86,15 +130,19 @@ class ApiService {
             
             const response = await fetch('/api/user/register', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     name: userInfo.name,
                     phone: userInfo.phone,
                     language: userInfo.language
                 })
             });
+            
+            // Handle 401 errors
+            if (response.status === 401) {
+                await this.handleApiError(response, () => this.registerUser());
+                return;
+            }
             
             const data = await response.json();
             
@@ -118,9 +166,7 @@ class ApiService {
             
             const response = await fetch('/api/voice/generate_response', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: this.getAuthHeaders(),
                 body: JSON.stringify({
                     text: text,
                     language: userInfo.language,
@@ -128,6 +174,12 @@ class ApiService {
                     session_id: userInfo.session_id
                 })
             });
+            
+            // Handle 401 errors
+            if (response.status === 401) {
+                await this.handleApiError(response, () => this.processConversation(text));
+                return;
+            }
             
             const data = await response.json();
             
