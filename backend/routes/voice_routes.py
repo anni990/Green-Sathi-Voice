@@ -201,7 +201,9 @@ def generate_response():
         
         # Generate response using device-specific pipeline
         response = pipeline_service.generate_response(device_id, user_input, language, conversation_history)
-        response = response.replace("*", "")
+        
+        # Don't remove asterisks - they're used for markdown formatting (bold text)
+        # response = response.replace("*", "")  # REMOVED - conflicts with markdown
 
         # Save conversation to database if user_id provided (with device_id)
         if user_id and response:
