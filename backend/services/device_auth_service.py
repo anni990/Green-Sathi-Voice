@@ -60,8 +60,8 @@ class DeviceAuthService:
             logger.warning(f"Invalid token: {e}")
             return None
     
-    def register_device(self, device_name, password):
-        """Register a new device"""
+    def register_device(self, device_name, password, pipeline_type='library', llm_service='gemini'):
+        """Register a new device with pipeline configuration"""
         try:
             # Validate inputs
             if not device_name or len(device_name.strip()) < 3:
@@ -85,19 +85,23 @@ class DeviceAuthService:
             access_token = self.generate_access_token(device_id)
             refresh_token = self.generate_refresh_token(device_id)
             
-            # Create device record
+            # Create device record with pipeline configuration
             db_manager.create_device(
                 device_id=device_id,
                 device_name=device_name.strip(),
                 password_hash=password_hash,
                 access_token=access_token,
-                refresh_token=refresh_token
+                refresh_token=refresh_token,
+                pipeline_type=pipeline_type,
+                llm_service=llm_service
             )
             
-            logger.info(f"Device registered successfully: ID {device_id}")
+            logger.info(f"Device registered successfully: ID {device_id} with {pipeline_type} pipeline and {llm_service} LLM")
             return {
                 'device_id': device_id,
                 'device_name': device_name.strip(),
+                'pipeline_type': pipeline_type,
+                'llm_service': llm_service,
                 'access_token': access_token,
                 'refresh_token': refresh_token
             }, None

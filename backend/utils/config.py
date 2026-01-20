@@ -30,12 +30,31 @@ class Config:
     AZURE_OPENAI_API_VERSION = os.getenv('AZURE_OPENAI_API_VERSION')
     AZURE_OPENAI_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
 
+    # Azure Speech Services Configuration
+    AZURE_SPEECH_KEY = os.getenv('AZURE_SPEECH_KEY')
+    AZURE_SPEECH_REGION = os.getenv('AZURE_SPEECH_REGION', 'eastus')
+    
+    # Azure TTS Voice mapping for Indian languages
+    AZURE_VOICES = {
+        'hi-IN': 'hi-IN-SwaraNeural',
+        'bn-BD': 'bn-BD-NabanitaNeural',
+        'ta-IN': 'ta-IN-PallaviNeural',
+        'te-IN': 'te-IN-ShrutiNeural',
+        'gu-IN': 'gu-IN-DhwaniNeural',
+        'mr-IN': 'mr-IN-AarohiNeural'
+    }
     
     # Dhenu AI Configuration
     DHENU_API_KEY = os.getenv('DHENU_API_KEY')
     
     # Default LLM Service
     DEFAULT_LLM_SERVICE = os.getenv('DEFAULT_LLM_SERVICE', 'azure_openai')
+    
+    # Pipeline Configuration
+    VALID_PIPELINE_TYPES = ['library', 'api']
+    VALID_LLM_SERVICES = ['gemini', 'openai', 'azure_openai', 'vertex']
+    DEFAULT_PIPELINE_TYPE = 'library'
+    DEFAULT_LLM_SERVICE_TYPE = 'azure_openai'
     
     # Device Authentication Configuration
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')

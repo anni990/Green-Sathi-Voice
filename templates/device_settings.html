@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Settings - Green Sathi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-cream: #F8F9F1; 
+            --sathi-green: #16A34A;
+            --sathi-orange: #F97316;
+            --sathi-dark: #1e293b;
+        }
+
+        body {
+            background-color: var(--bg-cream);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--sathi-green) 0%, #15803d 100%);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(22, 163, 74, 0.3);
+        }
+
+        .setting-card {
+            transition: all 0.3s ease;
+        }
+
+        .setting-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+    <!-- Header -->
+    <div class="max-w-4xl mx-auto mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="/" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fas fa-arrow-left text-xl"></i>
+                </a>
+                <div>
+                    <h1 class="text-2xl font-black text-gray-800">Device Settings</h1>
+                    <p class="text-sm text-gray-500">Configure voice pipeline & AI service</p>
+                </div>
+            </div>
+            <img src="../static/images/logo.png" alt="Logo" class="w-12 h-12 rounded-lg">
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- Device Info Card -->
+        <div class="glass-panel rounded-3xl p-6 mb-6 shadow-lg">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-desktop text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-gray-800">Device Information</h2>
+                    <p class="text-sm text-gray-500">Current device details</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="bg-gray-50 rounded-2xl p-4">
+                    <p class="text-xs text-gray-400 font-bold uppercase mb-1">Device ID</p>
+                    <p id="device-id-display" class="text-lg font-black text-gray-800">-</p>
+                </div>
+                <div class="bg-gray-50 rounded-2xl p-4">
+                    <p class="text-xs text-gray-400 font-bold uppercase mb-1">Device Name</p>
+                    <p id="device-name-display" class="text-lg font-bold text-gray-800">-</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pipeline Configuration -->
+        <div class="glass-panel rounded-3xl p-6 mb-6 shadow-lg setting-card">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-microphone text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-gray-800">Voice Pipeline</h2>
+                    <p class="text-sm text-gray-500">Speech-to-text & text-to-speech configuration</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">Pipeline Type</label>
+                    <select id="pipeline-type" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-green-500 transition-colors font-semibold text-gray-700">
+                        <option value="library">Library (Google STT + gTTS) - Free</option>
+                        <option value="api">API (Azure Cognitive Services) - Paid</option>
+                    </select>
+                    <p class="text-xs text-gray-400 mt-2 ml-1">
+                        <span id="pipeline-description">Loading...</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- LLM Configuration -->
+        <div class="glass-panel rounded-3xl p-6 mb-6 shadow-lg setting-card">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-robot text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="font-bold text-gray-800">AI Service</h2>
+                    <p class="text-sm text-gray-500">Language model for conversations</p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-400 uppercase mb-2 block">LLM Service</label>
+                    <select id="llm-service" class="w-full px-4 py-3 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-purple-500 transition-colors font-semibold text-gray-700">
+                        <option value="azure_openai">Azure OpenAI</option>
+                        <option value="gemini">Gemini</option>
+                        <option value="openai">OpenAI</option>
+                        <option value="vertex">Vertex AI</option>
+                    </select>
+                    <p class="text-xs text-gray-400 mt-2 ml-1">
+                        <span id="llm-description">Loading...</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <button id="save-btn" class="w-full btn-primary text-white font-black py-4 rounded-2xl flex items-center justify-center gap-3 uppercase tracking-wider text-sm shadow-lg">
+            <i class="fas fa-save"></i>
+            Save Configuration
+        </button>
+
+        <!-- Status Messages -->
+        <div id="success-message" class="hidden mt-4 bg-green-50 text-green-600 p-4 rounded-2xl text-sm font-bold border-l-4 border-green-500 flex items-center gap-3">
+            <i class="fas fa-check-circle"></i>
+            <span id="success-text"></span>
+        </div>
+
+        <div id="error-message" class="hidden mt-4 bg-red-50 text-red-600 p-4 rounded-2xl text-sm font-bold border-l-4 border-red-500 flex items-center gap-3">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="error-text"></span>
+        </div>
+
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-white/90 backdrop-blur-xl flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-green-100 border-t-green-600 mx-auto mb-4"></div>
+            <p class="text-green-800 font-black text-xs uppercase tracking-wider">Updating...</p>
+        </div>
+    </div>
+
+    <script src="../static/js/DeviceAuthManager.js"></script>
+    <script>
+        const pipelineDescriptions = {
+            library: '✓ Free to use | ✓ Works offline | ⚠ Slower processing',
+            api: '✓ Fast processing | ✓ High quality | ⚠ Requires Azure subscription'
+        };
+
+        const llmDescriptions = {
+            gemini: 'Google Gemini - Fast and reliable',
+            openai: 'OpenAI GPT - Advanced language model',
+            azure_openai: 'Azure OpenAI - Enterprise-grade',
+            vertex: 'Vertex AI - Google Cloud platform'
+        };
+
+        async function loadCurrentConfig() {
+            try {
+                // Check authentication
+                if (!deviceAuth.checkAuth()) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Display device info
+                const deviceInfo = deviceAuth.getDeviceInfo();
+                document.getElementById('device-id-display').textContent = deviceInfo.deviceId || '-';
+                document.getElementById('device-name-display').textContent = deviceInfo.deviceName || '-';
+
+                // Fetch pipeline configuration
+                const config = await deviceAuth.fetchPipelineConfig();
+                if (config) {
+                    document.getElementById('pipeline-type').value = config.pipeline_type || 'library';
+                    document.getElementById('llm-service').value = config.llm_service || 'gemini';
+                    updateDescriptions();
+                }
+            } catch (error) {
+                console.error('Error loading config:', error);
+                showError('Failed to load configuration');
+            }
+        }
+
+        function updateDescriptions() {
+            const pipelineType = document.getElementById('pipeline-type').value;
+            const llmService = document.getElementById('llm-service').value;
+            
+            document.getElementById('pipeline-description').textContent = pipelineDescriptions[pipelineType] || '';
+            document.getElementById('llm-description').textContent = llmDescriptions[llmService] || '';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success-message');
+            document.getElementById('success-text').textContent = message;
+            successDiv.classList.remove('hidden');
+            setTimeout(() => successDiv.classList.add('hidden'), 5000);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            document.getElementById('error-text').textContent = message;
+            errorDiv.classList.remove('hidden');
+            setTimeout(() => errorDiv.classList.add('hidden'), 5000);
+        }
+
+        function setLoading(isLoading) {
+            const overlay = document.getElementById('loading-overlay');
+            const btn = document.getElementById('save-btn');
+            
+            if (isLoading) {
+                overlay.classList.remove('hidden');
+                btn.disabled = true;
+            } else {
+                overlay.classList.add('hidden');
+                btn.disabled = false;
+            }
+        }
+
+        document.getElementById('save-btn').addEventListener('click', async () => {
+            const pipelineType = document.getElementById('pipeline-type').value;
+            const llmService = document.getElementById('llm-service').value;
+
+            setLoading(true);
+
+            try {
+                const result = await deviceAuth.updatePipelineConfig(pipelineType, llmService);
+                
+                if (result.success) {
+                    showSuccess('Configuration updated successfully!');
+                } else {
+                    showError(result.error || 'Failed to update configuration');
+                }
+            } catch (error) {
+                console.error('Error updating config:', error);
+                showError('Network error occurred');
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        // Update descriptions on change
+        document.getElementById('pipeline-type').addEventListener('change', updateDescriptions);
+        document.getElementById('llm-service').addEventListener('change', updateDescriptions);
+
+        // Initialize
+        loadCurrentConfig();
+    </script>
+</body>
+</html>
