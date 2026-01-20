@@ -3,8 +3,7 @@ from gtts import gTTS
 import os
 import logging
 from pydub import AudioSegment
-import io
-import tempfile
+import azure.cognitiveservices.speech as speechsdk
 from backend.utils.config import Config
 
 logger = logging.getLogger(__name__)
@@ -16,6 +15,96 @@ class SpeechService:
         self.recognizer = sr.Recognizer()
         logger.info("Speech service initialized")
     
+    def azure_real_time_speech_to_text(self, language='hi-IN'):
+        """Azure real-time speech recognition with automatic silence detection"""
+        try:
+            if not self.azure_speech_config:
+                raise Exception("Azure Speech Services not configured")
+            
+            # Configure speech recognition language
+            self.azure_speech_config.speech_recognition_language = language
+            
+            # Set silence timeout to 3 seconds
+            self.azure_speech_config.set_property(
+                speechsdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "3000"
+            )
+            self.azure_speech_config.set_property(
+                speechsdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, "3000"
+            )
+            
+            # Use default microphone
+            audio_config = speechsdk.audio.AudioConfig(use_default_microphone=True)
+            
+            # Create recognizer
+            recognizer = speechsdk.SpeechRecognizer(
+                speech_config=self.azure_speech_config, 
+                audio_config=audio_config
+            )
+            
+            logger.info("Starting real-time speech recognition...")
+            
+            # Perform recognition
+            result = recognizer.recognize_once_async().get()
+            
+            if result.reason == speechsdk.ResultReason.RecognizedSpeech:
+                logger.info(f"Azure speech recognized: {result.text}")
+                return result.text
+            elif result.reason == speechsdk.ResultReason.NoMatch:
+                logger.warning("No speech could be recognized")
+                return None
+            else:
+                logger.error(f"Speech recognition error: {result.reason}")
+                return None
+                
+        except Exception as e:
+            logger.error(f"Error in Azure speech recognition: {e}")
+            return None
+    
+    def azure_text_to_speech(self, text, language_code='hi-IN', output_path=None):
+        """Azure text-to-speech with native voice support"""
+        try:
+            if not self.azure_speech_config:
+                raise Exception("Azure Speech Services not configured")
+            
+            # Get the appropriate voice for the language
+            voice_name = Config.AZURE_VOICES.get(language_code, "hi-IN-SwaraNeural")
+            self.azure_speech_config.speech_synthesis_voice_name = voice_name
+            
+            if output_path:
+                # Save to file
+                audio_config = speechsdk.audio.AudioOutputConfig(filename=output_path)
+                synthesizer = speechsdk.SpeechSynthesizer(self.azure_speech_config, audio_config)
+                
+                result = synthesizer.speak_text_async(text).get()
+                
+                if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+                    logger.info(f"Azure TTS audio saved to: {output_path}")
+                    return output_path
+                else:
+                    logger.error(f"Azure TTS error: {result.reason}")
+                    return None
+            else:
+                # Play directly to speakers
+                audio_config = speechsdk.audio.AudioOutputConfig(use_default_speaker=True)
+                synthesizer = speechsdk.SpeechSynthesizer(self.azure_speech_config, audio_config)
+                
+                result = synthesizer.speak_text_async(text).get()
+                
+                if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
+                    logger.info("Azure TTS speech synthesized successfully")
+                    return True
+                elif result.reason == speechsdk.ResultReason.Canceled:
+                    cancellation = result.cancellation_details
+                    logger.error(f"Azure TTS canceled: {cancellation.reason}, {cancellation.error_details}")
+                    return False
+                else:
+                    logger.error(f"Azure TTS error: {result.reason}")
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"Error in Azure text-to-speech: {e}")
+            return None if output_path else False
+        
     def speech_to_text(self, audio_file_path, language='hi-IN'):
         """Convert audio file to text with support for Indian languages"""
         try:

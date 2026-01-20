@@ -17,6 +17,7 @@ bcrypt==4.1.2
 google-generativeai==0.3.2
 vertexai
 openai
+azure-cognitiveservices-speech
 
 # Speech Processing
 pydub==0.25.1
