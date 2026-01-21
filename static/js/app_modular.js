@@ -152,7 +152,9 @@ class VoiceBotApp {
                 await this.apiService.extractUserInfo(text);
                 break;
             case 'language_detection':
-                await this.apiService.detectLanguage(text);
+                // Get current attempt number from apiService
+                const attempt = this.apiService.languageDetectionAttempt || 1;
+                await this.apiService.detectLanguage(text, attempt);
                 break;
             case 'conversation':
                 await this.apiService.processConversation(text);
@@ -197,5 +199,5 @@ class VoiceBotApp {
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new VoiceBotApp();
+    window.app = new VoiceBotApp();
 });

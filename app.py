@@ -6,6 +6,7 @@ import logging
 from backend.routes.voice_routes import voice_bp
 from backend.routes.user_routes import user_bp
 from backend.routes.admin_routes import admin_bp
+from backend.routes.device_routes import device_bp
 from backend.utils.config import Config
 
 # Load environment variables
@@ -35,11 +36,17 @@ def create_app():
     app.register_blueprint(voice_bp, url_prefix='/api/voice')
     app.register_blueprint(user_bp, url_prefix='/api/user')
     app.register_blueprint(admin_bp, url_prefix='/')
+    app.register_blueprint(device_bp, url_prefix='/')
     
     # Main route
     @app.route('/')
     def index():
         return render_template('index.html')
+    
+    # VAD Tuning Tool
+    @app.route('/vad-tuning')
+    def vad_tuning():
+        return render_template('vad_tuning.html')
     
     @app.errorhandler(404)
     def not_found(error):

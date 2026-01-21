@@ -41,7 +41,7 @@ def test_config():
 def test_gemini_service():
     """Test Gemini service methods"""
     try:
-        from backend.services.gemini_service import GeminiService
+        from backend.services.llm_service import GeminiService
         
         print("✓ Testing Gemini Service...")
         

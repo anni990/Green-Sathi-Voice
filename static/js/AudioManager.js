@@ -12,6 +12,17 @@ class AudioManager {
         this.isAudioPlaying = false;
         this.autoRecordAfterAudio = false;
         
+        // Voice Activity Detection (VAD) properties
+        this.audioContext = null;
+        this.analyser = null;
+        this.silenceTimer = null;
+        this.isSpeaking = false;
+        this.silenceThreshold = 2000; // 2 seconds of silence before stopping
+        this.volumeThreshold = 20; // Raw volume threshold (0-255 scale, not dB)
+        this.vadCheckInterval = null;
+        this.maxRecordingTime = 120000; // 120 seconds max recording time
+        this.speechDetectionCount = 0; // Counter to confirm speech detection
+        
         this.setupAudioEventListeners();
     }
     
@@ -71,15 +82,41 @@ class AudioManager {
             // Stop any playing audio immediately when recording starts
             this.stopAllAudio();
             
-            this.app.uiController.updateStatus('listening', 'सुन रहा हूँ...');
+            this.app.uiController.updateStatus('listening', 'बोलना शुरू करें... (बोलना बंद करने पर स्वतः रुकेगा)');
             this.app.uiController.showVoiceAnimation(true);
             this.isRecording = true;
+            this.audioChunks = [];
+            this.isSpeaking = false;
             
             // Update button state based on current step
             this.updateRecordingButtonState(true);
             
-            // Use Azure Speech Services for real-time speech recognition
-            await this.processAzureSpeechRecognition();
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            this.mediaRecorder = new MediaRecorder(stream);
+            
+            this.mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    this.audioChunks.push(event.data);
+                }
+            };
+            
+            this.mediaRecorder.onstop = () => {
+                this.cleanupVAD();
+                this.processRecording();
+            };
+            
+            this.mediaRecorder.start();
+            
+            // Setup Voice Activity Detection
+            this.setupVoiceActivityDetection(stream);
+            
+            // Safety timeout - stop after max recording time (60 seconds)
+            setTimeout(() => {
+                if (this.isRecording) {
+                    console.log('Max recording time reached, stopping...');
+                    this.stopRecording();
+                }
+            }, this.maxRecordingTime);
             
         } catch (error) {
             this.app.uiController.showError('रिकॉर्डिंग शुरू करने में विफल: ' + error.message);
@@ -256,16 +293,68 @@ class AudioManager {
             
             const data = await response.json();
             
-            if (data.text) {
+            // Check if STT succeeded
+            if (data.text && data.stt_success !== false) {
+                // STT successful - proceed with text processing
                 await this.app.handleTranscribedText(data.text);
+            } else if (data.fallback || data.stt_success === false) {
+                // STT failed - trigger step-specific fallback
+                await this.handleSTTFailure();
             } else {
+                // Generic error
                 this.app.uiController.showError('Could not understand the audio. Please try again.');
                 this.app.uiController.updateStatus('error', 'Processing failed');
+                this.resetButtonState();
             }
             
         } catch (error) {
-            this.app.uiController.showError('Error processing audio: ' + error.message);
-            this.app.uiController.updateStatus('error', 'Processing error');
+            console.error('Error processing audio:', error);
+            // On network/exception error, also trigger fallback
+            await this.handleSTTFailure();
+        }
+    }
+    
+    async handleSTTFailure() {
+        const currentStep = this.app.stateManager.getCurrentStep();
+        
+        console.log(`STT failed at step: ${currentStep}`);
+        
+        switch (currentStep) {
+            case 'name_phone':
+                // STT failed during name/phone collection - show manual entry popup
+                console.log('Triggering phone input fallback due to STT failure');
+                this.app.uiController.updateStatus('processing', 'ऑडियो समझ नहीं आया...');
+                await this.app.apiService.handleExtractionFallback('');
+                break;
+                
+            case 'language_detection':
+                // STT failed during language detection - trigger retry
+                console.log('Triggering language detection retry due to STT failure');
+                const attempt = this.app.apiService.languageDetectionAttempt || 1;
+                
+                if (attempt < 3) {
+                    // Retry with audio prompt
+                    await this.app.apiService.handleLanguageDetectionRetry(attempt);
+                } else {
+                    // Max retries reached - default to Hindi
+                    this.app.uiController.showError('भाषा पहचानना नहीं हो सकी। डिफ़ॉल्ट हिंदी का उपयोग किया जा रहा है।');
+                    this.app.stateManager.updateUserInfo('language', 'hindi');
+                    this.app.elementManager.setElementContent('userLanguage', 'hindi');
+                    await this.app.apiService.registerUser();
+                    this.app.uiController.showUserInfoDisplay();
+                }
+                break;
+                
+            case 'conversation':
+                // STT failed during conversation - just show retry message
+                this.app.uiController.showError('ऑडियो समझ नहीं आया। कृपया पुन: प्रयास करें।');
+                this.app.uiController.updateStatus('ready', 'अगले संदेश के लिए तैयार - Enter दबाएं');
+                break;
+                
+            default:
+                this.app.uiController.showError('Could not understand the audio. Please try again.');
+                this.app.uiController.updateStatus('error', 'Processing failed');
+                this.resetButtonState();
         }
     }
     
@@ -412,6 +501,39 @@ class AudioManager {
         }
     }
     
+    async playAudioFromUrl(url) {
+        return new Promise((resolve, reject) => {
+            try {
+                const elements = this.app.elementManager.getAll();
+                const audio = elements.staticAudio || new Audio();
+                
+                audio.src = url;
+                
+                audio.onplay = () => {
+                    this.isAudioPlaying = true;
+                };
+                
+                audio.onended = () => {
+                    this.isAudioPlaying = false;
+                    resolve();
+                };
+                
+                audio.onerror = (error) => {
+                    this.isAudioPlaying = false;
+                    console.error('Error playing audio:', error);
+                    reject(error);
+                };
+                
+                audio.play().catch(reject);
+                
+            } catch (error) {
+                console.error('Error in playAudioFromUrl:', error);
+                this.isAudioPlaying = false;
+                reject(error);
+            }
+        });
+    }
+    
     onAudioEnded() {
         // This method is now handled by the audio event listeners in playResponse
         // Keep it for compatibility but don't duplicate status updates
@@ -431,5 +553,132 @@ class AudioManager {
                 this.startRecording();
             }, 1000); // 1 second delay before auto-recording
         }
+    }
+    
+    /**
+     * Setup Voice Activity Detection (VAD) using Web Audio API
+     * Monitors audio stream and detects when user stops speaking
+     */
+    setupVoiceActivityDetection(stream) {
+        try {
+            // Create audio context and analyser
+            this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            this.analyser = this.audioContext.createAnalyser();
+            this.analyser.fftSize = 2048;
+            this.analyser.smoothingTimeConstant = 0.8;
+            
+            // Connect stream to analyser
+            const source = this.audioContext.createMediaStreamSource(stream);
+            source.connect(this.analyser);
+            
+            // Start monitoring audio levels
+            this.startVADMonitoring();
+            
+            console.log('Voice Activity Detection initialized');
+        } catch (error) {
+            console.error('Failed to setup VAD:', error);
+            // VAD failed, but recording will continue with max timeout
+        }
+    }
+    
+    /**
+     * Monitor audio levels and detect silence
+     */
+    startVADMonitoring() {
+        this.vadCheckInterval = setInterval(() => {
+            if (!this.isRecording) {
+                this.cleanupVAD();
+                return;
+            }
+            
+            const volume = this.getAudioVolume();
+            
+            // Check if user is speaking (volume above threshold)
+            if (volume > this.volumeThreshold) {
+                // User is speaking - increment detection counter
+                this.speechDetectionCount++;
+                
+                if (!this.isSpeaking && this.speechDetectionCount > 3) {
+                    // Confirmed speech after 3 consecutive detections
+                    this.isSpeaking = true;
+                    this.app.uiController.updateStatus('listening', 'सुन रहा हूँ... (बोलते रहें)');
+                    console.log('Speech confirmed, volume:', volume);
+                }
+                
+                // Clear silence timer since user is speaking
+                if (this.silenceTimer) {
+                    clearTimeout(this.silenceTimer);
+                    this.silenceTimer = null;
+                }
+            } else {
+                // Volume below threshold (silence detected)
+                this.speechDetectionCount = 0; // Reset speech counter
+                
+                if (this.isSpeaking && !this.silenceTimer) {
+                    // User was speaking but now silent, start silence timer
+                    console.log('Silence detected, starting 2-second timer...');
+                    this.app.uiController.updateStatus('listening', 'रुकें... (2 सेकंड चुप्पी के बाद बंद होगा)');
+                    
+                    this.silenceTimer = setTimeout(() => {
+                        if (this.isRecording) {
+                            console.log('Silence timeout reached, stopping recording...');
+                            this.stopRecording();
+                        }
+                    }, this.silenceThreshold);
+                }
+            }
+        }, 100); // Check every 100ms
+    }
+    
+    /**
+     * Get current audio volume level (raw value 0-255)
+     */
+    getAudioVolume() {
+        if (!this.analyser) return 0;
+        
+        const bufferLength = this.analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        this.analyser.getByteFrequencyData(dataArray);
+        
+        // Calculate average volume across frequency bins
+        let sum = 0;
+        let count = 0;
+        
+        // Focus on speech frequencies (85 Hz to 3000 Hz roughly corresponds to bins 20-350 at 2048 FFT)
+        const startBin = Math.floor(bufferLength * 0.02); // Low frequency cutoff
+        const endBin = Math.floor(bufferLength * 0.35);   // High frequency cutoff
+        
+        for (let i = startBin; i < endBin && i < bufferLength; i++) {
+            sum += dataArray[i];
+            count++;
+        }
+        
+        const average = count > 0 ? sum / count : 0;
+        
+        return average;
+    }
+    
+    /**
+     * Cleanup VAD resources
+     */
+    cleanupVAD() {
+        if (this.vadCheckInterval) {
+            clearInterval(this.vadCheckInterval);
+            this.vadCheckInterval = null;
+        }
+        
+        if (this.silenceTimer) {
+            clearTimeout(this.silenceTimer);
+            this.silenceTimer = null;
+        }
+        
+        if (this.audioContext) {
+            this.audioContext.close();
+            this.audioContext = null;
+        }
+        
+        this.analyser = null;
+        this.isSpeaking = false;
+        this.speechDetectionCount = 0;
     }
 }

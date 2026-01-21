@@ -16,6 +16,13 @@ class KeyboardHandler {
     }
     
     handleKeyboardInput(event) {
+        // Check if phone input popup is open - give it priority
+        const phonePopup = document.getElementById('phoneInputOverlay');
+        if (phonePopup) {
+            // Let the popup handle its own Enter/input events
+            return;
+        }
+        
         // Prevent keyboard actions when recording is in progress or audio is being processed
         if (this.app.stateManager.isRecording) {
             return;
@@ -23,7 +30,7 @@ class KeyboardHandler {
         
         // Prevent default browser behavior for these keys
         if (event.key === 'Enter' || event.key === 'Backspace') {
-            // Don't prevent backspace in input fields (though we don't have any currently)
+            // Don't prevent backspace in input fields
             if (event.key === 'Backspace' && event.target.tagName === 'INPUT') {
                 return;
             }

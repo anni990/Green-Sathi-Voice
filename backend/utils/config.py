@@ -17,12 +17,51 @@ class Config:
     # Gemini API Configuration
     GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
     
+    # Vertex AI Configuration
+    VERTEX_PROJECT_ID = os.getenv('VERTEX_PROJECT_ID')
+    VERTEX_LOCATION = os.getenv('VERTEX_LOCATION')
+
+    # OpenAI Configuration
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+
+    # Azure OpenAI Configuration
+    AZURE_OPENAI_API_KEY = os.getenv('AZURE_OPENAI_API_KEY')
+    AZURE_OPENAI_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
+    AZURE_OPENAI_API_VERSION = os.getenv('AZURE_OPENAI_API_VERSION')
+    AZURE_OPENAI_DEPLOYMENT = os.getenv('AZURE_OPENAI_DEPLOYMENT')
+
+    # Azure Speech Services Configuration
+    AZURE_SPEECH_KEY = os.getenv('AZURE_SPEECH_KEY')
+    AZURE_SPEECH_REGION = os.getenv('AZURE_SPEECH_REGION', 'eastus')
+    
+    # Azure TTS Voice mapping for Indian languages
+    AZURE_VOICES = {
+        'hi-IN': 'hi-IN-SwaraNeural',
+        'bn-BD': 'bn-BD-NabanitaNeural',
+        'ta-IN': 'ta-IN-PallaviNeural',
+        'te-IN': 'te-IN-ShrutiNeural',
+        'gu-IN': 'gu-IN-DhwaniNeural',
+        'mr-IN': 'mr-IN-AarohiNeural'
+    }
+    
     # Dhenu AI Configuration
     DHENU_API_KEY = os.getenv('DHENU_API_KEY')
     
-    # Azure Speech Services Configuration
-    AZURE_SPEECH_KEY = os.getenv('AZURE_SPEECH_KEY')
-    AZURE_SPEECH_REGION = os.getenv('AZURE_SPEECH_REGION', 'centralindia')
+    # Default LLM Service
+    DEFAULT_LLM_SERVICE = os.getenv('DEFAULT_LLM_SERVICE', 'azure_openai')
+    
+    # Pipeline Configuration
+    VALID_PIPELINE_TYPES = ['library', 'api']
+    VALID_LLM_SERVICES = ['gemini', 'openai', 'azure_openai', 'vertex']
+    DEFAULT_PIPELINE_TYPE = 'library'
+    DEFAULT_LLM_SERVICE_TYPE = 'azure_openai'
+    
+    # Device Authentication Configuration
+    JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')
+    ACCESS_TOKEN_EXPIRY = int(os.getenv('ACCESS_TOKEN_EXPIRY', '3600'))  # 1 hour in seconds
+    REFRESH_TOKEN_EXPIRY = int(os.getenv('REFRESH_TOKEN_EXPIRY', '86400'))  # 24 hours in seconds
+    DEVICE_ID_START = int(os.getenv('DEVICE_ID_START', '1201'))  # Starting device ID
+    DEFAULT_DEVICE_ID = int(os.getenv('DEFAULT_DEVICE_ID', '1200'))  # For existing data migration
     
     # Audio Configuration
     AUDIO_UPLOAD_FOLDER = os.getenv('AUDIO_UPLOAD_FOLDER', 'temp_audio')
