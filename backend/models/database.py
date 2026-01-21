@@ -21,10 +21,9 @@ class DatabaseManager:
             raise
     
     def create_user(self, name, phone, language, device_id=None):
-        """Create a new user record"""
+        """Create a new user record (name is optional)"""
         try:
             user_data = {
-                'name': name,
                 'phone': phone,
                 'language': language,
                 'device_id': device_id,
@@ -32,18 +31,26 @@ class DatabaseManager:
                 'updated_at': datetime.utcnow()
             }
             
+            # Add name only if provided
+            if name:
+                user_data['name'] = name
+            
             # Check if user already exists
             existing_user = self.users.find_one({'phone': phone})
             if existing_user:
                 # Update existing user
+                update_data = {
+                    'language': language,
+                    'device_id': device_id,
+                    'updated_at': datetime.utcnow()
+                }
+                # Only update name if provided
+                if name:
+                    update_data['name'] = name
+                    
                 self.users.update_one(
                     {'phone': phone},
-                    {'$set': {
-                        'name': name,
-                        'language': language,
-                        'device_id': device_id,
-                        'updated_at': datetime.utcnow()
-                    }}
+                    {'$set': update_data}
                 )
                 return existing_user['_id']
             else:

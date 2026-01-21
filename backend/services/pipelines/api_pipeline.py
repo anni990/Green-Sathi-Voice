@@ -6,6 +6,7 @@ import azure.cognitiveservices.speech as speechsdk
 from pydub import AudioSegment
 from .base_pipeline import BasePipeline
 from backend.utils.config import Config
+from backend.utils.markdown_utils import clean_markdown_for_tts
 
 logger = logging.getLogger(__name__)
 
@@ -52,12 +53,12 @@ class APIPipeline(BasePipeline):
             # Configure language
             self.azure_speech_config.speech_recognition_language = language
             
-            # Set silence timeout (3 seconds)
+            # Set silence timeout (2 seconds for faster response)
             self.azure_speech_config.set_property(
-                speechsdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "3000"
+                speechsdk.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs, "5000"
             )
             self.azure_speech_config.set_property(
-                speechsdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, "3000"
+                speechsdk.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs, "2000"
             )
             
             # Handle different audio input types
@@ -110,7 +111,7 @@ class APIPipeline(BasePipeline):
         Convert text to speech using Azure Speech Services
         
         Args:
-            text: Text to convert
+            text: Text to convert (may contain markdown)
             language: Language code (e.g., 'hi-IN', 'bn-BD')
             output_path: Optional path to save audio file
             
@@ -118,6 +119,10 @@ class APIPipeline(BasePipeline):
             str: Path to generated audio file or None if failed
         """
         try:
+            # Clean markdown formatting before TTS
+            clean_text = clean_markdown_for_tts(text)
+            logger.info(f"Cleaned text for TTS: {clean_text[:100]}...")
+            
             # Get the appropriate voice for the language
             voice_name = Config.AZURE_VOICES.get(language, "hi-IN-SwaraNeural")
             self.azure_speech_config.speech_synthesis_voice_name = voice_name
@@ -127,7 +132,7 @@ class APIPipeline(BasePipeline):
                 os.makedirs(Config.AUDIO_UPLOAD_FOLDER, exist_ok=True)
                 output_path = os.path.join(
                     Config.AUDIO_UPLOAD_FOLDER,
-                    f'tts_azure_{hash(text)}_{language}.wav'
+                    f'tts_azure_{hash(clean_text)}_{language}.wav'
                 )
             
             # Configure audio output
@@ -139,8 +144,8 @@ class APIPipeline(BasePipeline):
                 audio_config=audio_config
             )
             
-            # Perform synthesis
-            result = synthesizer.speak_text_async(text).get()
+            # Perform synthesis with cleaned text
+            result = synthesizer.speak_text_async(clean_text).get()
             
             if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
                 logger.info(f"Azure TTS generated: {output_path}")

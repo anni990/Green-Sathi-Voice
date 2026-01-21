@@ -5,6 +5,7 @@ import logging
 from pydub import AudioSegment
 import azure.cognitiveservices.speech as speechsdk
 from backend.utils.config import Config
+from backend.utils.markdown_utils import clean_markdown_for_tts
 
 logger = logging.getLogger(__name__)
 
@@ -82,8 +83,12 @@ class SpeechService:
             if not self.azure_speech_config:
                 raise Exception("Azure Speech Services not configured")
             
+            # Clean markdown formatting before TTS
+            clean_text = clean_markdown_for_tts(text)
+            logger.info(f"Cleaned text for Azure TTS: {clean_text[:100]}...")
+            
             # Get the appropriate voice for the language
-            voice_name = Config.AZURE_VOICES.get(language_code, "hi-IN-SwaraNeural")
+            voice_name = Config.AZURE_VOICES.get(language, "hi-IN-SwaraNeural")
             self.azure_speech_config.speech_synthesis_voice_name = voice_name
             
             if output_path:
@@ -91,7 +96,7 @@ class SpeechService:
                 audio_config = speechsdk.audio.AudioOutputConfig(filename=output_path)
                 synthesizer = speechsdk.SpeechSynthesizer(self.azure_speech_config, audio_config)
                 
-                result = synthesizer.speak_text_async(text).get()
+                result = synthesizer.speak_text_async(clean_text).get()
                 
                 if result.reason == speechsdk.ResultReason.SynthesizingAudioCompleted:
                     logger.info(f"Azure TTS audio saved to: {output_path}")
@@ -149,14 +154,18 @@ class SpeechService:
     def text_to_speech(self, text, language='en', output_path=None):
         """Convert text to speech and return audio file path"""
         try:
+            # Clean markdown formatting before TTS
+            clean_text = clean_markdown_for_tts(text)
+            logger.info(f"Cleaned text for TTS: {clean_text[:100]}...")
+            
             # Create TTS object
-            tts = gTTS(text=text, lang=language, slow=False)
+            tts = gTTS(text=clean_text, lang=language, slow=False)
             
             # Generate output path if not provided
             if not output_path:
                 output_path = os.path.join(
                     Config.AUDIO_UPLOAD_FOLDER, 
-                    f"tts_{hash(text)}_{language}.mp3"
+                    f"tts_{hash(clean_text)}_{language}.mp3"
                 )
             
             # Save to file

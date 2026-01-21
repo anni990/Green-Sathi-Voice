@@ -23,8 +23,8 @@ body {
     }
 
     .desktop-sidebar {
-        width: 480px;
-        min-width: 480px;
+        width: 400px;
+        min-width: 400px;
         display: flex;
         flex-direction: column;
         background: rgba(255, 255, 255, 0.95);
@@ -308,4 +308,59 @@ kbd {
 .info-card {
     background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(234, 88, 12, 0.1));
     border: 2px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Markdown Formatting Styles for Conversation */
+.conversation-bubble strong {
+    font-weight: 700;
+    color: #047857;
+}
+
+.conversation-bubble em {
+    font-style: italic;
+    color: #065f46;
+}
+
+.conversation-bubble h3,
+.conversation-bubble h4 {
+    color: #065f46;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+}
+
+.conversation-bubble ul,
+.conversation-bubble ol {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.conversation-bubble li {
+    margin-bottom: 0.25rem;
+    line-height: 1.5;
+}
+
+.conversation-bubble ul li {
+    list-style-type: disc;
+}
+
+.conversation-bubble ol li {
+    list-style-type: decimal;
+}
+
+.conversation-bubble p {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+.conversation-bubble br {
+    content: "";
+    display: block;
+    margin: 0.25rem 0;
+}
+
+/* Better spacing for formatted content */
+.conversation-bubble.bg-gradient-to-r.from-orange-100 {
+    line-height: 1.6;
+    word-spacing: 0.05rem;
 }

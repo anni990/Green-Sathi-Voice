@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VAD Tuning Tool - Green Sathi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #16A34A;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+        }
+        .value-display {
+            display: inline-block;
+            min-width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #16A34A;
+        }
+        button {
+            background: #16A34A;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #15803d;
+        }
+        button.stop {
+            background: #DC2626;
+        }
+        button.stop:hover {
+            background: #B91C1C;
+        }
+        #volumeMeter {
+            width: 100%;
+            height: 50px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            position: relative;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        #volumeBar {
+            height: 100%;
+            background: linear-gradient(90deg, #16A34A, #FFA500, #DC2626);
+            width: 0%;
+            transition: width 0.1s;
+        }
+        #volumeValue {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-weight: bold;
+            color: #333;
+            z-index: 10;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .status.idle {
+            background: #e0e0e0;
+            color: #666;
+        }
+        .status.listening {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
+        .status.speaking {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        .status.silence {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        .log {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+        .recommendations {
+            background: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 15px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 VAD Tuning Tool</h1>
+        <p>Use this tool to find the optimal Voice Activity Detection settings for your environment.</p>
+        
+        <div class="control-group">
+            <label>Volume Threshold: <span class="value-display" id="volumeThresholdValue">20</span></label>
+            <input type="range" id="volumeThreshold" min="1" max="30" value="20" step="1">
+            <small>Higher = requires louder speech | Lower = more sensitive</small>
+        </div>
+        
+        <div class="control-group">
+            <label>Silence Duration (seconds): <span class="value-display" id="silenceThresholdValue">2.0</span></label>
+            <input type="range" id="silenceThreshold" min="1" max="5" value="2" step="0.5">
+            <small>How long to wait after speech stops before ending</small>
+        </div>
+        
+        <div class="control-group">
+            <button id="startBtn" onclick="startRecording()">Start Recording</button>
+            <button id="stopBtn" class="stop" onclick="stopRecording()" disabled>Stop Recording</button>
+        </div>
+        
+        <div id="status" class="status idle">
+            Status: Idle - Click "Start Recording" to begin
+        </div>
+        
+        <div id="volumeMeter">
+            <div id="volumeBar"></div>
+            <div id="volumeValue">0</div>
+        </div>
+        
+        <div class="recommendations">
+            <strong>💡 Tuning Tips:</strong>
+            <ul>
+                <li><strong>Stops too early?</strong> Lower volume threshold (more sensitive)</li>
+                <li><strong>Doesn't stop?</strong> Increase volume threshold or reduce silence duration</li>
+                <li><strong>Background noise issues?</strong> Increase volume threshold</li>
+                <li><strong>Quiet speech not detected?</strong> Lower volume threshold to 2-3</li>
+            </ul>
+        </div>
+        
+        <div class="log" id="log">
+            <strong>Event Log:</strong><br>
+        </div>
+        
+        <div style="background: #f0f0f0; padding: 15px; border-radius: 5px; margin-top: 20px;">
+            <strong>📋 How to Use:</strong>
+            <ol>
+                <li>Click "Start Recording" and speak normally</li>
+                <li>Watch the volume meter - it should show green when you speak</li>
+                <li>Stop speaking and watch the timer</li>
+                <li>Adjust sliders if behavior isn't right</li>
+                <li>Once satisfied, copy the values to AudioManager.js</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        let audioContext = null;
+        let analyser = null;
+        let mediaStream = null;
+        let vadCheckInterval = null;
+        let silenceTimer = null;
+        let isSpeaking = false;
+        let isRecording = false;
+        let speechDetectionCount = 0;
+
+        // Get elements
+        const volumeThresholdSlider = document.getElementById('volumeThreshold');
+        const silenceThresholdSlider = document.getElementById('silenceThreshold');
+        const volumeThresholdValue = document.getElementById('volumeThresholdValue');
+        const silenceThresholdValue = document.getElementById('silenceThresholdValue');
+        const statusDiv = document.getElementById('status');
+        const volumeBar = document.getElementById('volumeBar');
+        const volumeValue = document.getElementById('volumeValue');
+        const logDiv = document.getElementById('log');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+
+        // Update slider values
+        volumeThresholdSlider.oninput = () => {
+            volumeThresholdValue.textContent = volumeThresholdSlider.value;
+        };
+        silenceThresholdSlider.oninput = () => {
+            silenceThresholdValue.textContent = parseFloat(silenceThresholdSlider.value).toFixed(1);
+        };
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.textContent = `[${timestamp}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function updateStatus(status, message) {
+            statusDiv.className = `status ${status}`;
+            statusDiv.textContent = `Status: ${message}`;
+        }
+
+        async function startRecording() {
+            try {
+                updateStatus('listening', 'Starting...');
+                log('Starting recording...');
+                
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                analyser.smoothingTimeConstant = 0.8;
+                
+                const source = audioContext.createMediaStreamSource(mediaStream);
+                source.connect(analyser);
+                
+                isRecording = true;
+                isSpeaking = false;
+                speechDetectionCount = 0;
+                
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                
+                updateStatus('listening', 'Waiting for speech...');
+                log('VAD monitoring started');
+                
+                startVADMonitoring();
+                
+            } catch (error) {
+                log('ERROR: ' + error.message);
+                updateStatus('idle', 'Error: ' + error.message);
+            }
+        }
+
+        function stopRecording() {
+            if (vadCheckInterval) {
+                clearInterval(vadCheckInterval);
+                vadCheckInterval = null;
+            }
+            
+            if (silenceTimer) {
+                clearTimeout(silenceTimer);
+                silenceTimer = null;
+            }
+            
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
+                mediaStream = null;
+            }
+            
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+            }
+            
+            analyser = null;
+            isRecording = false;
+            isSpeaking = false;
+            speechDetectionCount = 0;
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+            
+            volumeBar.style.width = '0%';
+            volumeValue.textContent = '0';
+            
+            updateStatus('idle', 'Recording stopped');
+            log('Recording stopped manually');
+        }
+
+        function startVADMonitoring() {
+            vadCheckInterval = setInterval(() => {
+                if (!isRecording) {
+                    stopRecording();
+                    return;
+                }
+                
+                const volume = getAudioVolume();
+                const threshold = parseFloat(volumeThresholdSlider.value);
+                
+                // Update volume meter
+                const percentage = Math.min(100, (volume / 30) * 100);
+                volumeBar.style.width = percentage + '%';
+                volumeValue.textContent = volume.toFixed(1);
+                
+                if (volume > threshold) {
+                    speechDetectionCount++;
+                    
+                    if (!isSpeaking && speechDetectionCount > 3) {
+                        isSpeaking = true;
+                        updateStatus('speaking', `Speech detected! (Volume: ${volume.toFixed(1)})`);
+                        log(`SPEECH DETECTED - Volume: ${volume.toFixed(1)} > Threshold: ${threshold}`);
+                    }
+                    
+                    if (silenceTimer) {
+                        clearTimeout(silenceTimer);
+                        silenceTimer = null;
+                    }
+                } else {
+                    speechDetectionCount = 0;
+                    
+                    if (isSpeaking && !silenceTimer) {
+                        const silenceDuration = parseFloat(silenceThresholdSlider.value) * 1000;
+                        updateStatus('silence', `Silence detected - will stop in ${silenceThresholdSlider.value}s`);
+                        log(`SILENCE DETECTED - Starting ${silenceThresholdSlider.value}s timer`);
+                        
+                        silenceTimer = setTimeout(() => {
+                            log('SILENCE TIMEOUT - Auto-stopping');
+                            stopRecording();
+                        }, silenceDuration);
+                    }
+                }
+            }, 100);
+        }
+
+        function getAudioVolume() {
+            if (!analyser) return 0;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+            
+            let sum = 0;
+            let count = 0;
+            
+            const startBin = Math.floor(bufferLength * 0.02);
+            const endBin = Math.floor(bufferLength * 0.35);
+            
+            for (let i = startBin; i < endBin && i < bufferLength; i++) {
+                sum += dataArray[i];
+                count++;
+            }
+            
+            return count > 0 ? sum / count : 0;
+        }
+
+        log('VAD Tuning Tool ready. Adjust sliders and click "Start Recording" to test.');
+    </script>
+</body>
+</html>

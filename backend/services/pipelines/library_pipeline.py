@@ -7,6 +7,7 @@ from pydub import AudioSegment
 import tempfile
 from .base_pipeline import BasePipeline
 from backend.utils.config import Config
+from backend.utils.markdown_utils import clean_markdown_for_tts
 
 logger = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ class LibraryPipeline(BasePipeline):
         Convert text to speech using gTTS
         
         Args:
-            text: Text to convert
+            text: Text to convert (may contain markdown)
             language: Language code (e.g., 'hi', 'bn', 'ta')
             output_path: Optional path to save audio file
             
@@ -101,16 +102,20 @@ class LibraryPipeline(BasePipeline):
             str: Path to generated audio file or None if failed
         """
         try:
+            # Clean markdown formatting before TTS
+            clean_text = clean_markdown_for_tts(text)
+            logger.info(f"Cleaned text for TTS: {clean_text[:100]}...")
+            
             # Create output path if not provided
             if not output_path:
                 os.makedirs(Config.AUDIO_UPLOAD_FOLDER, exist_ok=True)
                 output_path = os.path.join(
                     Config.AUDIO_UPLOAD_FOLDER,
-                    f'tts_{hash(text)}_{language}.mp3'
+                    f'tts_{hash(clean_text)}_{language}.mp3'
                 )
             
-            # Generate speech using gTTS
-            tts = gTTS(text=text, lang=language, slow=False)
+            # Generate speech using gTTS with cleaned text
+            tts = gTTS(text=clean_text, lang=language, slow=False)
             tts.save(output_path)
             logger.info(f"Library TTS generated: {output_path}")
             
