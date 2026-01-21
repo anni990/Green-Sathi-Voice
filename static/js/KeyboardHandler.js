@@ -23,6 +23,16 @@ class KeyboardHandler {
             return;
         }
         
+        // Don't handle keyboard input on landing page - let index.html handle it
+        if (document.getElementById('landing-page') && document.getElementById('landing-page').style.display !== 'none') {
+            return;
+        }
+        
+        // Don't handle keyboard input when login popup is visible
+        if (document.getElementById('login-popup') && !document.getElementById('login-popup').classList.contains('hidden')) {
+            return;
+        }
+        
         // Prevent keyboard actions when recording is in progress or audio is being processed
         if (this.app.stateManager.isRecording) {
             return;
