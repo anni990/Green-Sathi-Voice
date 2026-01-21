@@ -10,7 +10,6 @@ class VoiceBotApp {
         this.stateManager = new StateManager();
         this.uiController = new UIController(this);
         this.keyboardHandler = new KeyboardHandler(this);
-        this.azureSpeechManager = new AzureSpeechManager(this);
         this.audioManager = new AudioManager(this);
         this.apiService = new ApiService(this);
         this.conversationManager = new ConversationManager(this);

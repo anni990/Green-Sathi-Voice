@@ -10,7 +10,7 @@ from backend.utils.markdown_utils import clean_markdown_for_tts
 logger = logging.getLogger(__name__)
 
 class SpeechService:
-    """Handles Speech-to-Text and Text-to-Speech operations with Azure Speech Services"""
+    """Handles Speech-to-Text and Text-to-Speech operations"""
     
     def __init__(self):
         self.recognizer = sr.Recognizer()
