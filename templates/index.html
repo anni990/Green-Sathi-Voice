@@ -444,26 +444,36 @@
         </div>
     </div>
 
+    <!-- Login Required Popup -->
+    <div id="login-popup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="glass-card rounded-2xl p-6 text-center max-w-sm mx-4">
+            <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
+            <h3 class="text-lg font-bold text-gray-800 mb-4">Login Required</h3>
+            <p class="text-gray-600 mb-6">Please login to use the voice assistant.</p>
+            <div class="flex gap-4 justify-center">
+                <button id="login-popup-cancel" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-full font-semibold hover:bg-gray-400 transition-colors">Cancel</button>
+                <button id="login-popup-login" class="px-4 py-2 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700 transition-colors">Login</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Landing Page Interaction Logic -->
     <script>
         let landingPageActive = true;
 
         // Add keyboard listener for landing page
         document.addEventListener('keydown', function (event) {
-            if (landingPageActive && (event.key === 'Enter' || event.keyCode === 13)) {
+            if (landingPageActive && (event.key === 'Enter' || event.keyCode === 13) && document.getElementById('login-popup').classList.contains('hidden')) {
                 event.preventDefault();
-                startVoiceBot();
+                if (window.deviceAuth && !window.deviceAuth.checkAuth()) {
+                    showLoginPopup();
+                } else {
+                    startVoiceBot();
+                }
             }
         });
 
         function startVoiceBot() {
-            // Check if device is authenticated before starting
-            if (window.deviceAuth && !window.deviceAuth.checkAuth()) {
-                alert('Please login to use the voice assistant');
-                window.location.href = '/login';
-                return;
-            }
-
             // First hide the landing page immediately
             const landingPage = document.getElementById('landing-page');
             const mainUI = document.getElementById('main-ui');
@@ -483,6 +493,30 @@
                     console.error('App not initialized yet');
                 }
             }, 100); // Small delay to ensure UI is ready
+        }
+
+        function showLoginPopup() {
+            document.getElementById('login-popup').classList.remove('hidden');
+        }
+
+        function hideLoginPopup() {
+            document.getElementById('login-popup').classList.add('hidden');
+        }
+
+        // Setup login popup event listeners
+        function setupLoginPopup() {
+            const cancelBtn = document.getElementById('login-popup-cancel');
+            const loginBtn = document.getElementById('login-popup-login');
+
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', hideLoginPopup);
+            }
+
+            if (loginBtn) {
+                loginBtn.addEventListener('click', () => {
+                    window.location.href = '/login';
+                });
+            }
         }
 
         // Account dropdown functionality
@@ -545,9 +579,13 @@
 
         // Initialize auth check when DOM is ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', checkAuthStatus);
+            document.addEventListener('DOMContentLoaded', () => {
+                checkAuthStatus();
+                setupLoginPopup();
+            });
         } else {
             checkAuthStatus();
+            setupLoginPopup();
         }
     </script>
 
