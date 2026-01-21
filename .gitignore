@@ -115,3 +115,6 @@ static/audio/*.wav
 
 # Notes
 Notes
+
+# GCP creds file
+vertex-gemini-service.json
