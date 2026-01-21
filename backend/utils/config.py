@@ -90,17 +90,6 @@ class Config:
         'marathi': 'mr-IN'
     }
     
-    # Azure Speech Service voice mapping
-    AZURE_VOICES = {
-        'en-IN': 'en-IN-NeerjaNeural',
-        'hi-IN': 'hi-IN-SwaraNeural',
-        'ta-IN': 'ta-IN-PallaviNeural',
-        'te-IN': 'te-IN-ShrutiNeural',
-        'bn-IN': 'bn-IN-TanishaaNeural',
-        'gu-IN': 'gu-IN-DhwaniNeural',
-        'mr-IN': 'mr-IN-AarohiNeural'
-    }
-    
     # Language prompts in Indian languages
     LANGUAGE_PROMPTS = {
         'name_phone': {
