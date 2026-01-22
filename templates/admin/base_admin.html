@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %} - Voice Bot Assistant</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-green: #059669;
+            --light-green: #10b981;
+            --primary-orange: #ea580c;
+            --light-orange: #fb923c;
+        }
+
+        body {
+            background: #f7f7f7;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar {
+            transition: all 0.3s ease;
+            width: 250px;
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar.collapsed .sidebar-text {
+            display: none;
+        }
+
+        .sidebar-item {
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-item:hover {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--primary-green);
+        }
+
+        .sidebar-item.active {
+            background: rgba(16, 185, 129, 0.2);
+            border-left: 4px solid var(--primary-green);
+            font-weight: 600;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .main-content.expanded {
+            margin-left: 70px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                left: -250px;
+                z-index: 50;
+                height: 100vh;
+            }
+
+            .sidebar.mobile-open {
+                left: 0;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .mobile-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 40;
+            }
+
+            .mobile-overlay.show {
+                display: block;
+            }
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .user-dropdown {
+            position: relative;
+            z-index: 1000;
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            min-width: 180px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 9999;
+        }
+
+        .user-dropdown.active .user-dropdown-menu {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .user-dropdown-menu::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            right: 16px;
+            width: 12px;
+            height: 12px;
+            background: white;
+            border-left: 1px solid rgba(0, 0, 0, 0.1);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+            transform: rotate(45deg);
+            z-index: 10000;
+        }
+
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar glass-card fixed left-0 top-0 h-full z-30" id="sidebar">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <img src="/static/images/logo.png" alt="Logo" class="w-10 h-10 rounded-full object-cover">
+                    <div class="sidebar-text">
+                        <h2 class="font-bold text-gray-800">Admin Panel</h2>
+                        <p class="text-xs text-gray-600">GreenSathi</p>
+                    </div>
+                </div>
+                <button id="sidebarToggle" class="p-2 rounded-lg hover:bg-gray-100 hidden md:block">
+                    <i class="fas fa-bars text-gray-600"></i>
+                </button>
+            </div>
+        </div>
+
+        <nav class="p-4 space-y-2">
+            <a href="/admin/dashboard"
+                class="sidebar-item flex items-center space-x-3 p-3 rounded-lg {% if request.path == '/admin/dashboard' %}active{% endif %}"
+                data-section="dashboard">
+                <i class="fas fa-chart-pie w-5"></i>
+                <span class="sidebar-text">Dashboard</span>
+            </a>
+            <a href="/admin/users"
+                class="sidebar-item flex items-center space-x-3 p-3 rounded-lg {% if request.path == '/admin/users' %}active{% endif %}"
+                data-section="users">
+                <i class="fas fa-users w-5"></i>
+                <span class="sidebar-text">Users</span>
+            </a>
+            <a href="/admin/conversations"
+                class="sidebar-item flex items-center space-x-3 p-3 rounded-lg {% if request.path == '/admin/conversations' %}active{% endif %}"
+                data-section="conversations">
+                <i class="fas fa-comments w-5"></i>
+                <span class="sidebar-text">Conversations</span>
+            </a>
+            <a href="/admin/devices"
+                class="sidebar-item flex items-center space-x-3 p-3 rounded-lg {% if request.path == '/admin/devices' %}active{% endif %}"
+                data-section="devices">
+                <i class="fas fa-mobile-alt w-5"></i>
+                <span class="sidebar-text">Devices</span>
+            </a>
+            <a href="/admin/analytics"
+                class="sidebar-item flex items-center space-x-3 p-3 rounded-lg {% if request.path == '/admin/analytics' %}active{% endif %}"
+                data-section="analytics">
+                <i class="fas fa-chart-line w-5"></i>
+                <span class="sidebar-text">Analytics</span>
+            </a>
+            <a href="/admin/settings"
+                class="sidebar-item flex items-center space-x-3 p-3 rounded-lg {% if request.path == '/admin/settings' %}active{% endif %}"
+                data-section="settings">
+                <i class="fas fa-cog w-5"></i>
+                <span class="sidebar-text">Settings</span>
+            </a>
+        </nav>
+
+        <div class="absolute bottom-4 left-4 right-4">
+            <h1 class="text-xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-green-600 leading-none">
+                Green<span class="text-orange-400">Sathi</span></h1>
+            <p class="text-[10px] md:text-xs font-bold text-green-600 tracking-widest uppercase mt-1">AI Farming
+                Companion</p>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content min-h-screen" id="mainContent">
+        <!-- Top Header -->
+        <header class="glass-card border-b border-gray-200 p-3 md:p-4 relative" style="z-index: 100;">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <button id="mobileSidebarToggle" class="p-2 rounded-lg hover:bg-gray-100 md:hidden">
+                        <i class="fas fa-bars text-gray-600"></i>
+                    </button>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">{% block page_title %}Dashboard{% endblock %}</h1>
+                        <p class="text-gray-600">{% block page_subtitle %}Welcome to the admin panel{% endblock %}</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 rounded-lg hover:bg-gray-100 relative" id="refreshBtn" onclick="refreshPage()">
+                        <i class="fas fa-sync-alt text-gray-600"></i>
+                    </button>
+                    <div class="user-dropdown" id="userDropdown">
+                        <button type="button" class="w-10 h-10 rounded-full bg-green-200 flex items-center justify-center cursor-pointer hover:opacity-90 transition" id="userDropdownBtn">
+                            <i class="fas fa-user-shield text-green-600 text-sm"></i>
+                        </button>
+                        <div class="user-dropdown-menu" id="userDropdownMenu">
+                            <div class="p-3 border-b border-gray-100">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-user-shield text-green-600"></i>
+                                    <span class="font-semibold text-gray-800">admin</span>
+                                </div>
+                            </div>
+                            <a href="#" onclick="logout(); return false;" class="flex items-center space-x-3 p-3 text-red-600 hover:bg-red-50 transition rounded-b-lg">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="p-4 md:p-6">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Shared Scripts -->
+    <script>
+        // Sidebar toggle functionality
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+
+            // Save state to localStorage
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+
+            sidebar.classList.add('mobile-open');
+            overlay.classList.add('show');
+        }
+
+        function closeMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobileOverlay');
+
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.remove('show');
+        }
+
+        // User dropdown toggle
+        function toggleUserDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('userDropdown');
+            dropdown.classList.toggle('active');
+        }
+        // Event listeners
+        document.getElementById('sidebarToggle')?.addEventListener('click', toggleSidebar);
+        document.getElementById('mobileSidebarToggle')?.addEventListener('click', toggleMobileSidebar);
+        document.getElementById('mobileOverlay')?.addEventListener('click', closeMobileSidebar);
+
+        // User dropdown toggle - Simplified and fixed
+        document.addEventListener('DOMContentLoaded', () => {
+            const userDropdownBtn = document.getElementById('userDropdownBtn');
+            const userDropdown = document.getElementById('userDropdown');
+            
+            if (userDropdownBtn && userDropdown) {
+                userDropdownBtn.addEventListener('click', (event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    userDropdown.classList.toggle('active');
+                    console.log('Dropdown toggled:', userDropdown.classList.contains('active'));
+                });
+            }
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (event) => {
+                if (userDropdown && !userDropdown.contains(event.target)) {
+                    userDropdown.classList.remove('active');
+                }
+            });
+        });
+
+        // Restore sidebar state from localStorage
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (sidebarCollapsed) {
+                document.getElementById('sidebar').classList.add('collapsed');
+                document.getElementById('mainContent').classList.add('expanded');
+            }
+        });
+
+        // Logout function
+        async function logout() {
+            try {
+                const response = await fetch('/admin/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+
+                if (response.ok) {
+                    window.location.href = '/admin/login';
+                } else {
+                    alert('Logout failed');
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                alert('Logout failed');
+            }
+        }
+
+        // Refresh page function (to be overridden by page-specific JS)
+        function refreshPage() {
+            location.reload();
+        }
+
+        // Show notification helper
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                warning: 'bg-orange-500',
+                info: 'bg-blue-500'
+            };
+
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-opacity duration-300`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
+</body>
+
+</html>

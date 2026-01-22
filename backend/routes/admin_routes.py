@@ -38,8 +38,8 @@ def require_admin_auth():
 
 @admin_bp.route('/admin')
 def admin_redirect():
-    """Redirect /admin to /admin/login"""
-    return redirect(url_for('admin.login'))
+    """Redirect /admin to /admin/dashboard"""
+    return redirect(url_for('admin.dashboard_page'))
 
 @admin_bp.route('/admin/login', methods=['GET', 'POST'])
 def login():
@@ -64,7 +64,7 @@ def login():
     # Check if already logged in
     token = session.get('admin_token')
     if token and admin_service.validate_session(token):
-        return redirect(url_for('admin.dashboard'))
+        return redirect(url_for('admin.dashboard_page'))
     
     return render_template('admin/login.html')
 
@@ -93,9 +93,39 @@ def logout():
 
 @admin_bp.route('/admin/dashboard')
 @require_admin_auth()
-def dashboard():
+def dashboard_page():
     """Admin dashboard page"""
     return render_template('admin/dashboard.html')
+
+@admin_bp.route('/admin/users')
+@require_admin_auth()
+def users_page():
+    """Users management page"""
+    return render_template('admin/users.html')
+
+@admin_bp.route('/admin/conversations')
+@require_admin_auth()
+def conversations_page():
+    """Conversations page"""
+    return render_template('admin/conversations.html')
+
+@admin_bp.route('/admin/devices')
+@require_admin_auth()
+def devices_page():
+    """Devices management page"""
+    return render_template('admin/devices.html')
+
+@admin_bp.route('/admin/analytics')
+@require_admin_auth()
+def analytics_page():
+    """Analytics page"""
+    return render_template('admin/analytics.html')
+
+@admin_bp.route('/admin/settings')
+@require_admin_auth()
+def settings_page():
+    """Settings page"""
+    return render_template('admin/settings.html')
 
 @admin_bp.route('/admin/api/dashboard')
 @require_admin_auth()
@@ -158,6 +188,8 @@ def get_users():
         if users_data and 'users' in users_data:
             # Convert all ObjectIds to strings using utility function
             users_data = convert_objectids_to_strings(users_data)
+            # Add total_pages field for frontend compatibility
+            users_data['total_pages'] = users_data.get('pages', 0)
             return jsonify({'success': True, 'data': users_data})
         else:
             # Return empty data if no users found
@@ -253,16 +285,95 @@ def get_analytics():
     """API endpoint for detailed analytics"""
     try:
         days = request.args.get('days', 30, type=int)
-        analytics = admin_service.get_conversation_analytics(days)
+        device_id = request.args.get('device_id', None)
+        
+        analytics = admin_service.get_conversation_analytics(days, device_id)
         
         if analytics:
             # Convert any ObjectIds to strings using utility function
             analytics = convert_objectids_to_strings(analytics)
             return jsonify({'success': True, 'data': analytics})
         else:
-            return jsonify({'success': False, 'message': 'Failed to get analytics'}), 500
+            return jsonify({'success': False, 'message': 'No analytics data available'}), 404
     except Exception as e:
         logger.error(f"Error getting analytics: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error'}), 500
+
+@admin_bp.route('/admin/api/devices')
+@require_admin_auth()
+def get_devices():
+    """API endpoint for devices list"""
+    try:
+        page = request.args.get('page', 1, type=int)
+        limit = request.args.get('limit', 20, type=int)
+        
+        devices_data = admin_service.get_devices_list(page, limit)
+        
+        if devices_data and 'devices' in devices_data:
+            # Convert all ObjectIds to strings
+            devices_data = convert_objectids_to_strings(devices_data)
+            # Add total_pages for frontend compatibility
+            devices_data['total_pages'] = devices_data.get('pages', 0)
+            return jsonify({'success': True, 'data': devices_data})
+        else:
+            return jsonify({
+                'success': True, 
+                'data': {
+                    'devices': [],
+                    'total': 0,
+                    'page': page,
+                    'pages': 0,
+                    'total_pages': 0
+                }
+            })
+    except Exception as e:
+        logger.error(f"Error getting devices: {e}")
+        return jsonify({'success': False, 'message': f'Internal server error: {str(e)}'}), 500
+
+@admin_bp.route('/admin/api/devices/<device_id>')
+@require_admin_auth()
+def get_device_details_api(device_id):
+    """API endpoint for specific device details"""
+    try:
+        device = admin_service.get_device_details(device_id)
+        if device:
+            device = convert_objectids_to_strings(device)
+            return jsonify({'success': True, 'data': device})
+        else:
+            return jsonify({'success': False, 'message': 'Device not found'}), 404
+    except Exception as e:
+        logger.error(f"Error getting device details: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error'}), 500
+
+@admin_bp.route('/admin/api/devices/<device_id>/pipeline', methods=['PUT'])
+@require_admin_auth()
+def update_device_pipeline_api(device_id):
+    """API endpoint to update device pipeline configuration"""
+    try:
+        data = request.get_json()
+        pipeline_type = data.get('pipeline_type')
+        llm_service = data.get('llm_service')
+        
+        if not pipeline_type and not llm_service:
+            return jsonify({'success': False, 'message': 'At least one field required'}), 400
+        
+        # Validate pipeline_type
+        if pipeline_type and pipeline_type not in ['library', 'api']:
+            return jsonify({'success': False, 'message': 'Invalid pipeline_type'}), 400
+        
+        # Validate llm_service
+        valid_llm_services = ['gemini', 'openai', 'azure_openai', 'vertex', 'dhenu']
+        if llm_service and llm_service not in valid_llm_services:
+            return jsonify({'success': False, 'message': 'Invalid llm_service'}), 400
+        
+        success = admin_service.update_device_pipeline(device_id, pipeline_type, llm_service)
+        
+        if success:
+            return jsonify({'success': True, 'message': 'Pipeline configuration updated'})
+        else:
+            return jsonify({'success': False, 'message': 'Failed to update configuration'}), 400
+    except Exception as e:
+        logger.error(f"Error updating device pipeline: {e}")
         return jsonify({'success': False, 'message': 'Internal server error'}), 500
 
 @admin_bp.route('/admin/api/change-password', methods=['POST'])
