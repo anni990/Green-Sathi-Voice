@@ -1,71 +1,192 @@
-import hashlib
+import jwt
+import bcrypt
 import secrets
 import logging
 from datetime import datetime, timedelta
 from backend.models.database import db_manager
+from backend.utils.config import Config
 
 logger = logging.getLogger(__name__)
 
 class AdminService:
-    """Handles admin authentication and management operations"""
+    """Handles admin authentication and management operations with secure database storage"""
     
     def __init__(self):
-        self.admin_credentials = {
-            'username': 'admin',
-            'password': self._hash_password('123456')  # Default password
-        }
-        self.sessions = {}  # In-memory session storage
-        logger.info("Admin service initialized")
+        self.jwt_secret = Config.JWT_SECRET_KEY
+        self.session_expiry = 86400  # 24 hours in seconds
+        self._ensure_admin_exists()
+        logger.info("Admin service initialized with database authentication")
+    
+    def _ensure_admin_exists(self):
+        """Ensure default admin user exists in database"""
+        try:
+            admin = db_manager.admins.find_one({'username': 'admin'})
+            if not admin:
+                # Create default admin with password '123456'
+                default_password = self._hash_password('123456')
+                db_manager.admins.insert_one({
+                    'username': 'admin',
+                    'password_hash': default_password,
+                    'created_at': datetime.utcnow(),
+                    'updated_at': datetime.utcnow()
+                })
+                logger.info("Default admin user created with username: admin, password: 123456")
+        except Exception as e:
+            logger.error(f"Failed to ensure admin exists: {e}")
     
     def _hash_password(self, password):
-        """Hash password using SHA256"""
-        return hashlib.sha256(password.encode()).hexdigest()
+        """Hash password using bcrypt (secure)"""
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+    
+    def _verify_password(self, password, password_hash):
+        """Verify password against bcrypt hash"""
+        return bcrypt.checkpw(password.encode('utf-8'), password_hash.encode('utf-8'))
+    
+    def _generate_jwt_token(self, username):
+        """Generate JWT session token"""
+        payload = {
+            'username': username,
+            'type': 'admin_session',
+            'exp': datetime.utcnow() + timedelta(seconds=self.session_expiry),
+            'iat': datetime.utcnow(),
+            'jti': secrets.token_hex(16)  # Unique token ID
+        }
+        return jwt.encode(payload, self.jwt_secret, algorithm='HS256')
+    
+    def _decode_jwt_token(self, token):
+        """Decode and validate JWT token"""
+        try:
+            payload = jwt.decode(token, self.jwt_secret, algorithms=['HS256'])
+            if payload.get('type') != 'admin_session':
+                return None
+            return payload
+        except jwt.ExpiredSignatureError:
+            logger.warning("Admin token has expired")
+            return None
+        except jwt.InvalidTokenError as e:
+            logger.warning(f"Invalid admin token: {e}")
+            return None
     
     def authenticate(self, username, password):
-        """Authenticate admin user"""
-        if (username == self.admin_credentials['username'] and 
-            self._hash_password(password) == self.admin_credentials['password']):
-            # Generate session token
-            token = secrets.token_hex(32)
-            self.sessions[token] = {
+        """Authenticate admin user with database verification"""
+        try:
+            # Get admin from database
+            admin = db_manager.admins.find_one({'username': username})
+            
+            if not admin:
+                logger.warning(f"Admin login attempt with invalid username: {username}")
+                return None
+            
+            # Verify password
+            if not self._verify_password(password, admin['password_hash']):
+                logger.warning(f"Admin login attempt with incorrect password for: {username}")
+                return None
+            
+            # Generate JWT token
+            token = self._generate_jwt_token(username)
+            
+            # Store session in database
+            db_manager.admin_sessions.insert_one({
                 'username': username,
-                'login_time': datetime.utcnow()
-            }
+                'token': token,
+                'login_time': datetime.utcnow(),
+                'expires_at': datetime.utcnow() + timedelta(seconds=self.session_expiry),
+                'ip_address': None  # Can be added from request context
+            })
+            
+            logger.info(f"Admin logged in successfully: {username}")
             return token
-        return None
+            
+        except Exception as e:
+            logger.error(f"Admin authentication error: {e}")
+            return None
     
     def validate_session(self, token):
         """Validate admin session token"""
-        if token in self.sessions:
-            session = self.sessions[token]
-            # Check if session is less than 24 hours old
-            if datetime.utcnow() - session['login_time'] < timedelta(hours=24):
+        try:
+            # Decode JWT token
+            payload = self._decode_jwt_token(token)
+            if not payload:
+                return False
+            
+            # Verify token exists in database and not expired
+            session = db_manager.admin_sessions.find_one({
+                'token': token,
+                'expires_at': {'$gt': datetime.utcnow()}
+            })
+            
+            if session:
                 return True
-            else:
-                # Remove expired session
-                del self.sessions[token]
-        return False
+            
+            # Clean up expired session if found
+            db_manager.admin_sessions.delete_one({'token': token})
+            return False
+            
+        except Exception as e:
+            logger.error(f"Session validation error: {e}")
+            return False
     
     def logout(self, token):
-        """Logout admin and remove session"""
-        if token in self.sessions:
-            del self.sessions[token]
-            return True
-        return False
+        """Logout admin and remove session from database"""
+        try:
+            result = db_manager.admin_sessions.delete_one({'token': token})
+            if result.deleted_count > 0:
+                logger.info("Admin logged out successfully")
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Logout error: {e}")
+            return False
     
     def change_password(self, token, current_password, new_password):
-        """Change admin password"""
-        if not self.validate_session(token):
-            return False, "Invalid session"
-        
-        if self._hash_password(current_password) != self.admin_credentials['password']:
-            return False, "Current password is incorrect"
-        
-        if len(new_password) < 6:
-            return False, "Password must be at least 6 characters long"
-        
-        self.admin_credentials['password'] = self._hash_password(new_password)
-        return True, "Password changed successfully"
+        """Change admin password in database"""
+        try:
+            # Validate session
+            if not self.validate_session(token):
+                return False, "Invalid session"
+            
+            # Get username from token
+            payload = self._decode_jwt_token(token)
+            if not payload:
+                return False, "Invalid token"
+            
+            username = payload.get('username')
+            
+            # Get admin from database
+            admin = db_manager.admins.find_one({'username': username})
+            if not admin:
+                return False, "Admin user not found"
+            
+            # Verify current password
+            if not self._verify_password(current_password, admin['password_hash']):
+                return False, "Current password is incorrect"
+            
+            # Validate new password
+            if len(new_password) < 6:
+                return False, "Password must be at least 6 characters long"
+            
+            # Hash and update new password
+            new_password_hash = self._hash_password(new_password)
+            db_manager.admins.update_one(
+                {'username': username},
+                {
+                    '$set': {
+                        'password_hash': new_password_hash,
+                        'updated_at': datetime.utcnow()
+                    }
+                }
+            )
+            
+            # Invalidate all existing sessions for security
+            db_manager.admin_sessions.delete_many({'username': username})
+            
+            logger.info(f"Password changed successfully for admin: {username}")
+            return True, "Password changed successfully. Please login again."
+            
+        except Exception as e:
+            logger.error(f"Password change error: {e}")
+            return False, "Password change failed"
     
     def get_dashboard_stats(self):
         """Get comprehensive dashboard statistics"""
