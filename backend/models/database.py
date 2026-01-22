@@ -72,6 +72,12 @@ class DatabaseManager:
     def create_conversation(self, user_id, user_input, bot_response, device_id=None, session_id=None):
         """Save conversation turn to database"""
         try:
+            from bson import ObjectId
+            
+            # Ensure user_id is ObjectId for consistent $lookup joins
+            if isinstance(user_id, str):
+                user_id = ObjectId(user_id)
+            
             conversation_data = {
                 'user_id': user_id,
                 'device_id': device_id,
@@ -172,6 +178,18 @@ class DatabaseManager:
                     "foreignField": "_id",
                     "as": "user_info"
                 }},
+                {"$unwind": {
+                    "path": "$user_info",
+                    "preserveNullAndEmptyArrays": True
+                }},
+                {"$addFields": {
+                    "name": "$user_info.name",
+                    "phone": "$user_info.phone",
+                    "language": "$user_info.language"
+                }},
+                {"$project": {
+                    "user_info": 0
+                }},
                 {"$sort": {"conversation_count": -1}},
                 {"$limit": 10}
             ]))
@@ -206,8 +224,13 @@ class DatabaseManager:
     def get_user_conversations(self, user_id, page=1, limit=10):
         """Get conversations for a specific user"""
         try:
+            from bson import ObjectId
+            
+            # Ensure user_id is ObjectId for querying
+            if isinstance(user_id, str):
+                user_id = ObjectId(user_id)
+            
             skip = (page - 1) * limit
-            # user_id is stored as string in the database, not ObjectId
             conversations = list(self.conversations.find({
                 'user_id': user_id
             }).sort('timestamp', -1).skip(skip).limit(limit))
@@ -239,7 +262,169 @@ class DatabaseManager:
             logger.error(f"Failed to search users: {e}")
             return []
     
+    def get_all_conversations(self, page=1, limit=20):
+        """Get paginated conversations with user and device details"""
+        try:
+            from bson import ObjectId
+            
+            skip = (page - 1) * limit
+            
+            # Aggregation pipeline to join with users and devices
+            pipeline = [
+                {
+                    '$lookup': {
+                        'from': 'users',
+                        'localField': 'user_id',
+                        'foreignField': '_id',
+                        'as': 'user_info'
+                    }
+                },
+                {
+                    '$lookup': {
+                        'from': 'devices',
+                        'localField': 'device_id',
+                        'foreignField': 'device_id',
+                        'as': 'device_info'
+                    }
+                },
+                {
+                    '$unwind': {
+                        'path': '$user_info',
+                        'preserveNullAndEmptyArrays': True
+                    }
+                },
+                {
+                    '$unwind': {
+                        'path': '$device_info',
+                        'preserveNullAndEmptyArrays': True
+                    }
+                },
+                {
+                    '$addFields': {
+                        'user_name': '$user_info.name',
+                        'user_phone': '$user_info.phone',
+                        'user_language': '$user_info.language',
+                        'device_name': '$device_info.device_name'
+                    }
+                },
+                {
+                    '$project': {
+                        'user_info': 0,
+                        'device_info': 0
+                    }
+                },
+                {
+                    '$sort': {'timestamp': -1}
+                },
+                {
+                    '$skip': skip
+                },
+                {
+                    '$limit': limit
+                }
+            ]
+            
+            conversations = list(self.conversations.aggregate(pipeline))
+            total = self.conversations.count_documents({})
+            
+            return {
+                'conversations': conversations,
+                'total': total,
+                'page': page,
+                'pages': (total + limit - 1) // limit
+            }
+        except Exception as e:
+            logger.error(f"Failed to get all conversations: {e}")
+            return None
+    
     # ===== Device Management Methods =====
+    
+    def get_all_devices(self, page=1, limit=20):
+        """Get paginated device list for admin"""
+        try:
+            skip = (page - 1) * limit
+            
+            # Aggregation to include user count per device
+            pipeline = [
+                {
+                    '$lookup': {
+                        'from': 'users',
+                        'localField': 'device_id',
+                        'foreignField': 'device_id',
+                        'as': 'users'
+                    }
+                },
+                {
+                    '$addFields': {
+                        'user_count': {'$size': '$users'},
+                        'last_active': {'$max': '$users.updated_at'}
+                    }
+                },
+                {
+                    '$project': {
+                        'users': 0,  # Remove the users array
+                        'password_hash': 0,  # Don't expose password hash
+                        'access_token': 0,  # Don't expose tokens
+                        'refresh_token': 0
+                    }
+                },
+                {
+                    '$sort': {'created_at': -1}
+                },
+                {
+                    '$skip': skip
+                },
+                {
+                    '$limit': limit
+                }
+            ]
+            
+            devices = list(self.devices.aggregate(pipeline))
+            total = self.devices.count_documents({})
+            
+            return {
+                'devices': devices,
+                'total': total,
+                'page': page,
+                'pages': (total + limit - 1) // limit
+            }
+        except Exception as e:
+            logger.error(f"Failed to get devices: {e}")
+            return None
+    
+    def get_device_statistics(self):
+        """Get device statistics for admin dashboard"""
+        try:
+            total_devices = self.devices.count_documents({})
+            
+            # Devices by pipeline type
+            pipeline_stats = list(self.devices.aggregate([
+                {"$group": {"_id": "$pipeline_type", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}}
+            ]))
+            
+            # Devices by LLM service
+            llm_stats = list(self.devices.aggregate([
+                {"$group": {"_id": "$llm_service", "count": {"$sum": 1}}},
+                {"$sort": {"count": -1}}
+            ]))
+            
+            # Active devices (logged in within last 7 days)
+            from datetime import datetime, timedelta
+            seven_days_ago = datetime.utcnow() - timedelta(days=7)
+            active_devices = self.devices.count_documents({
+                "last_login": {"$gte": seven_days_ago}
+            })
+            
+            return {
+                'total_devices': total_devices,
+                'active_devices': active_devices,
+                'pipeline_stats': pipeline_stats,
+                'llm_stats': llm_stats
+            }
+        except Exception as e:
+            logger.error(f"Failed to get device statistics: {e}")
+            return None
     
     def get_next_device_id(self):
         """Get the next available device ID (auto-increment starting from 1201)"""

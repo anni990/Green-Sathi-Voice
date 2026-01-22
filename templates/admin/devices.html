@@ -1,0 +1,63 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Devices{% endblock %}
+{% block page_title %}Device Management{% endblock %}
+{% block page_subtitle %}Manage devices and pipeline configurations{% endblock %}
+
+{% block content %}
+<div class="glass-card rounded-xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full table-auto">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">Device ID</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">Device Name</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">Pipeline Type</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">LLM Service</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">Users</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="devicesTable">
+                <tr>
+                    <td colspan="6" class="py-8 text-center text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>Loading...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div class="text-sm text-gray-600">
+            Showing <span id="devicesShowingStart">0</span> to <span id="devicesShowingEnd">0</span> of <span id="devicesTotal">0</span> devices
+        </div>
+        <div class="flex space-x-2" id="devicesPagination">
+            <!-- Pagination buttons will be rendered here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/admin/AdminApiService.js"></script>
+<script src="/static/js/admin/TableRenderer.js"></script>
+<script src="/static/js/admin/ModalManager.js"></script>
+<script src="/static/js/admin/DevicesController.js"></script>
+<script>
+    // Initialize devices controller
+    const devicesController = new DevicesController();
+    
+    // Override refresh function
+    function refreshPage() {
+        devicesController.loadData();
+    }
+    
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        devicesController.init();
+    });
+</script>
+{% endblock %}
