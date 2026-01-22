@@ -114,14 +114,31 @@ class AdminService:
         return db_manager.search_users(query)
     
     def get_all_conversations(self, page=1, limit=20):
-        """Get paginated conversations with user details"""
+        """Get paginated conversations with user and device details"""
+        return db_manager.get_all_conversations(page, limit)
+
+    def get_conversation_analytics(self, days=30, device_id=None):
+        """Get detailed conversation analytics with optional device filtering"""
         try:
+            from datetime import datetime, timedelta
             from bson import ObjectId
             
-            skip = (page - 1) * limit
+            # Get conversations from last N days
+            start_date = datetime.utcnow() - timedelta(days=days)
             
-            # Use aggregation to join conversations with users
+            # Build match criteria
+            match_criteria = {'timestamp': {'$gte': start_date}}
+            if device_id and device_id != 'all':
+                try:
+                    match_criteria['device_id'] = int(device_id)
+                except (ValueError, TypeError):
+                    match_criteria['device_id'] = device_id
+            
+            # Aggregation pipeline to get conversations with user data
             pipeline = [
+                {
+                    '$match': match_criteria
+                },
                 {
                     '$lookup': {
                         'from': 'users',
@@ -135,64 +152,41 @@ class AdminService:
                         'path': '$user_info',
                         'preserveNullAndEmptyArrays': True
                     }
-                },
-                {
-                    '$addFields': {
-                        'user_name': '$user_info.name',
-                        'user_phone': '$user_info.phone',
-                        'user_language': '$user_info.language'
-                    }
-                },
-                {
-                    '$project': {
-                        'user_info': 0  # Remove the user_info field to clean up
-                    }
-                },
-                {
-                    '$sort': {'timestamp': -1}
-                },
-                {
-                    '$skip': skip
-                },
-                {
-                    '$limit': limit
                 }
             ]
             
             conversations = list(db_manager.conversations.aggregate(pipeline))
-            total = db_manager.conversations.count_documents({})
-            
-            return {
-                'conversations': conversations,
-                'total': total,
-                'page': page,
-                'pages': (total + limit - 1) // limit
-            }
-        except Exception as e:
-            logger.error(f"Failed to get all conversations: {e}")
-            return None
-
-    def get_conversation_analytics(self, days=30):
-        """Get detailed conversation analytics"""
-        try:
-            from datetime import datetime, timedelta
-            
-            # Get conversations from last N days
-            start_date = datetime.utcnow() - timedelta(days=days)
-            
-            conversations = list(db_manager.conversations.find({
-                'timestamp': {'$gte': start_date}
-            }))
             
             # Analyze conversation patterns
             hourly_distribution = {}
             language_distribution = {}
+            daily_trend = {}
+            device_distribution = {}
             avg_response_length = 0
+            total_users = set()
             
             for conv in conversations:
                 # Hour distribution
                 hour = conv['timestamp'].hour
                 hourly_distribution[hour] = hourly_distribution.get(hour, 0) + 1
+                
+                # Daily trend
+                date_str = conv['timestamp'].strftime('%Y-%m-%d')
+                daily_trend[date_str] = daily_trend.get(date_str, 0) + 1
+                
+                # Language distribution (from user_info)
+                if 'user_info' in conv and conv['user_info']:
+                    language = conv['user_info'].get('language', 'Unknown')
+                    language_distribution[language] = language_distribution.get(language, 0) + 1
+                    
+                    # Track unique users
+                    if '_id' in conv['user_info']:
+                        total_users.add(str(conv['user_info']['_id']))
+                
+                # Device distribution
+                if 'device_id' in conv and conv['device_id']:
+                    device_id = conv['device_id']
+                    device_distribution[device_id] = device_distribution.get(device_id, 0) + 1
                 
                 # Response length
                 if 'bot_response' in conv:
@@ -201,15 +195,59 @@ class AdminService:
             if conversations:
                 avg_response_length = avg_response_length / len(conversations)
             
+            # Sort daily trend by date
+            daily_trend_sorted = [{'date': k, 'count': v} for k, v in sorted(daily_trend.items())]
+            
+            # Convert language_distribution to list format
+            language_dist_list = [{'language': k, 'count': v} for k, v in language_distribution.items()]
+            
+            # Convert device_distribution to list format
+            device_dist_list = [{'device_id': k, 'count': v} for k, v in device_distribution.items()]
+            
             return {
                 'total_conversations': len(conversations),
+                'unique_users': len(total_users),
                 'hourly_distribution': hourly_distribution,
+                'language_distribution': language_dist_list,
+                'daily_trend': daily_trend_sorted,
+                'device_distribution': device_dist_list,
                 'avg_response_length': round(avg_response_length, 2),
                 'period_days': days
             }
         except Exception as e:
             logger.error(f"Failed to get conversation analytics: {e}")
             return None
+    
+    def get_devices_list(self, page=1, limit=20):
+        """Get paginated devices list"""
+        return db_manager.get_all_devices(page, limit)
+    
+    def get_device_details(self, device_id):
+        """Get detailed device information"""
+        try:
+            device = db_manager.get_device_by_id(int(device_id))
+            if device:
+                # Get user count for this device
+                user_count = db_manager.users.count_documents({'device_id': int(device_id)})
+                device['user_count'] = user_count
+                
+                # Remove sensitive data
+                device.pop('password_hash', None)
+                device.pop('access_token', None)
+                device.pop('refresh_token', None)
+                
+                return device
+        except Exception as e:
+            logger.error(f"Failed to get device details: {e}")
+        return None
+    
+    def update_device_pipeline(self, device_id, pipeline_type=None, llm_service=None):
+        """Update device pipeline configuration"""
+        try:
+            return db_manager.update_device_pipeline_config(int(device_id), pipeline_type, llm_service)
+        except Exception as e:
+            logger.error(f"Failed to update device pipeline: {e}")
+            return False
 
 # Global admin service instance
 admin_service = AdminService()

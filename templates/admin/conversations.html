@@ -1,0 +1,62 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Conversations{% endblock %}
+{% block page_title %}Conversations{% endblock %}
+{% block page_subtitle %}View all conversation history{% endblock %}
+
+{% block content %}
+<div class="glass-card rounded-xl overflow-hidden">
+    <div class="overflow-x-auto">
+        <table class="min-w-full table-auto">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">User</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">Language</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">Device</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">User Input</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">Bot Response</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="conversationsTable">
+                <tr>
+                    <td colspan="6" class="py-8 text-center text-gray-500">
+                        <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+                        <p>Loading...</p>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+        <div class="text-sm text-gray-600">
+            Showing <span id="conversationsShowingStart">0</span> to <span id="conversationsShowingEnd">0</span> of <span id="conversationsTotal">0</span> conversations
+        </div>
+        <div class="flex space-x-2" id="conversationsPagination">
+            <!-- Pagination buttons will be rendered here -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/admin/AdminApiService.js"></script>
+<script src="/static/js/admin/TableRenderer.js"></script>
+<script src="/static/js/admin/ConversationsController.js"></script>
+<script>
+    // Initialize conversations controller
+    const conversationsController = new ConversationsController();
+    
+    // Override refresh function
+    function refreshPage() {
+        conversationsController.loadData();
+    }
+    
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        conversationsController.init();
+    });
+</script>
+{% endblock %}

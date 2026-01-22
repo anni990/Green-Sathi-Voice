@@ -148,21 +148,35 @@ class DeviceAuthService:
             # Decode refresh token
             payload = self.decode_token(refresh_token)
             
-            if not payload or payload.get('type') != 'refresh':
-                return None, "Invalid refresh token"
+            if not payload:
+                logger.warning("Refresh token has expired or is invalid")
+                return None, "Refresh token has expired. Please login again."
+            
+            if payload.get('type') != 'refresh':
+                logger.warning(f"Invalid token type: {payload.get('type')}")
+                return None, "Invalid refresh token type"
             
             device_id = payload.get('device_id')
+            
+            if not device_id:
+                logger.warning("Refresh token missing device_id")
+                return None, "Invalid refresh token format"
             
             # Verify refresh token exists in database
             device = db_manager.get_device_by_token(refresh_token, 'refresh')
             
-            if not device or device['device_id'] != device_id:
-                return None, "Refresh token not found or invalid"
+            if not device:
+                logger.warning(f"Refresh token not found in database for device: {device_id}")
+                return None, "Refresh token not found. Please login again."
+            
+            if device['device_id'] != device_id:
+                logger.warning(f"Device ID mismatch: token={device_id}, db={device['device_id']}")
+                return None, "Device ID mismatch. Please login again."
             
             # Generate new access token
             new_access_token = self.generate_access_token(device_id)
             
-            # Update access token in database
+            # Update access token in database (keep same refresh token)
             db_manager.update_device_tokens(device_id, new_access_token, refresh_token)
             
             logger.info(f"Access token refreshed for device: ID {device_id}")
@@ -172,8 +186,8 @@ class DeviceAuthService:
             }, None
             
         except Exception as e:
-            logger.error(f"Token refresh failed: {e}")
-            return None, "Token refresh failed"
+            logger.error(f"Token refresh failed with exception: {e}")
+            return None, "Token refresh failed. Please try again."
     
     def logout_device(self, device_id):
         """Logout device by invalidating tokens"""
