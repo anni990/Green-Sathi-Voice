@@ -15,6 +15,8 @@ class DatabaseManager:
             self.users = self.db.users
             self.conversations = self.db.conversations
             self.devices = self.db.devices
+            self.admins = self.db.admins
+            self.admin_sessions = self.db.admin_sessions
             logger.info("Connected to MongoDB successfully")
         except Exception as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
