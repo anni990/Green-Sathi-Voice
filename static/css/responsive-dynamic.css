@@ -1,0 +1,339 @@
+/* ========================================
+   DYNAMIC RESPONSIVE SYSTEM
+   Viewport-based calculations for all devices
+   
+   Usage: Import this CSS file after Tailwind
+   and it will override fixed sizes with dynamic ones
+   ======================================== */
+
+:root {
+    /* Base font size scales with viewport width */
+    --base-font-size: clamp(12px, 1.2vw, 18px);
+    
+    /* Spacing system based on viewport */
+    --space-xs: clamp(0.25rem, 0.5vw, 0.5rem);
+    --space-sm: clamp(0.5rem, 1vw, 1rem);
+    --space-md: clamp(0.75rem, 1.5vw, 1.5rem);
+    --space-lg: clamp(1rem, 2vw, 2rem);
+    --space-xl: clamp(1.5rem, 3vw, 3rem);
+    --space-2xl: clamp(2rem, 4vw, 4rem);
+    
+    /* Typography scale - fluid and responsive */
+    --text-xs: clamp(0.625rem, 0.8vw, 0.75rem);
+    --text-sm: clamp(0.75rem, 0.9vw, 0.875rem);
+    --text-base: clamp(0.875rem, 1.1vw, 1rem);
+    --text-lg: clamp(1rem, 1.3vw, 1.125rem);
+    --text-xl: clamp(1.125rem, 1.5vw, 1.25rem);
+    --text-2xl: clamp(1.25rem, 1.8vw, 1.5rem);
+    --text-3xl: clamp(1.5rem, 2.2vw, 1.875rem);
+    --text-4xl: clamp(1.75rem, 2.8vw, 2.25rem);
+    
+    /* Component sizes */
+    --logo-size: clamp(2.5rem, 4vw, 3.5rem);
+    --button-padding-x: clamp(1rem, 2vw, 2rem);
+    --button-padding-y: clamp(0.5rem, 1vw, 0.75rem);
+    --button-font: clamp(0.75rem, 1vw, 0.875rem);
+    
+    /* Mic button - scales with screen */
+    --mic-size: clamp(5rem, 10vw, 8rem);
+    --mic-icon-size: clamp(2rem, 4vw, 3.5rem);
+    
+    /* Card padding */
+    --card-padding: clamp(0.75rem, 1.5vw, 1.5rem);
+    --card-gap: clamp(0.5rem, 1vw, 1rem);
+    
+    /* Border radius scaling */
+    --radius-sm: clamp(0.5rem, 1vw, 0.75rem);
+    --radius-md: clamp(0.75rem, 1.5vw, 1rem);
+    --radius-lg: clamp(1rem, 2vw, 1.5rem);
+    --radius-full: 9999px;
+}
+
+/* Apply dynamic sizing to body */
+body {
+    font-size: var(--base-font-size);
+}
+
+/* ========================================
+   LANDING PAGE - HEADER
+   ======================================== */
+
+/* Logo dynamic sizing */
+#landing-page header img {
+    width: var(--logo-size) !important;
+    height: var(--logo-size) !important;
+}
+
+/* Header title - brand name */
+#landing-page header h1 {
+    font-size: var(--text-2xl) !important;
+    line-height: 1.2;
+}
+
+#landing-page header h1 + p {
+    font-size: var(--text-xs) !important;
+    margin-top: var(--space-xs);
+}
+
+/* Auth buttons - dynamic sizing */
+#auth-buttons a {
+    padding: var(--button-padding-y) var(--button-padding-x) !important;
+    font-size: var(--button-font) !important;
+    border-radius: var(--radius-full) !important;
+    gap: var(--space-xs);
+}
+
+#auth-buttons i {
+    font-size: var(--text-lg);
+}
+
+/* Account dropdown */
+#account-dropdown button {
+    padding: var(--button-padding-y) var(--button-padding-x) !important;
+    font-size: var(--button-font) !important;
+}
+
+#dropdown-menu {
+    font-size: var(--text-sm) !important;
+}
+
+/* ========================================
+   LANDING PAGE - MAIN CONTENT
+   ======================================== */
+
+/* Main content headings */
+#landing-page main h2 {
+    font-size: var(--text-3xl) !important;
+    line-height: 1.2;
+}
+
+#landing-page main p {
+    font-size: var(--text-base) !important;
+}
+
+/* Glass cards - weather and mandi */
+.glass-card {
+    padding: var(--card-padding) !important;
+    gap: var(--card-gap) !important;
+    border-radius: var(--radius-lg) !important;
+}
+
+.glass-card .text-2xl,
+.glass-card .text-4xl {
+    font-size: clamp(1.5rem, 3vw, 2rem) !important;
+}
+
+.glass-card p:first-of-type {
+    font-size: var(--text-xs) !important;
+}
+
+.glass-card p:last-of-type {
+    font-size: var(--text-base) !important;
+}
+
+/* Microphone button - central hero element */
+#landing-mic-icon {
+    width: var(--mic-size) !important;
+    height: var(--mic-size) !important;
+}
+
+#landing-mic-icon svg {
+    width: var(--mic-icon-size) !important;
+    height: var(--mic-icon-size) !important;
+}
+
+/* Mic status text */
+#landing-mic-status {
+    font-size: var(--text-xl) !important;
+    margin-top: clamp(2rem, 4vw, 3.5rem);
+}
+
+#landing-mic-status + p {
+    font-size: var(--text-sm) !important;
+    margin-top: var(--space-sm);
+}
+
+/* Floating leaves/decorations */
+.leaf-float {
+    font-size: clamp(2rem, 4vw, 3rem) !important;
+}
+
+/* ========================================
+   LANDING PAGE - FOOTER
+   ======================================== */
+
+/* Footer cards */
+#landing-page footer .glass-card {
+    padding: var(--card-padding) !important;
+}
+
+#landing-page footer .glass-card h4 {
+    font-size: var(--text-base) !important;
+}
+
+#landing-page footer .glass-card p {
+    font-size: var(--text-xs) !important;
+}
+
+#landing-page footer .text-2xl,
+#landing-page footer .text-3xl {
+    font-size: clamp(1.25rem, 2.5vw, 1.75rem) !important;
+}
+
+/* Footer version text */
+#landing-page footer > div:last-child {
+    font-size: var(--text-xs) !important;
+    margin-top: var(--space-md);
+}
+
+/* Responsive grid gaps */
+#landing-page main {
+    gap: clamp(1rem, 3vw, 3rem) !important;
+}
+
+#landing-page footer > div {
+    gap: var(--space-md) !important;
+}
+
+/* ========================================
+   VOICE BOT UI - MAIN INTERFACE
+   ======================================== */
+
+/* Main UI header */
+#main-ui header img {
+    width: var(--logo-size) !important;
+    height: var(--logo-size) !important;
+}
+
+#main-ui header h1 {
+    font-size: var(--text-2xl) !important;
+}
+
+#main-ui header p {
+    font-size: var(--text-xs) !important;
+}
+
+/* Sidebar and conversation */
+#main-ui .glass-card {
+    padding: var(--card-padding) !important;
+    border-radius: var(--radius-lg) !important;
+}
+
+#main-ui #status-text {
+    font-size: var(--text-base) !important;
+}
+
+#main-ui #action-instruction {
+    font-size: var(--text-lg) !important;
+}
+
+/* Main action buttons */
+.main-button {
+    width: clamp(4rem, 10vw, 5rem) !important;
+    height: clamp(4rem, 10vw, 5rem) !important;
+}
+
+.main-button i {
+    font-size: clamp(1.5rem, 3vw, 2rem) !important;
+}
+
+/* Conversation bubbles */
+#conversation-history {
+    font-size: var(--text-base) !important;
+}
+
+/* ========================================
+   DEVICE AUTH PAGES (Login/Register)
+   ======================================== */
+
+/* Auth page headings */
+.glass-panel h2,
+.glass-panel h1 {
+    font-size: var(--text-3xl) !important;
+}
+
+.glass-panel p {
+    font-size: var(--text-sm) !important;
+}
+
+/* Form inputs */
+.glass-panel input,
+.glass-panel select {
+    font-size: var(--text-base) !important;
+    padding: var(--space-md) !important;
+}
+
+.glass-panel label {
+    font-size: var(--text-xs) !important;
+}
+
+/* Auth buttons */
+.glass-panel button[type="submit"] {
+    padding: var(--space-md) var(--space-lg) !important;
+    font-size: var(--button-font) !important;
+}
+
+/* Device ID box */
+.id-highlight-box {
+    padding: var(--card-padding) !important;
+}
+
+.id-highlight-box input {
+    font-size: var(--text-xl) !important;
+}
+
+/* ========================================
+   DEVICE-SPECIFIC OPTIMIZATIONS
+   ======================================== */
+
+/* Media box / landscape displays (like Galaxy M33 5G) */
+@media (min-width: 1024px) and (max-height: 768px) {
+    :root {
+        --base-font-size: clamp(10px, 0.9vw, 14px);
+        --space-lg: clamp(0.75rem, 1.5vw, 1.5rem);
+        --mic-size: clamp(4rem, 8vw, 6rem);
+        --logo-size: clamp(2rem, 3vw, 2.5rem);
+        --text-3xl: clamp(1.25rem, 1.8vw, 1.5rem);
+        --button-padding-x: clamp(0.75rem, 1.5vw, 1.5rem);
+        --button-padding-y: clamp(0.4rem, 0.8vw, 0.6rem);
+    }
+    
+    #landing-page {
+        padding-top: var(--space-md);
+        padding-bottom: var(--space-md);
+    }
+}
+
+/* Large kiosk displays (18.5" and above) */
+@media (min-width: 1366px) {
+    :root {
+        --base-font-size: clamp(11px, 1vw, 16px);
+        --text-4xl: clamp(1.5rem, 2.2vw, 2rem);
+        --mic-size: clamp(5rem, 8vw, 7rem);
+    }
+}
+
+/* Ultra-wide displays (1920px+) */
+@media (min-width: 1920px) {
+    :root {
+        --base-font-size: 14px;
+        --mic-size: 7rem;
+        --logo-size: 3rem;
+    }
+}
+
+/* Small tablets and mobile landscape */
+@media (max-width: 768px) {
+    :root {
+        --space-lg: clamp(1rem, 2.5vw, 1.5rem);
+        --mic-size: clamp(6rem, 15vw, 10rem);
+    }
+}
+
+/* Mobile portrait */
+@media (max-width: 640px) {
+    :root {
+        --base-font-size: clamp(14px, 2vw, 16px);
+        --button-padding-x: clamp(0.75rem, 3vw, 1.5rem);
+    }
+}
