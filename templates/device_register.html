@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Device Registration - Green Sathi</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animate.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome.min.css') }}">
     <style>
         :root {
             --bg-cream: #F8F9F1; 
@@ -57,22 +57,48 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* Desktop specific: No scroll */
+        .btn-register:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(22, 163, 74, 0.3);
+        }
+
+        /* Desktop specific */
         @media (min-width: 1024px) {
-            body { overflow: hidden; }
             .main-split {
                 display: grid;
                 grid-template-columns: 0.85fr 1.15fr;
-                height: 85vh;
-                max-height: 750px;
+                min-height: 500px;
+                max-height: 90vh;
+            }
+            .form-container {
+                overflow-y: auto;
+                max-height: 90vh;
+            }
+            .form-container::-webkit-scrollbar {
+                width: 6px;
+            }
+            .form-container::-webkit-scrollbar-track {
+                background: rgba(0,0,0,0.05);
+                border-radius: 10px;
+            }
+            .form-container::-webkit-scrollbar-thumb {
+                background: var(--sathi-green);
+                border-radius: 10px;
             }
         }
 
         /* Mobile specific: Hide left side and adjust padding */
         @media (max-width: 1023px) {
             .left-branding { display: none; }
-            .form-container { padding: 1.5rem !important; }
-            .glass-panel { border-radius: 2rem; }
+            .form-container { 
+                padding: 1.5rem !important;
+                max-height: none !important;
+            }
+            .glass-panel { 
+                border-radius: 2rem;
+                max-height: 95vh;
+                overflow-y: auto;
+            }
         }
     </style>
 </head>
@@ -111,20 +137,20 @@
                 </div>
             </div>
 
-            <div class="form-container p-8 lg:p-14 bg-white/80">
-                <div class="max-w-md mx-auto h-full flex flex-col justify-center">
+            <div class="form-container p-6 lg:p-10 bg-white/80">
+                <div class="max-w-md mx-auto py-4 lg:py-8">
                     
-                    <div class="lg:hidden flex items-center justify-center gap-3 mb-6">
+                    <div class="lg:hidden flex items-center justify-center gap-3 mb-4">
                         <img src="../static/images/logo.png" class="w-10 h-10 rounded-lg">
                         <h2 class="text-xl font-black text-green-600">Green<span class="text-orange-500">Sathi</span></h2>
                     </div>
 
-                    <div class="mb-6">
+                    <div class="mb-4 lg:mb-6">
                         <h2 class="text-2xl lg:text-3xl font-extrabold text-gray-800">Register Kiosk</h2>
                         <p class="text-gray-500 text-sm font-medium">Create your secure device credentials.</p>
                     </div>
 
-                    <form id="registration-form" class="space-y-4">
+                    <form id="registration-form" class="space-y-3 lg:space-y-4">
                         <div class="space-y-1">
                             <label class="text-[10px] font-black text-gray-400 uppercase">Device Name</label>
                             <div class="relative border-2 border-gray-100 bg-white rounded-2xl">
@@ -205,16 +231,16 @@
                         </div>
 
                         <button type="submit" id="register-btn"
-                            class="w-full btn-register text-white font-black py-4 rounded-2xl mt-2 flex items-center justify-center gap-3 uppercase tracking-widest text-xs">
+                            class="w-full btn-register text-white font-black py-3.5 lg:py-4 rounded-2xl mt-2 flex items-center justify-center gap-3 uppercase tracking-widest text-xs shadow-lg">
                             Complete Registration
                         </button>
                     </form>
 
-                    <div id="error-message" class="hidden mt-4 bg-red-50 text-red-600 p-3 rounded-xl text-xs font-bold border-l-4 border-red-500">
+                    <div id="error-message" class="hidden mt-3 lg:mt-4 bg-red-50 text-red-600 p-3 rounded-xl text-xs font-bold border-l-4 border-red-500">
                         <span id="error-text"></span>
                     </div>
 
-                    <div class="mt-6 text-center">
+                    <div class="mt-4 lg:mt-6 text-center pb-4">
                         <p class="text-sm font-bold text-gray-400">
                             Already registered? 
                             <a href="/login" class="text-green-600 ml-1 underline underline-offset-4">Login</a>
