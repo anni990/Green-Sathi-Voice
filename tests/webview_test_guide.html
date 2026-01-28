@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebView Testing Instructions</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        .section {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #10b981;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .checklist {
+            list-style: none;
+            padding: 0;
+        }
+        .checklist li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+        .checklist li:before {
+            content: '☐';
+            position: absolute;
+            left: 0;
+            font-size: 20px;
+            color: #10b981;
+        }
+        .warning {
+            background: #fef3c7;
+            border-left-color: #f59e0b;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #f59e0b;
+            margin: 20px 0;
+        }
+        .success {
+            background: #d1fae5;
+            border-left-color: #10b981;
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #10b981;
+            margin: 20px 0;
+        }
+        button {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 5px;
+        }
+        button:hover {
+            background: #059669;
+        }
+        .step {
+            counter-increment: step;
+            margin-bottom: 20px;
+        }
+        .step:before {
+            content: counter(step);
+            background: #10b981;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        body {
+            counter-reset: step;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🧪 WebView Testing Guide</h1>
+        <p>Test Android WebView compatibility before deploying APK</p>
+    </div>
+
+    <div class="section">
+        <h2>📋 Quick Test in Browser</h2>
+        <div class="step">
+            <strong>Open Chrome DevTools</strong>
+            <p>Press <code>F12</code> or <code>Ctrl+Shift+I</code></p>
+        </div>
+        
+        <div class="step">
+            <strong>Open Console Tab</strong>
+            <p>Click on the "Console" tab in DevTools</p>
+        </div>
+        
+        <div class="step">
+            <strong>Simulate WebView</strong>
+            <p>Copy and paste this code into the console:</p>
+            <div class="code-block">
+document.body.classList.add('webview');
+document.body.setAttribute('data-platform', 'android');
+console.log('✅ WebView simulation activated');
+location.reload();
+            </div>
+            <button onclick="activateWebView()">🚀 Activate WebView Mode</button>
+        </div>
+        
+        <div class="step">
+            <strong>Set Kiosk Resolution</strong>
+            <p>In DevTools, toggle device toolbar (<code>Ctrl+Shift+M</code>) and set:</p>
+            <div class="code-block">
+Width: 1366px
+Height: 768px
+            </div>
+            <button onclick="setKioskResolution()">📺 Set Kiosk Size</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>✅ What to Check</h2>
+        <ul class="checklist">
+            <li>Console shows "Android WebView detected - applying compatibility fixes"</li>
+            <li>Microphone button is visible and centered</li>
+            <li>Mic button size is appropriate (not too large or hidden)</li>
+            <li>Left ad panel has green gradient background</li>
+            <li>Left ad text "PM Kisan Samridhi" is visible (not animated)</li>
+            <li>Right ad panel has white background</li>
+            <li>QR code and "Premium Seeds" content visible</li>
+            <li>Logo size is appropriate (not oversized)</li>
+            <li>All text has proper padding and spacing</li>
+            <li>Weather and Mandi cards are visible with padding</li>
+            <li>Footer section cards are properly sized</li>
+            <li>No content is cut off or overflowing</li>
+        </ul>
+    </div>
+
+    <div class="warning">
+        <strong>⚠️ Important:</strong> The WebView simulation is not 100% accurate. Always test on the actual Android media box device after APK deployment to verify all fixes work correctly.
+    </div>
+
+    <div class="section">
+        <h2>🔍 Troubleshooting</h2>
+        
+        <h3>If mic button still not visible:</h3>
+        <p>Check in console:</p>
+        <div class="code-block">
+console.log(getComputedStyle(document.getElementById('landing-mic-icon')).width);
+console.log(getComputedStyle(document.getElementById('landing-mic-icon')).display);
+        </div>
+        <button onclick="checkMicButton()">🔍 Check Mic Button</button>
+        
+        <h3>If CSS variables not working:</h3>
+        <div class="code-block">
+console.log(getComputedStyle(document.body).getPropertyValue('--base-font-size'));
+        </div>
+        <button onclick="checkCSSVariables()">🔍 Check CSS Variables</button>
+        
+        <h3>If left ad panel no color:</h3>
+        <div class="code-block">
+console.log(getComputedStyle(document.getElementById('left-ad')).background);
+        </div>
+        <button onclick="checkLeftAd()">🔍 Check Left Ad</button>
+    </div>
+
+    <div class="success">
+        <h3>✅ Expected Results:</h3>
+        <ul>
+            <li>Mic button: width 60-80px, visible, centered</li>
+            <li>Left ad: green gradient (#dcfce7 to #bbf7d0)</li>
+            <li>Text: 9-11px on kiosk, readable</li>
+            <li>All elements: proper padding applied</li>
+            <li>No animations running</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>📱 Test on Actual Device</h2>
+        <ol>
+            <li>Build APK with median.co</li>
+            <li>Upload all local CSS files (no CDN dependencies)</li>
+            <li>Install APK on media box</li>
+            <li>Launch in fullscreen/kiosk mode</li>
+            <li>Enable USB debugging if possible</li>
+            <li>Connect Chrome Remote Debugging: <code>chrome://inspect</code></li>
+            <li>Verify all 12 checklist items above</li>
+        </ol>
+    </div>
+
+    <script>
+        function activateWebView() {
+            document.body.classList.add('webview');
+            document.body.setAttribute('data-platform', 'android');
+            alert('✅ WebView mode activated! Page will reload...');
+            location.reload();
+        }
+
+        function setKioskResolution() {
+            alert('📺 Please manually set resolution in DevTools:\n\n1. Toggle device toolbar (Ctrl+Shift+M)\n2. Select "Responsive"\n3. Enter: 1366 x 768');
+        }
+
+        function checkMicButton() {
+            const mic = document.getElementById('landing-mic-icon');
+            if (!mic) {
+                alert('❌ Mic button element not found on this page');
+                return;
+            }
+            const styles = getComputedStyle(mic);
+            console.log('Mic Button Diagnostics:');
+            console.log('Width:', styles.width);
+            console.log('Height:', styles.height);
+            console.log('Display:', styles.display);
+            console.log('Visibility:', styles.visibility);
+            console.log('Opacity:', styles.opacity);
+            alert(`Mic Button:\nWidth: ${styles.width}\nHeight: ${styles.height}\nDisplay: ${styles.display}\n\nCheck console for details`);
+        }
+
+        function checkCSSVariables() {
+            const baseFont = getComputedStyle(document.body).getPropertyValue('--base-font-size');
+            if (!baseFont) {
+                console.warn('⚠️ CSS variables not supported or not defined');
+                alert('⚠️ CSS variables not working!\n\nThis is expected in WebView. The webview-fixes.css provides fallback values.');
+            } else {
+                console.log('✅ CSS variables working:', baseFont);
+                alert('✅ CSS variables supported!\nBase font: ' + baseFont);
+            }
+        }
+
+        function checkLeftAd() {
+            const leftAd = document.getElementById('left-ad');
+            if (!leftAd) {
+                alert('❌ Left ad element not found on this page');
+                return;
+            }
+            const styles = getComputedStyle(leftAd);
+            console.log('Left Ad Diagnostics:');
+            console.log('Background:', styles.background);
+            console.log('Width:', styles.width);
+            console.log('Position:', styles.position);
+            console.log('Display:', styles.display);
+            alert(`Left Ad:\nBackground: ${styles.background.substring(0, 50)}...\nWidth: ${styles.width}\n\nCheck console for full details`);
+        }
+
+        // Auto-detect if already on the main page
+        if (window.location.pathname === '/' || window.location.pathname.includes('index')) {
+            console.log('📍 On main page - ready to test');
+        } else {
+            console.log('📍 Not on main page - navigate to index page first');
+        }
+    </script>
+</body>
+</html>

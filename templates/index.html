@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Green Sathi - Krishi Guru</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/animate.min.css') }}">
@@ -12,6 +12,26 @@
     <link rel="stylesheet" href="../static/css/landing.css">
     <link rel="stylesheet" href="../static/css/advertisment.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive-dynamic.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/webview-fixes.css') }}">
+    
+    <script>
+        // Detect Android WebView and add class to body
+        (function() {
+            var ua = navigator.userAgent.toLowerCase();
+            var isAndroid = ua.indexOf('android') > -1;
+            var isWebView = ua.indexOf('wv') > -1 || 
+                           (isAndroid && ua.indexOf('version/') > -1) ||
+                           (typeof Android !== 'undefined');
+            
+            document.addEventListener('DOMContentLoaded', function() {
+                if (isWebView || isAndroid) {
+                    document.body.classList.add('webview');
+                    document.body.setAttribute('data-platform', 'android');
+                    console.log('Android WebView detected - applying compatibility fixes');
+                }
+            });
+        })();
+    </script>
 </head>
 
 <body class="min-h-screen">
