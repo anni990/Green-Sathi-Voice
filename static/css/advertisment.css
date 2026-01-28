@@ -44,6 +44,7 @@ body {
     
     #left-ad {
         width: 60px !important;
+        background: linear-gradient(180deg, #d1fae5 0%, #a7f3d0 100%) !important;
     }
     
     #right-ad {
@@ -51,7 +52,8 @@ body {
     }
     
     .scroll-text {
-        font-size: 12px !important;
+        font-size: 9px !important;
+        font-weight: 600 !important;
     }
     
     /* Scale down right ad content */
@@ -92,39 +94,33 @@ body {
     left: 0 !important;
     top: 0 !important;
     height: 100vh !important;
-    background: rgba(34, 197, 94, 0.1) !important;
-    backdrop-filter: blur(10px) !important;
+    position: fixed !important;
+    background: linear-gradient(180deg, #dcfce7 0%, #bbf7d0 100%) !important;
     border-right: 1px solid rgba(34, 197, 94, 0.2) !important;
     z-index: 10 !important;
     overflow: hidden !important;
+    display: block !important;
 }
 
 .scroll-container {
     height: 100% !important;
     position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .scroll-text {
     position: absolute !important;
-    top: 49vh !important;
+    top: 50% !important;
     left: 50% !important;
-    transform: translateX(-50%) rotate(-90deg) !important;
+    transform: translateX(-50%) translateY(-50%) rotate(-90deg) !important;
     white-space: nowrap !important;
-    font-size: 20px !important;
+    font-size: 16px !important;
     font-weight: bold !important;
     color: #166534 !important;
-    animation: scrollVertical 20s linear infinite !important;
     width: max-content !important;
-}
-
-@keyframes scrollVertical {
-    0% {
-        transform: translateX(-50%) rotate(-90deg) translateY(0);
-    }
-
-    100% {
-        transform: translateX(-50%) rotate(-90deg) translateY(-800px);
-    }
+    animation: none !important;
 }
 
 /* Right advertisement area */
@@ -133,47 +129,29 @@ body {
     right: 0 !important;
     top: 0 !important;
     height: 100vh !important;
-    background: rgba(255, 255, 255, 0.95) !important;
-    backdrop-filter: blur(10px) !important;
+    position: fixed !important;
+    background: #ffffff !important;
     border-left: 1px solid rgba(0, 0, 0, 0.1) !important;
     z-index: 10 !important;
+    display: block !important;
 }
 
-/* Animation for ad elements */
-.ad-qr {
-    animation: fadeInUp 1s ease-out;
-}
-
-.ad-text {
-    animation: fadeInUp 1.5s ease-out;
-}
-
+/* Remove all animations for WebView compatibility */
+.ad-qr,
+.ad-text,
 .left-ad-text {
-    animation: slideInLeft 2s ease-out;
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
 }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideInLeft {
-    from {
-        opacity: 0;
-        transform: translateX(-20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+/* Remove all animations for WebView compatibility */
+.ad-qr,
+.ad-text,
+.left-ad-text {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
 }
 
 /* Hide advertisements on mobile devices */
