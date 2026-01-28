@@ -35,6 +35,57 @@ body {
     }
 }
 
+/* Media box / kiosk displays (1366x768) - optimized margins */
+@media (min-width: 1366px) and (max-height: 768px) {
+    body {
+        margin-left: 60px !important;
+        margin-right: 120px !important;
+    }
+    
+    #left-ad {
+        width: 60px !important;
+    }
+    
+    #right-ad {
+        width: 120px !important;
+    }
+    
+    .scroll-text {
+        font-size: 12px !important;
+    }
+    
+    /* Scale down right ad content */
+    #right-ad .ad-qr {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    
+    #right-ad .text-xs {
+        font-size: 0.5rem !important;
+    }
+    
+    #right-ad .text-sm {
+        font-size: 0.6rem !important;
+    }
+    
+    #right-ad .text-base {
+        font-size: 0.7rem !important;
+    }
+    
+    #right-ad .text-lg {
+        font-size: 0.8rem !important;
+    }
+    
+    #right-ad .text-xl {
+        font-size: 0.9rem !important;
+    }
+    
+    #right-ad button {
+        padding: 0.3rem 0.6rem !important;
+        font-size: 0.65rem !important;
+    }
+}
+
 /* Left advertisement area */
 #left-ad {
     width: 100px !important;

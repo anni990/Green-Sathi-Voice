@@ -286,30 +286,77 @@ body {
    DEVICE-SPECIFIC OPTIMIZATIONS
    ======================================== */
 
-/* Media box / landscape displays (like Galaxy M33 5G) */
-@media (min-width: 1024px) and (max-height: 768px) {
+/* Media box / kiosk displays (1366x768) */
+@media (min-width: 1366px) and (max-height: 768px) {
     :root {
-        --base-font-size: clamp(10px, 0.9vw, 14px);
-        --space-lg: clamp(0.75rem, 1.5vw, 1.5rem);
-        --mic-size: clamp(4rem, 8vw, 6rem);
-        --logo-size: clamp(2rem, 3vw, 2.5rem);
-        --text-3xl: clamp(1.25rem, 1.8vw, 1.5rem);
-        --button-padding-x: clamp(0.75rem, 1.5vw, 1.5rem);
-        --button-padding-y: clamp(0.4rem, 0.8vw, 0.6rem);
+        --base-font-size: clamp(8px, 0.7vw, 12px);
+        --space-xs: clamp(0.15rem, 0.3vw, 0.3rem);
+        --space-sm: clamp(0.3rem, 0.6vw, 0.6rem);
+        --space-md: clamp(0.5rem, 0.9vw, 0.9rem);
+        --space-lg: clamp(0.5rem, 1vw, 1rem);
+        --space-xl: clamp(0.75rem, 1.5vw, 1.5rem);
+        --space-2xl: clamp(1rem, 2vw, 2rem);
+        
+        /* Typography - much smaller for TV display */
+        --text-xs: clamp(0.5rem, 0.6vw, 0.625rem);
+        --text-sm: clamp(0.6rem, 0.7vw, 0.7rem);
+        --text-base: clamp(0.7rem, 0.8vw, 0.8rem);
+        --text-lg: clamp(0.8rem, 0.9vw, 0.9rem);
+        --text-xl: clamp(0.9rem, 1vw, 1rem);
+        --text-2xl: clamp(1rem, 1.2vw, 1.2rem);
+        --text-3xl: clamp(1.1rem, 1.4vw, 1.4rem);
+        --text-4xl: clamp(1.3rem, 1.6vw, 1.6rem);
+        
+        /* Logo - MUCH smaller */
+        --logo-size: clamp(1.5rem, 2vw, 2rem);
+        
+        /* Buttons */
+        --button-padding-x: clamp(0.6rem, 1.2vw, 1.2rem);
+        --button-padding-y: clamp(0.3rem, 0.6vw, 0.6rem);
+        --button-font: clamp(0.6rem, 0.75vw, 0.75rem);
+        
+        /* Mic button */
+        --mic-size: clamp(3rem, 5vw, 4.5rem);
+        --mic-icon-size: clamp(1.2rem, 2vw, 2rem);
+        
+        /* Cards */
+        --card-padding: clamp(0.5rem, 1vw, 1rem);
+        --card-gap: clamp(0.3rem, 0.6vw, 0.6rem);
+        
+        /* Border radius */
+        --radius-sm: clamp(0.3rem, 0.6vw, 0.5rem);
+        --radius-md: clamp(0.5rem, 0.9vw, 0.75rem);
+        --radius-lg: clamp(0.75rem, 1.2vw, 1rem);
     }
     
     #landing-page {
-        padding-top: var(--space-md);
-        padding-bottom: var(--space-md);
+        padding-top: var(--space-sm);
+        padding-bottom: var(--space-sm);
     }
-}
-
-/* Large kiosk displays (18.5" and above) */
-@media (min-width: 1366px) {
-    :root {
-        --base-font-size: clamp(11px, 1vw, 16px);
-        --text-4xl: clamp(1.5rem, 2.2vw, 2rem);
-        --mic-size: clamp(5rem, 8vw, 7rem);
+    
+    /* Force smaller header spacing */
+    #landing-page header {
+        gap: var(--space-sm) !important;
+    }
+    
+    /* Reduce glass card sizes */
+    .glass-card .text-2xl,
+    .glass-card .text-4xl {
+        font-size: clamp(1rem, 1.5vw, 1.3rem) !important;
+    }
+    
+    /* Smaller footer cards */
+    #landing-page footer .glass-card h4 {
+        font-size: var(--text-sm) !important;
+    }
+    
+    #landing-page footer .glass-card p {
+        font-size: clamp(0.5rem, 0.6vw, 0.6rem) !important;
+    }
+    
+    /* Reduce main content spacing */
+    #landing-page main {
+        gap: clamp(0.75rem, 1.5vw, 1.5rem) !important;
     }
 }
 
