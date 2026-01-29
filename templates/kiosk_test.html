@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kiosk Mode Quick Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            opacity: 0.8;
+        }
+
+        .info-value {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 2px 8px;
+            border-radius: 5px;
+        }
+
+        .status-indicator {
+            text-align: center;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .status-indicator.success {
+            border: 3px solid #4ade80;
+        }
+
+        .status-indicator.warning {
+            border: 3px solid #facc15;
+        }
+
+        .status-indicator.error {
+            border: 3px solid #ef4444;
+        }
+
+        .scale-demo {
+            margin: 40px 0;
+            text-align: center;
+        }
+
+        .scale-box {
+            display: inline-block;
+            padding: 40px 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .scale-box:hover {
+            transform: scale(1.05);
+        }
+
+        .instructions {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 40px 0;
+        }
+
+        .instructions h2 {
+            margin-bottom: 20px;
+            color: #ffd700;
+        }
+
+        .instructions ol {
+            margin-left: 30px;
+        }
+
+        .instructions li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: 2px solid white;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .console-output {
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 20px 0;
+        }
+
+        .console-output .log {
+            margin: 5px 0;
+        }
+
+        .console-output .error {
+            color: #ff4444;
+        }
+
+        .console-output .success {
+            color: #44ff44;
+        }
+
+        .console-output .info {
+            color: #4444ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🖥️ Kiosk Mode Quick Test</h1>
+            <p>Screen Detection & Scaling Validation Tool</p>
+        </div>
+
+        <!-- Status Indicator -->
+        <div id="status-indicator" class="status-indicator">
+            <h2 id="status-text">Initializing...</h2>
+        </div>
+
+        <!-- Device Information -->
+        <div class="info-grid">
+            <div class="info-card">
+                <h3>📱 Screen Information</h3>
+                <div class="info-item">
+                    <span class="info-label">Screen Width:</span>
+                    <span class="info-value" id="screen-width">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Screen Height:</span>
+                    <span class="info-value" id="screen-height">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Window Width:</span>
+                    <span class="info-value" id="window-width">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Window Height:</span>
+                    <span class="info-value" id="window-height">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Device Pixel Ratio:</span>
+                    <span class="info-value" id="dpr">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Orientation:</span>
+                    <span class="info-value" id="orientation">-</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>🎯 Kiosk Mode Status</h3>
+                <div class="info-item">
+                    <span class="info-label">Is WebView:</span>
+                    <span class="info-value" id="is-webview">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Is Large Screen:</span>
+                    <span class="info-value" id="is-large">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Scale Factor:</span>
+                    <span class="info-value" id="scale-factor">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Base Font Size:</span>
+                    <span class="info-value" id="font-size">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Kiosk Class:</span>
+                    <span class="info-value" id="kiosk-class">-</span>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <h3>🌐 Browser Information</h3>
+                <div class="info-item">
+                    <span class="info-label">Platform:</span>
+                    <span class="info-value" id="platform">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Language:</span>
+                    <span class="info-value" id="language">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Touch Support:</span>
+                    <span class="info-value" id="touch-support">-</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Online Status:</span>
+                    <span class="info-value" id="online-status">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scale Demo -->
+        <div class="scale-demo">
+            <h2>Scale Demonstration</h2>
+            <div class="scale-box">This text scales with screen size</div>
+        </div>
+
+        <!-- Test Controls -->
+        <div style="text-align: center; margin: 40px 0;">
+            <button onclick="refreshData()">🔄 Refresh Data</button>
+            <button onclick="testResize()">📐 Test Resize</button>
+            <button onclick="copyToClipboard()">📋 Copy Info</button>
+            <button onclick="window.location.href='/'">🏠 Back to App</button>
+        </div>
+
+        <!-- Console Output -->
+        <div class="instructions">
+            <h2>📝 Console Output</h2>
+            <div id="console" class="console-output">
+                <div class="log info">[INFO] Initializing test page...</div>
+            </div>
+        </div>
+
+        <!-- Instructions -->
+        <div class="instructions">
+            <h2>📚 Testing Instructions</h2>
+            <ol>
+                <li><strong>Screen Size Check:</strong> Verify that the detected screen dimensions match your display</li>
+                <li><strong>Scale Factor:</strong> For 24" displays (1920x1080), scale should be 0.7 (70%)</li>
+                <li><strong>WebView Detection:</strong> Should show "true" when running in Android TV WebView</li>
+                <li><strong>Large Screen:</strong> Should show "true" for screens 1024px or wider</li>
+                <li><strong>Font Size:</strong> Should decrease on larger screens (13px for 1920px width)</li>
+                <li><strong>Resize Test:</strong> Click "Test Resize" to verify responsive behavior</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function addLog(message, type = 'log') {
+            const console = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            const log = document.createElement('div');
+            log.className = `log ${type}`;
+            log.textContent = `[${timestamp}] ${message}`;
+            console.appendChild(log);
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function updateDeviceInfo() {
+            // Screen dimensions
+            document.getElementById('screen-width').textContent = `${screen.width}px`;
+            document.getElementById('screen-height').textContent = `${screen.height}px`;
+            document.getElementById('window-width').textContent = `${window.innerWidth}px`;
+            document.getElementById('window-height').textContent = `${window.innerHeight}px`;
+            document.getElementById('dpr').textContent = window.devicePixelRatio;
+            document.getElementById('orientation').textContent = screen.orientation?.type || 'unknown';
+
+            // Browser info
+            document.getElementById('platform').textContent = navigator.platform;
+            document.getElementById('language').textContent = navigator.language;
+            document.getElementById('touch-support').textContent = 'ontouchstart' in window ? 'Yes' : 'No';
+            document.getElementById('online-status').textContent = navigator.onLine ? 'Online' : 'Offline';
+
+            // Kiosk mode info (if available)
+            if (window.getKioskInfo) {
+                const info = window.getKioskInfo();
+                document.getElementById('is-webview').textContent = info.isWebView ? 'Yes ✓' : 'No ✗';
+                document.getElementById('is-large').textContent = info.isLargeScreen ? 'Yes ✓' : 'No ✗';
+                document.getElementById('scale-factor').textContent = info.currentScale;
+                
+                const computedFontSize = window.getComputedStyle(document.body).fontSize;
+                document.getElementById('font-size').textContent = computedFontSize;
+                
+                const hasKioskClass = document.body.classList.contains('kiosk-mode');
+                document.getElementById('kiosk-class').textContent = hasKioskClass ? 'Applied ✓' : 'Not Applied ✗';
+
+                // Update status
+                const statusIndicator = document.getElementById('status-indicator');
+                const statusText = document.getElementById('status-text');
+                
+                if (hasKioskClass && info.currentScale < 1) {
+                    statusIndicator.className = 'status-indicator success';
+                    statusText.textContent = '✓ Kiosk Mode Active & Working Correctly';
+                    addLog('Kiosk mode is active and functioning correctly', 'success');
+                } else if (screen.width >= 1024) {
+                    statusIndicator.className = 'status-indicator warning';
+                    statusText.textContent = '⚠ Large Screen Detected but Kiosk Mode Not Applied';
+                    addLog('Warning: Large screen detected but kiosk mode not active', 'error');
+                } else {
+                    statusIndicator.className = 'status-indicator';
+                    statusText.textContent = 'ℹ Mobile/Tablet Size - Kiosk Mode Not Required';
+                    addLog('Mobile/tablet size detected - no scaling needed', 'info');
+                }
+
+                addLog(`Screen: ${info.screenWidth}x${info.screenHeight}, Scale: ${info.currentScale}`, 'info');
+            } else {
+                document.getElementById('is-webview').textContent = 'N/A';
+                document.getElementById('is-large').textContent = 'N/A';
+                document.getElementById('scale-factor').textContent = 'N/A';
+                document.getElementById('font-size').textContent = window.getComputedStyle(document.body).fontSize;
+                document.getElementById('kiosk-class').textContent = 'N/A';
+
+                const statusIndicator = document.getElementById('status-indicator');
+                const statusText = document.getElementById('status-text');
+                statusIndicator.className = 'status-indicator error';
+                statusText.textContent = '✗ Kiosk Mode Script Not Loaded';
+                addLog('ERROR: Kiosk mode script not found', 'error');
+            }
+        }
+
+        function refreshData() {
+            addLog('Refreshing data...', 'info');
+            updateDeviceInfo();
+            addLog('Data refreshed successfully', 'success');
+        }
+
+        function testResize() {
+            addLog('Testing resize handling...', 'info');
+            const originalWidth = window.innerWidth;
+            
+            // Simulate resize (won't actually resize but will log current state)
+            setTimeout(() => {
+                updateDeviceInfo();
+                addLog(`Resize test complete. Width: ${window.innerWidth}px`, 'success');
+            }, 100);
+        }
+
+        function copyToClipboard() {
+            const info = window.getKioskInfo ? window.getKioskInfo() : {};
+            const text = `
+Screen Size: ${screen.width}x${screen.height}
+Window Size: ${window.innerWidth}x${window.innerHeight}
+Device Pixel Ratio: ${window.devicePixelRatio}
+Platform: ${navigator.platform}
+User Agent: ${navigator.userAgent}
+Is WebView: ${info.isWebView || 'N/A'}
+Is Large Screen: ${info.isLargeScreen || 'N/A'}
+Scale Factor: ${info.currentScale || 'N/A'}
+            `.trim();
+
+            navigator.clipboard.writeText(text).then(() => {
+                addLog('Device information copied to clipboard', 'success');
+                alert('Device information copied to clipboard!');
+            }).catch(err => {
+                addLog('Failed to copy to clipboard: ' + err, 'error');
+            });
+        }
+
+        // Initialize on load
+        window.addEventListener('load', () => {
+            addLog('Test page loaded successfully', 'success');
+            updateDeviceInfo();
+        });
+
+        // Update on resize
+        window.addEventListener('resize', () => {
+            addLog('Window resized, updating information...', 'info');
+            updateDeviceInfo();
+        });
+
+        // Update on orientation change
+        window.addEventListener('orientationchange', () => {
+            addLog('Orientation changed, updating information...', 'info');
+            setTimeout(updateDeviceInfo, 300);
+        });
+    </script>
+</body>
+</html>

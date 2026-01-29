@@ -43,6 +43,11 @@ def create_app():
     def index():
         return render_template('index.html')
     
+    # Kiosk Mode Test Page
+    @app.route('/kiosk-test')
+    def kiosk_test():
+        return render_template('kiosk_test.html')
+    
     # VAD Tuning Tool
     @app.route('/vad-tuning')
     def vad_tuning():

@@ -3,14 +3,18 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Green Sathi - Krishi Guru</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/animate.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome.min.css') }}">
-    <link rel="stylesheet" href="../static/css/style.css">
-    <link rel="stylesheet" href="../static/css/landing.css">
-    <link rel="stylesheet" href="../static/css/advertisment.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/advertisment.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/kiosk-mode.css') }}">
 </head>
 
 <body class="min-h-screen">
@@ -21,7 +25,7 @@
         <header
             class="w-full flex flex-col md:flex-row justify-between items-center gap-6 animate__animated animate__fadeInDown">
             <div class="flex items-center gap-4">
-                <img src="../static/images/logo.png" alt="Green Sathi Logo"
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Green Sathi Logo"
                     class="w-12 h-12 md:w-14 md:h-14 rounded-full object-contain">
                 <div>
                     <h1
@@ -173,7 +177,7 @@
     <div id="main-ui" class="hidden min-h-screen">
         <div class="flex justify-between items-center px-4 lg:px-6 py-3 lg:py-4">
             <div class="flex items-center gap-4">
-                <img src="../static/images/logo.png" alt="Green Sathi Logo"
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Green Sathi Logo"
                     class="w-12 h-12 md:w-14 md:h-14 rounded-full object-contain">
                 <div>
                     <h1
@@ -422,7 +426,7 @@
         <!-- Top Half: QR Code and Title -->
         <div
             class="h-1/2 flex flex-col items-center justify-center p-4 ad-qr bg-gradient-to-b from-green-50 to-green-100">
-            <img src="../static/images/qr-code.png" alt="QR Code" class="w-20 h-20 mb-3 rounded-lg shadow-md">
+            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="QR Code" class="w-20 h-20 mb-3 rounded-lg shadow-md">
             <h4 class="text-sm font-bold text-center text-gray-800 mb-2">Scan to Download App</h4>
             <p class="text-xs text-center text-gray-600">Get instant farming advice on your phone</p>
         </div>
@@ -590,15 +594,17 @@
     </script>
 
     <!-- JavaScript -->
-    <script src="/static/js/DeviceAuthManager.js"></script>
-    <script src="/static/js/ElementManager.js"></script>
-    <script src="/static/js/StateManager.js"></script>
-    <script src="/static/js/UIController.js"></script>
-    <script src="/static/js/KeyboardHandler.js"></script>
-    <script src="/static/js/AudioManager.js"></script>
-    <script src="/static/js/ApiService.js"></script>
-    <script src="/static/js/ConversationManager.js"></script>
-    <script src="/static/js/app_modular.js"></script>
+    <!-- Kiosk Mode must load first for proper screen detection -->
+    <script src="{{ url_for('static', filename='js/kiosk-mode.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/DeviceAuthManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ElementManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/StateManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/UIController.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/KeyboardHandler.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/AudioManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ApiService.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ConversationManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app_modular.js') }}"></script>
 </body>
 
 </html>

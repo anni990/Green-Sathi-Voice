@@ -1,0 +1,341 @@
+/**
+ * Kiosk Mode & Large Screen Optimization
+ * Optimized for 24" Android TV displays and WebView
+ * Auto-detects screen size and scales appropriately
+ */
+
+:root {
+    /* Kiosk-specific variables */
+    --kiosk-scale: 1;
+    --base-font-size: 14px;
+    --kiosk-max-width: 1400px;
+}
+
+/* Force Desktop Mode Detection for Large Screens */
+@media (min-width: 1024px) {
+    :root {
+        --kiosk-scale: 0.85;
+        --base-font-size: 13px;
+    }
+}
+
+@media (min-width: 1280px) {
+    :root {
+        --kiosk-scale: 0.8;
+        --base-font-size: 12px;
+    }
+}
+
+@media (min-width: 1440px) {
+    :root {
+        --kiosk-scale: 0.75;
+        --base-font-size: 11px;
+    }
+}
+
+@media (min-width: 1920px) {
+    :root {
+        --kiosk-scale: 0.7;
+        --base-font-size: 10px;
+    }
+}
+
+/* Override base body styles for kiosk */
+body.kiosk-mode {
+    font-size: var(--base-font-size);
+    max-width: 100vw;
+    overflow-x: hidden;
+    transform-origin: top center;
+}
+
+/* Scale entire landing page */
+#landing-page.kiosk-scale {
+    transform: scale(var(--kiosk-scale));
+    transform-origin: top center;
+    width: calc(100% / var(--kiosk-scale));
+    height: auto;
+}
+
+/* Scale main UI */
+#main-ui.kiosk-scale {
+    transform: scale(var(--kiosk-scale));
+    transform-origin: top center;
+    width: calc(100% / var(--kiosk-scale));
+    min-height: calc(100vh / var(--kiosk-scale));
+}
+
+/* Large Screen Specific Adjustments */
+@media (min-width: 1024px) {
+    /* Reduce header size */
+    header h1 {
+        font-size: 2rem !important;
+    }
+    
+    header p {
+        font-size: 0.65rem !important;
+    }
+    
+    header img {
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+    }
+
+    /* Reduce main content text */
+    main h2 {
+        font-size: 1.75rem !important;
+    }
+    
+    main p {
+        font-size: 0.9rem !important;
+    }
+
+    /* Reduce card sizes */
+    .glass-card {
+        padding: 0.875rem !important;
+    }
+
+    /* Reduce icon sizes */
+    .glass-card .text-2xl {
+        font-size: 1.5rem !important;
+    }
+
+    /* Reduce microphone button */
+    #landing-mic-container .w-24,
+    #landing-mic-container .w-32 {
+        width: 5rem !important;
+        height: 5rem !important;
+    }
+
+    #landing-mic-container svg {
+        width: 2.5rem !important;
+        height: 2.5rem !important;
+    }
+
+    #landing-mic-status {
+        font-size: 1.25rem !important;
+    }
+
+    /* Reduce footer cards */
+    footer .glass-card {
+        padding: 0.75rem !important;
+    }
+
+    footer h4 {
+        font-size: 0.9rem !important;
+    }
+
+    footer p {
+        font-size: 0.7rem !important;
+    }
+
+    /* Reduce button sizes */
+    a[href="/login"],
+    a[href="/register"] {
+        padding: 0.5rem 1.5rem !important;
+        font-size: 0.8rem !important;
+    }
+
+    /* Main action button */
+    .main-button {
+        width: 4rem !important;
+        height: 4rem !important;
+        font-size: 1.5rem !important;
+    }
+
+    /* Status indicator */
+    #status-text {
+        font-size: 0.875rem !important;
+    }
+
+    /* User info */
+    #user-info h3 {
+        font-size: 1rem !important;
+    }
+
+    #user-info p {
+        font-size: 0.8rem !important;
+    }
+
+    /* Conversation area */
+    #conversation-history {
+        font-size: 0.85rem !important;
+    }
+
+    .conversation-bubble {
+        font-size: 0.85rem !important;
+        padding: 0.625rem !important;
+    }
+
+    /* Advertisement panels scaling */
+    #left-ad,
+    #right-ad {
+        font-size: 0.75rem !important;
+    }
+
+    #right-ad h4 {
+        font-size: 0.9rem !important;
+    }
+
+    #right-ad h5 {
+        font-size: 1rem !important;
+    }
+
+    #right-ad p {
+        font-size: 0.75rem !important;
+    }
+
+    #right-ad img {
+        width: 4.5rem !important;
+        height: 4.5rem !important;
+    }
+}
+
+/* Extra Large Screens (24" displays) */
+@media (min-width: 1920px) {
+    body {
+        font-size: 13px !important;
+    }
+
+    header h1 {
+        font-size: 1.75rem !important;
+    }
+
+    main h2 {
+        font-size: 1.5rem !important;
+    }
+
+    #landing-mic-container .w-24,
+    #landing-mic-container .w-32 {
+        width: 4.5rem !important;
+        height: 4.5rem !important;
+    }
+
+    #landing-mic-status {
+        font-size: 1.1rem !important;
+    }
+
+    /* Further reduce all text */
+    .text-sm {
+        font-size: 0.75rem !important;
+    }
+
+    .text-base {
+        font-size: 0.85rem !important;
+    }
+
+    .text-lg {
+        font-size: 0.95rem !important;
+    }
+
+    .text-xl {
+        font-size: 1.1rem !important;
+    }
+
+    .text-2xl {
+        font-size: 1.3rem !important;
+    }
+
+    .text-3xl {
+        font-size: 1.6rem !important;
+    }
+}
+
+/* WebView Specific Fixes */
+@media screen and (min-device-width: 1024px) {
+    /* Force desktop layout */
+    .mobile-layout {
+        display: flex !important;
+    }
+
+    /* Remove mobile-specific margins */
+    .lg\:px-6 {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+
+    /* Ensure proper spacing */
+    body {
+        margin: 0;
+        padding: 0;
+    }
+}
+
+/* Landscape Orientation Optimization */
+@media (orientation: landscape) and (min-width: 1024px) {
+    #landing-page {
+        padding: 1.5rem 3rem !important;
+    }
+
+    main {
+        max-height: 65vh !important;
+    }
+
+    #landing-mic-container {
+        transform: scale(0.9);
+    }
+}
+
+/* Compact Mode for Very Large Displays */
+@media (min-width: 2560px) {
+    :root {
+        --kiosk-scale: 0.6;
+    }
+
+    body {
+        font-size: 12px !important;
+    }
+}
+
+/* Animation Performance Optimization */
+@media (prefers-reduced-motion: no-preference) {
+    .kiosk-mode .animate__animated {
+        animation-duration: 0.5s !important;
+    }
+}
+
+/* Touch Target Optimization for Kiosk */
+@media (pointer: coarse) and (min-width: 1024px) {
+    button,
+    a {
+        min-width: 44px;
+        min-height: 44px;
+        touch-action: manipulation;
+    }
+}
+
+/* Container Width Limits */
+.kiosk-container {
+    max-width: var(--kiosk-max-width);
+    margin: 0 auto;
+}
+
+/* Adjust grid layouts for wider screens */
+@media (min-width: 1440px) {
+    .grid-cols-1.md\:grid-cols-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 2rem !important;
+    }
+
+    .grid-cols-1.md\:grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 1.5rem !important;
+    }
+}
+
+/* Hide scrollbars but keep functionality */
+.kiosk-mode::-webkit-scrollbar {
+    width: 6px;
+}
+
+.kiosk-mode::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.kiosk-mode::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.3);
+    border-radius: 3px;
+}
+
+.kiosk-mode::-webkit-scrollbar-thumb:hover {
+    background: rgba(16, 185, 129, 0.5);
+}
