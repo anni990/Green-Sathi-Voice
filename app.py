@@ -43,6 +43,11 @@ def create_app():
     def index():
         return render_template('index.html')
     
+    # Kiosk Mode Fixed Layout (Android TV Optimized)
+    @app.route('/kiosk')
+    def kiosk_mode():
+        return render_template('index_kiosk.html')
+    
     # Kiosk Mode Test Page
     @app.route('/kiosk-test')
     def kiosk_test():
