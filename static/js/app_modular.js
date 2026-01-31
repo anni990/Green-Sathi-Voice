@@ -1,202 +1,236 @@
 /**
- * app.js - Main Application File
+ * app_modular.js - Main Application File (ES5 Compatible)
  * Orchestrates all modules and handles the main application flow
+ * ES5 Compatible - No classes, async/await, arrow functions, or template literals
  */
 
-class VoiceBotApp {
-    constructor() {
-        // Initialize all managers
-        this.elementManager = new ElementManager();
-        this.stateManager = new StateManager();
-        this.uiController = new UIController(this);
-        this.keyboardHandler = new KeyboardHandler(this);
-        this.audioManager = new AudioManager(this);
-        this.apiService = new ApiService(this);
-        this.conversationManager = new ConversationManager(this);
-        
-        // Initialize the application
-        this.initialize();
-    }
+function VoiceBotApp() {
+    // Initialize all managers
+    this.elementManager = new ElementManager();
+    this.stateManager = new StateManager();
+    this.uiController = new UIController(this);
+    this.keyboardHandler = new KeyboardHandler(this);
+    this.audioManager = new AudioManager(this);
+    this.apiService = new ApiService(this);
+    this.conversationManager = new ConversationManager(this);
     
-    initialize() {
-        this.bindEvents();
-        this.uiController.setupInitialState();
-        this.audioManager.checkMicrophonePermission();
-    }
-    
-    bindEvents() {
-        const elements = this.elementManager.getAll();
-        
-        // Main action buttons
-        elements.mainBtn.addEventListener('click', () => this.handleMainAction());
-        elements.desktopMainBtn?.addEventListener('click', () => this.handleMainAction());
-        
-        // Conversation buttons
-        elements.bottomBtn.addEventListener('click', () => this.handleConversationRecording());
-        elements.desktopBottomBtn?.addEventListener('click', () => this.handleConversationRecording());
-        elements.mobileConversationBtn?.addEventListener('click', () => this.handleConversationRecording());
-        
-        // Exit buttons
-        elements.exitBtn.addEventListener('click', () => this.exitSession());
-        elements.desktopExitBtn?.addEventListener('click', () => this.exitSession());
-    }
-    
-    // Main action handlers
-    handleMainAction() {
-        const currentStep = this.stateManager.getCurrentStep();
-        
-        switch (currentStep) {
-            case 'welcome':
-                this.startNamePhoneCollection();
-                break;
-            case 'name_phone':
-                this.audioManager.stopAllAudio();
-                this.audioManager.startRecording();
-                break;
-            case 'conversation':
-                // For conversation, desktop main button should work
-                this.audioManager.stopAllAudio();
-                this.audioManager.startRecording();
-                break;
-        }
-    }
-    
-    handleConversationRecording() {
-        if (this.stateManager.isConversationStep()) {
-            // Stop any playing audio before starting recording
-            this.audioManager.stopAllAudio();
-            this.audioManager.startRecording();
-        }
-    }
-    
-    exitSession() {
-        // Reset to initial state
-        this.stateManager.reset();
-        
-        const elements = this.elementManager.getAll();
-        
-        // Hide all sections
-        elements.userInfoDiv.classList.add('hidden');
-        elements.conversationContainer.classList.add('hidden');
-        elements.keyboardShortcutsMobile?.classList.add('hidden');
-        elements.keyboardShortcutsDesktop?.classList.add('hidden');
-        this.uiController.resetToInitialLayout();
-        
-        // Reset UI
-        this.uiController.setupInitialState();
-        
-        // Clear conversation
-        this.conversationManager.clearConversation();
-        
-        // Refresh page after exit
-        setTimeout(() => {
-            window.location.reload();
-        }, 300);
-    }
-    
-    // Flow control methods
-    async startNamePhoneCollection() {
-        this.stateManager.setStep('name_phone');
-        this.uiController.updateStatus('processing', 'ऑडियो चला रहा है...');
-        this.uiController.updateActionInstruction('कृपया अपना नाम और फोन नंबर बताएं (Enter दबाकर रिकॉर्ड करें)');
-        
-        const elements = this.elementManager.getAll();
-        elements.mainBtn.classList.add('recording');
-        
-        // Set flag to auto-record after audio ends
-        this.audioManager.autoRecordAfterAudio = true;
-        
-        // Play static audio prompt in Hindi
-        await this.audioManager.playStaticAudio('name_phone', 'hi');
-    }
-    
-    async startLanguageCollection() {
-        this.stateManager.setStep('language_detection');
-        this.uiController.updateStatus('processing', 'भाषा चयन ऑडियो...');
-        this.uiController.updateActionInstruction('अपनी पसंदीदा भाषा बताएं');
-        
-        // Set flag to auto-record after audio ends
-        this.audioManager.autoRecordAfterAudio = true;
-        
-        // Play static audio prompt in Hindi
-        await this.audioManager.playStaticAudio('language_selection', 'hi');
-    }
-    
-    async startConversation() {
-        this.stateManager.setStep('conversation');
-        
-        // Setup conversation layout
-        this.uiController.setupConversationLayout();
-        
-        const elements = this.elementManager.getAll();
-        
-        // Show desktop main button for conversation on desktop
-        if (window.innerWidth >= 1024 && elements.desktopMainBtn) {
-            elements.desktopMainBtn.classList.remove('hidden');
-        }
-        
-        // Play conversation start audio in user's language
-        const userInfo = this.stateManager.getUserInfo();
-        await this.audioManager.playStaticAudio('conversation_start', userInfo.language || 'hi');
-    }
-    
-    // Text processing handlers
-    async handleTranscribedText(text) {
-        console.log('Transcribed text:', text);
-        
-        const currentStep = this.stateManager.getCurrentStep();
-        
-        switch (currentStep) {
-            case 'name_phone':
-                await this.apiService.extractUserInfo(text);
-                break;
-            case 'language_detection':
-                // Get current attempt number from apiService
-                const attempt = this.apiService.languageDetectionAttempt || 1;
-                await this.apiService.detectLanguage(text, attempt);
-                break;
-            case 'conversation':
-                await this.apiService.processConversation(text);
-                break;
-        }
-    }
-    
-    // Utility methods for backward compatibility
-    get currentStep() {
-        return this.stateManager.getCurrentStep();
-    }
-    
-    get userInfo() {
-        return this.stateManager.getUserInfo();
-    }
-    
-    get isRecording() {
-        return this.audioManager.isRecording;
-    }
-    
-    get isAudioPlaying() {
-        return this.audioManager.isAudioPlaying;
-    }
-    
-    // Direct access to manager methods for backward compatibility
-    updateStatus(status, text) {
-        this.uiController.updateStatus(status, text);
-    }
-    
-    showError(message) {
-        this.uiController.showError(message);
-    }
-    
-    showVoiceAnimation(show) {
-        this.uiController.showVoiceAnimation(show);
-    }
-    
-    addMessageToConversation(message, type) {
-        this.conversationManager.addMessageToConversation(message, type);
-    }
+    // Initialize the application
+    this.initialize();
 }
 
+VoiceBotApp.prototype.initialize = function() {
+    this.bindEvents();
+    this.uiController.setupInitialState();
+    this.audioManager.checkMicrophonePermission();
+};
+
+VoiceBotApp.prototype.bindEvents = function() {
+    var self = this;
+    var elements = this.elementManager.getAll();
+    
+    // Main action buttons
+    elements.mainBtn.addEventListener('click', function() {
+        self.handleMainAction();
+    });
+    
+    if (elements.desktopMainBtn) {
+        elements.desktopMainBtn.addEventListener('click', function() {
+            self.handleMainAction();
+        });
+    }
+    
+    // Conversation buttons
+    elements.bottomBtn.addEventListener('click', function() {
+        self.handleConversationRecording();
+    });
+    
+    if (elements.desktopBottomBtn) {
+        elements.desktopBottomBtn.addEventListener('click', function() {
+            self.handleConversationRecording();
+        });
+    }
+    
+    if (elements.mobileConversationBtn) {
+        elements.mobileConversationBtn.addEventListener('click', function() {
+            self.handleConversationRecording();
+        });
+    }
+    
+    // Exit buttons
+    elements.exitBtn.addEventListener('click', function() {
+        self.exitSession();
+    });
+    
+    if (elements.desktopExitBtn) {
+        elements.desktopExitBtn.addEventListener('click', function() {
+            self.exitSession();
+        });
+    }
+};
+
+// Main action handlers
+VoiceBotApp.prototype.handleMainAction = function() {
+    var currentStep = this.stateManager.getCurrentStep();
+    
+    switch (currentStep) {
+        case 'welcome':
+            this.startNamePhoneCollection();
+            break;
+        case 'name_phone':
+            this.audioManager.stopAllAudio();
+            this.audioManager.startRecording();
+            break;
+        case 'conversation':
+            // For conversation, desktop main button should work
+            this.audioManager.stopAllAudio();
+            this.audioManager.startRecording();
+            break;
+    }
+};
+
+VoiceBotApp.prototype.handleConversationRecording = function() {
+    if (this.stateManager.isConversationStep()) {
+        // Stop any playing audio before starting recording
+        this.audioManager.stopAllAudio();
+        this.audioManager.startRecording();
+    }
+};
+
+VoiceBotApp.prototype.exitSession = function() {
+    var self = this;
+    
+    // Reset to initial state
+    this.stateManager.reset();
+    
+    var elements = this.elementManager.getAll();
+    
+    // Hide all sections
+    elements.userInfoDiv.classList.add('hidden');
+    elements.conversationContainer.classList.add('hidden');
+    
+    if (elements.keyboardShortcutsMobile) {
+        elements.keyboardShortcutsMobile.classList.add('hidden');
+    }
+    
+    if (elements.keyboardShortcutsDesktop) {
+        elements.keyboardShortcutsDesktop.classList.add('hidden');
+    }
+    
+    this.uiController.resetToInitialLayout();
+    
+    // Reset UI
+    this.uiController.setupInitialState();
+    
+    // Clear conversation
+    this.conversationManager.clearConversation();
+    
+    // Refresh page after exit
+    setTimeout(function() {
+        window.location.reload();
+    }, 300);
+};
+
+// Flow control methods
+VoiceBotApp.prototype.startNamePhoneCollection = function() {
+    this.stateManager.setStep('name_phone');
+    this.uiController.updateStatus('processing', 'ऑडियो चला रहा है...');
+    this.uiController.updateActionInstruction('कृपया अपना नाम और फोन नंबर बताएं (Enter दबाकर रिकॉर्ड करें)');
+    
+    var elements = this.elementManager.getAll();
+    elements.mainBtn.classList.add('recording');
+    
+    // Set flag to auto-record after audio ends
+    this.audioManager.autoRecordAfterAudio = true;
+    
+    // Play static audio prompt in Hindi
+    return this.audioManager.playStaticAudio('name_phone', 'hi');
+};
+
+VoiceBotApp.prototype.startLanguageCollection = function() {
+    this.stateManager.setStep('language_detection');
+    this.uiController.updateStatus('processing', 'भाषा चयन ऑडियो...');
+    this.uiController.updateActionInstruction('अपनी पसंदीदा भाषा बताएं');
+    
+    // Set flag to auto-record after audio ends
+    this.audioManager.autoRecordAfterAudio = true;
+    
+    // Play static audio prompt in Hindi
+    return this.audioManager.playStaticAudio('language_selection', 'hi');
+};
+
+VoiceBotApp.prototype.startConversation = function() {
+    this.stateManager.setStep('conversation');
+    
+    // Setup conversation layout
+    this.uiController.setupConversationLayout();
+    
+    var elements = this.elementManager.getAll();
+    
+    // Show desktop main button for conversation on desktop
+    if (window.innerWidth >= 1024 && elements.desktopMainBtn) {
+        elements.desktopMainBtn.classList.remove('hidden');
+    }
+    
+    // Play conversation start audio in user's language
+    var userInfo = this.stateManager.getUserInfo();
+    return this.audioManager.playStaticAudio('conversation_start', userInfo.language || 'hi');
+};
+
+// Text processing handlers
+VoiceBotApp.prototype.handleTranscribedText = function(text) {
+    console.log('Transcribed text:', text);
+    
+    var currentStep = this.stateManager.getCurrentStep();
+    
+    switch (currentStep) {
+        case 'name_phone':
+            return this.apiService.extractUserInfo(text);
+        case 'language_detection':
+            // Get current attempt number from apiService
+            var attempt = this.apiService.languageDetectionAttempt || 1;
+            return this.apiService.detectLanguage(text, attempt);
+        case 'conversation':
+            return this.apiService.processConversation(text);
+    }
+    
+    return Promise.resolve();
+};
+
+// Utility methods for backward compatibility
+VoiceBotApp.prototype.getCurrentStep = function() {
+    return this.stateManager.getCurrentStep();
+};
+
+VoiceBotApp.prototype.getUserInfo = function() {
+    return this.stateManager.getUserInfo();
+};
+
+VoiceBotApp.prototype.getIsRecording = function() {
+    return this.audioManager.isRecording;
+};
+
+VoiceBotApp.prototype.getIsAudioPlaying = function() {
+    return this.audioManager.isAudioPlaying;
+};
+
+// Direct access to manager methods for backward compatibility
+VoiceBotApp.prototype.updateStatus = function(status, text) {
+    this.uiController.updateStatus(status, text);
+};
+
+VoiceBotApp.prototype.showError = function(message) {
+    this.uiController.showError(message);
+};
+
+VoiceBotApp.prototype.showVoiceAnimation = function(show) {
+    this.uiController.showVoiceAnimation(show);
+};
+
+VoiceBotApp.prototype.addMessageToConversation = function(message, type) {
+    this.conversationManager.addMessageToConversation(message, type);
+};
+
 // Initialize the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
     window.app = new VoiceBotApp();
 });
