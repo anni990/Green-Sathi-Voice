@@ -235,7 +235,7 @@
                     localStorage.setItem('device_id', data.device_id);
                     localStorage.setItem('device_name', data.device_name);
                     showSuccess('Login successful! Redirecting...');
-                    setTimeout(() => { window.location.href = '/'; }, 1000);
+                    setTimeout(() => { window.location.href = '/kiosk'; }, 1000);
                 } else {
                     showError(data.error || 'Login failed.');
                     setLoading(false);
