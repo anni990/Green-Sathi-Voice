@@ -73,9 +73,13 @@ class LibraryPipeline(BasePipeline):
                     text = self.recognizer.recognize_google(audio, language=language)
                     logger.info(f"Library STT recognized: {text}")
                     
-                    # Cleanup temp files
-                    os.unlink(temp_file.name)
-                    os.unlink(wav_file.name)
+                    # Cleanup temp files (non-blocking - don't fail if cleanup fails)
+                    try:
+                        os.unlink(temp_file.name)
+                        os.unlink(wav_file.name)
+                        logger.debug("Cleaned up temporary audio files")
+                    except Exception as cleanup_error:
+                        logger.warning(f"Failed to cleanup temp files (non-critical): {cleanup_error}")
                     
                     return text
                     

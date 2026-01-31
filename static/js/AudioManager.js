@@ -224,6 +224,12 @@ AudioManager.prototype.processRecording = function() {
     var currentLanguage = this.app.stateManager.userInfo.language || 'hindi';
     formData.append('language', currentLanguage);
     
+    // Add device_id to use device-specific pipeline (critical for LLM service routing)
+    var deviceId = this.app.stateManager.userInfo.device_id;
+    if (deviceId) {
+        formData.append('device_id', deviceId);
+    }
+    
     // Send audio for processing
     return fetch('/api/voice/process_audio', {
         method: 'POST',
@@ -307,15 +313,22 @@ AudioManager.prototype.playResponse = function(text, language) {
     // Show processing status while waiting for TTS response
     this.app.uiController.updateStatus('processing', 'आवाज़ तैयार कर रहा है...');
     
+    // Get device_id for pipeline routing
+    var deviceId = this.app.stateManager.userInfo.device_id;
+    var requestBody = {
+        text: text,
+        language: language
+    };
+    if (deviceId) {
+        requestBody.device_id = deviceId;
+    }
+    
     return fetch('/api/voice/text_to_speech', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            text: text,
-            language: language
-        })
+        body: JSON.stringify(requestBody)
     })
     .then(function(response) {
         if (response.ok) {

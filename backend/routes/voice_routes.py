@@ -88,10 +88,13 @@ def extract_user_info():
         if not text:
             return jsonify({'error': 'No text provided', 'fallback': True}), 400
         
+        logger.info(f"===== EXTRACT_INFO CALLED ===== device_id: {device_id}, text: {text[:50]}...")
+        
         # Use pipeline service if device_id is provided
         if device_id:
             try:
                 device_id = int(device_id)
+                logger.info(f"Using pipeline_service for device {device_id}")
                 info = pipeline_service.extract_name_phone(device_id, text)
             except (ValueError, TypeError):
                 logger.warning(f"Invalid device_id format: {device_id}, using default LLM")
@@ -141,10 +144,13 @@ def detect_language():
                 'attempt': attempt
             }), 400
         
+        logger.info(f"===== DETECT_LANGUAGE CALLED ===== device_id: {device_id}, attempt: {attempt}, text: {text[:50]}...")
+        
         # Use pipeline service if device_id is provided
         if device_id:
             try:
                 device_id = int(device_id)
+                logger.info(f"Using pipeline_service for device {device_id}")
                 language = pipeline_service.detect_language(device_id, text)
             except (ValueError, TypeError):
                 logger.warning(f"Invalid device_id format: {device_id}, using default LLM")
@@ -194,12 +200,15 @@ def generate_response():
         if not user_input:
             return jsonify({'error': 'No text provided'}), 400
         
+        logger.info(f"===== GENERATE_RESPONSE CALLED ===== device_id: {device_id}, language: {language}, user_input: {user_input[:50]}...")
+        
         # Get conversation history if user_id provided
         conversation_history = None
         if user_id:
             conversation_history = db_manager.get_conversation_history(user_id, session_id, limit=10)
         
         # Generate response using device-specific pipeline
+        logger.info(f"Using pipeline_service for device {device_id}")
         response = pipeline_service.generate_response(device_id, user_input, language, conversation_history)
         
         # Don't remove asterisks - they're used for markdown formatting (bold text)
@@ -237,9 +246,8 @@ def text_to_speech():
         if device_id:
             try:
                 device_id = int(device_id)
-                # For TTS, get speech recognition language code (e.g., 'hi-IN')
-                lang_code = Config.SPEECH_RECOGNITION_LANGUAGES.get(language, 'hi-IN')
-                audio_path = pipeline_service.text_to_speech(device_id, text, lang_code)
+                # For TTS, use 2-letter language code (e.g., 'hi', 'bn') - gTTS format
+                audio_path = pipeline_service.text_to_speech(device_id, text, language_code)
             except (ValueError, TypeError):
                 logger.warning(f"Invalid device_id format: {device_id}, using legacy TTS")
                 audio_path = speech_service.text_to_speech(text, language_code)
@@ -303,3 +311,100 @@ def get_static_audio(prompt_type, language):
     except Exception as e:
         logger.error(f"Error getting static audio: {e}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@voice_bp.route('/testing-llm', methods=['POST'])
+def testing_llm():
+    """
+    Testing endpoint for LLM services - NO AUTHENTICATION REQUIRED
+    
+    Test different LLM services with custom queries.
+    
+    Request body:
+    {
+        "query": "Your question here",
+        "llm_service": "gemini|openai|azure_openai|vertex",
+        "language": "hindi" (optional, default: hindi),
+        "operation": "generate_response|extract_name_phone|detect_language" (optional, default: generate_response)
+    }
+    """
+    try:
+        data = request.get_json()
+        query = data.get('query', '')
+        llm_service_name = data.get('llm_service', 'gemini')
+        language = data.get('language', 'hindi')
+        operation = data.get('operation', 'generate_response')
+        
+        # Validate input
+        if not query:
+            logger.warning("[TESTING-LLM] No query provided")
+            return jsonify({'error': 'No query provided'}), 400
+        
+        # Log the test request
+        logger.info(f"========== TESTING-LLM API CALLED ==========")
+        logger.info(f"Query: {query[:100]}...")
+        logger.info(f"LLM Service: {llm_service_name}")
+        logger.info(f"Language: {language}")
+        logger.info(f"Operation: {operation}")
+        
+        # Get the requested LLM service
+        llm_service = llm_services.get(llm_service_name)
+        
+        if not llm_service:
+            available_services = ', '.join(llm_services.keys())
+            logger.error(f"[TESTING-LLM] Invalid LLM service: {llm_service_name}")
+            return jsonify({
+                'error': f'Invalid LLM service: {llm_service_name}',
+                'available_services': list(llm_services.keys())
+            }), 400
+        
+        logger.info(f"[TESTING-LLM] Using LLM service: {llm_service.__class__.__name__}")
+        
+        # Execute the requested operation
+        result = None
+        operation_start_time = __import__('time').time()
+        
+        if operation == 'generate_response':
+            logger.info(f"[TESTING-LLM] Calling generate_response...")
+            result = llm_service.generate_response(query, language, conversation_history=None)
+            logger.info(f"[TESTING-LLM] Response generated: {len(result)} characters")
+            
+        elif operation == 'extract_name_phone':
+            logger.info(f"[TESTING-LLM] Calling extract_name_phone...")
+            result = llm_service.extract_name_phone(query)
+            logger.info(f"[TESTING-LLM] Extraction result: {result}")
+            
+        elif operation == 'detect_language':
+            logger.info(f"[TESTING-LLM] Calling detect_language...")
+            result = llm_service.detect_language(query)
+            logger.info(f"[TESTING-LLM] Detected language: {result}")
+            
+        else:
+            logger.error(f"[TESTING-LLM] Invalid operation: {operation}")
+            return jsonify({
+                'error': f'Invalid operation: {operation}',
+                'available_operations': ['generate_response', 'extract_name_phone', 'detect_language']
+            }), 400
+        
+        operation_time = __import__('time').time() - operation_start_time
+        logger.info(f"[TESTING-LLM] Operation completed in {operation_time:.2f} seconds")
+        logger.info(f"========== TESTING-LLM API COMPLETED ==========")
+        
+        # Return the result
+        return jsonify({
+            'success': True,
+            'llm_service': llm_service_name,
+            'llm_class': llm_service.__class__.__name__,
+            'operation': operation,
+            'query': query,
+            'language': language,
+            'result': result,
+            'execution_time_seconds': round(operation_time, 2)
+        })
+        
+    except Exception as e:
+        logger.error(f"[TESTING-LLM] Error in testing endpoint: {e}")
+        logger.exception("Full traceback:")
+        return jsonify({
+            'error': 'Internal server error',
+            'message': str(e)
+        }), 500

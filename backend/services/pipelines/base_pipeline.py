@@ -57,7 +57,10 @@ class BasePipeline(ABC):
         Returns:
             dict: {'name': str, 'phone': str}
         """
-        return self.llm_service.extract_name_phone(text)
+        logger.info(f"Calling extract_name_phone with LLM: {self.llm_service.__class__.__name__}")
+        result = self.llm_service.extract_name_phone(text)
+        logger.info(f"Extract result - name: {result.get('name')}, phone: {result.get('phone')}")
+        return result
     
     def detect_language(self, text):
         """
@@ -69,7 +72,10 @@ class BasePipeline(ABC):
         Returns:
             str: Detected language name
         """
-        return self.llm_service.detect_language(text)
+        logger.info(f"Calling detect_language with LLM: {self.llm_service.__class__.__name__}")
+        language = self.llm_service.detect_language(text)
+        logger.info(f"Detected language: {language}")
+        return language
     
     def generate_response(self, user_input, language, conversation_history):
         """
@@ -83,4 +89,7 @@ class BasePipeline(ABC):
         Returns:
             str: Generated response
         """
-        return self.llm_service.generate_response(user_input, language, conversation_history)
+        logger.info(f"Calling generate_response with LLM: {self.llm_service.__class__.__name__}, language: {language}")
+        response = self.llm_service.generate_response(user_input, language, conversation_history)
+        logger.info(f"Generated response length: {len(response)} characters")
+        return response

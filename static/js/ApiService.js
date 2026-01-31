@@ -40,10 +40,17 @@ ApiService.prototype.handleApiError = function(response, retryFn) {
 ApiService.prototype.extractUserInfo = function(text) {
     var self = this;
     
+    // Get device_id for LLM service routing
+    var deviceId = this.app.stateManager.userInfo.device_id;
+    var requestBody = { text: text };
+    if (deviceId) {
+        requestBody.device_id = deviceId;
+    }
+    
     return fetch('/api/voice/extract_info', {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ text: text })
+        body: JSON.stringify(requestBody)
     })
     .then(function(response) {
         if (response.status === 401) {
@@ -166,10 +173,17 @@ ApiService.prototype.detectLanguage = function(text, attempt) {
     var self = this;
     if (typeof attempt === 'undefined') attempt = 1;
     
+    // Get device_id for LLM service routing
+    var deviceId = this.app.stateManager.userInfo.device_id;
+    var requestBody = { text: text, attempt: attempt };
+    if (deviceId) {
+        requestBody.device_id = deviceId;
+    }
+    
     return fetch('/api/voice/detect_language', {
         method: 'POST',
         headers: this.getAuthHeaders(),
-        body: JSON.stringify({ text: text, attempt: attempt })
+        body: JSON.stringify(requestBody)
     })
     .then(function(response) {
         if (response.status === 401) {

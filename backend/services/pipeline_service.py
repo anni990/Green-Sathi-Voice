@@ -60,6 +60,8 @@ class PipelineService:
                 logger.error(f"Invalid LLM service: {llm_service_name}, falling back to gemini")
                 llm_service = self.llm_services['gemini']
             
+            logger.info(f"***** PIPELINE CONFIG ***** Device: {device_id}, Type: {pipeline_type}, LLM: {llm_service_name} ({llm_service.__class__.__name__})")
+            
             # Instantiate pipeline
             if pipeline_type == 'library':
                 pipeline = LibraryPipeline(llm_service)
