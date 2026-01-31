@@ -1,21 +1,31 @@
-function addLog(message, type = 'log') {
-    const console = document.getElementById('console');
-    const timestamp = new Date().toLocaleTimeString();
-    const log = document.createElement('div');
-    log.className = `log ${type}`;
-    log.textContent = `[${timestamp}] ${message}`;
-    console.appendChild(log);
-    console.scrollTop = console.scrollHeight;
+// ES5 Compatible - No arrow functions, const/let, or optional chaining
+function addLog(message, type) {
+    if (typeof type === 'undefined') {
+        type = 'log';
+    }
+    var consoleElement = document.getElementById('console');
+    var timestamp = new Date().toLocaleTimeString();
+    var log = document.createElement('div');
+    log.className = 'log ' + type;
+    log.textContent = '[' + timestamp + '] ' + message;
+    consoleElement.appendChild(log);
+    consoleElement.scrollTop = consoleElement.scrollHeight;
 }
 
 function updateDeviceInfo() {
     // Screen dimensions
-    document.getElementById('screen-width').textContent = `${screen.width}px`;
-    document.getElementById('screen-height').textContent = `${screen.height}px`;
-    document.getElementById('window-width').textContent = `${window.innerWidth}px`;
-    document.getElementById('window-height').textContent = `${window.innerHeight}px`;
+    document.getElementById('screen-width').textContent = screen.width + 'px';
+    document.getElementById('screen-height').textContent = screen.height + 'px';
+    document.getElementById('window-width').textContent = window.innerWidth + 'px';
+    document.getElementById('window-height').textContent = window.innerHeight + 'px';
     document.getElementById('dpr').textContent = window.devicePixelRatio;
-    document.getElementById('orientation').textContent = screen.orientation?.type || 'unknown';
+    
+    // Handle orientation with fallback for older browsers
+    var orientationText = 'unknown';
+    if (screen.orientation && screen.orientation.type) {
+        orientationText = screen.orientation.type;
+    }
+    document.getElementById('orientation').textContent = orientationText;
 
     // Browser info
     document.getElementById('platform').textContent = navigator.platform;
@@ -25,20 +35,20 @@ function updateDeviceInfo() {
 
     // Kiosk mode info (if available)
     if (window.getKioskInfo) {
-        const info = window.getKioskInfo();
+        var info = window.getKioskInfo();
         document.getElementById('is-webview').textContent = info.isWebView ? 'Yes ✓' : 'No ✗';
         document.getElementById('is-large').textContent = info.isLargeScreen ? 'Yes ✓' : 'No ✗';
         document.getElementById('scale-factor').textContent = info.currentScale;
 
-        const computedFontSize = window.getComputedStyle(document.body).fontSize;
+        var computedFontSize = window.getComputedStyle(document.body).fontSize;
         document.getElementById('font-size').textContent = computedFontSize;
 
-        const hasKioskClass = document.body.classList.contains('kiosk-mode');
+        var hasKioskClass = document.body.classList.contains('kiosk-mode');
         document.getElementById('kiosk-class').textContent = hasKioskClass ? 'Applied ✓' : 'Not Applied ✗';
 
         // Update status
-        const statusIndicator = document.getElementById('status-indicator');
-        const statusText = document.getElementById('status-text');
+        var statusIndicator = document.getElementById('status-indicator');
+        var statusText = document.getElementById('status-text');
 
         if (hasKioskClass && info.currentScale < 1) {
             statusIndicator.className = 'status-indicator success';
@@ -54,7 +64,7 @@ function updateDeviceInfo() {
             addLog('Mobile/tablet size detected - no scaling needed', 'info');
         }
 
-        addLog(`Screen: ${info.screenWidth}x${info.screenHeight}, Scale: ${info.currentScale}`, 'info');
+        addLog('Screen: ' + info.screenWidth + 'x' + info.screenHeight + ', Scale: ' + info.currentScale, 'info');
     } else {
         document.getElementById('is-webview').textContent = 'N/A';
         document.getElementById('is-large').textContent = 'N/A';
@@ -62,8 +72,8 @@ function updateDeviceInfo() {
         document.getElementById('font-size').textContent = window.getComputedStyle(document.body).fontSize;
         document.getElementById('kiosk-class').textContent = 'N/A';
 
-        const statusIndicator = document.getElementById('status-indicator');
-        const statusText = document.getElementById('status-text');
+        var statusIndicator = document.getElementById('status-indicator');
+        var statusText = document.getElementById('status-text');
         statusIndicator.className = 'status-indicator error';
         statusText.textContent = '✗ Kiosk Mode Script Not Loaded';
         addLog('ERROR: Kiosk mode script not found', 'error');
@@ -78,50 +88,55 @@ function refreshData() {
 
 function testResize() {
     addLog('Testing resize handling...', 'info');
-    const originalWidth = window.innerWidth;
+    var originalWidth = window.innerWidth;
 
     // Simulate resize (won't actually resize but will log current state)
-    setTimeout(() => {
+    setTimeout(function() {
         updateDeviceInfo();
-        addLog(`Resize test complete. Width: ${window.innerWidth}px`, 'success');
+        addLog('Resize test complete. Width: ' + window.innerWidth + 'px', 'success');
     }, 100);
 }
 
 function copyToClipboard() {
-    const info = window.getKioskInfo ? window.getKioskInfo() : {};
-    const text = `
-Screen Size: ${screen.width}x${screen.height}
-Window Size: ${window.innerWidth}x${window.innerHeight}
-Device Pixel Ratio: ${window.devicePixelRatio}
-Platform: ${navigator.platform}
-User Agent: ${navigator.userAgent}
-Is WebView: ${info.isWebView || 'N/A'}
-Is Large Screen: ${info.isLargeScreen || 'N/A'}
-Scale Factor: ${info.currentScale || 'N/A'}
-            `.trim();
+    var info = window.getKioskInfo ? window.getKioskInfo() : {};
+    var text = '\nScreen Size: ' + screen.width + 'x' + screen.height + '\n' +
+        'Window Size: ' + window.innerWidth + 'x' + window.innerHeight + '\n' +
+        'Device Pixel Ratio: ' + window.devicePixelRatio + '\n' +
+        'Platform: ' + navigator.platform + '\n' +
+        'User Agent: ' + navigator.userAgent + '\n' +
+        'Is WebView: ' + (info.isWebView || 'N/A') + '\n' +
+        'Is Large Screen: ' + (info.isLargeScreen || 'N/A') + '\n' +
+        'Scale Factor: ' + (info.currentScale || 'N/A');
 
-    navigator.clipboard.writeText(text).then(() => {
-        addLog('Device information copied to clipboard', 'success');
-        alert('Device information copied to clipboard!');
-    }).catch(err => {
-        addLog('Failed to copy to clipboard: ' + err, 'error');
-    });
+    // Check if clipboard API is available
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function() {
+            addLog('Device information copied to clipboard', 'success');
+            alert('Device information copied to clipboard!');
+        }).catch(function(err) {
+            addLog('Failed to copy to clipboard: ' + err, 'error');
+        });
+    } else {
+        // Fallback for older browsers
+        addLog('Clipboard API not available', 'error');
+        alert('Clipboard not supported. Please copy manually:\n\n' + text);
+    }
 }
 
 // Initialize on load
-window.addEventListener('load', () => {
+window.addEventListener('load', function() {
     addLog('Test page loaded successfully', 'success');
     updateDeviceInfo();
 });
 
 // Update on resize
-window.addEventListener('resize', () => {
+window.addEventListener('resize', function() {
     addLog('Window resized, updating information...', 'info');
     updateDeviceInfo();
 });
 
 // Update on orientation change
-window.addEventListener('orientationchange', () => {
+window.addEventListener('orientationchange', function() {
     addLog('Orientation changed, updating information...', 'info');
     setTimeout(updateDeviceInfo, 300);
 });
