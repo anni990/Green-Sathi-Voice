@@ -349,13 +349,13 @@
     <!-- Landing Page Interaction Logic -->
     <script>
         // Global variables
-        let landingPageActive = true;
+        var landingPageActive = true;
 
         // Function definitions (will be called after modules load)
         function startVoiceBot() {
             console.log('🚀 Starting voice bot...');
-            const landingPage = document.getElementById('landing-page');
-            const mainUI = document.getElementById('main-ui');
+            var landingPage = document.getElementById('landing-page');
+            var mainUI = document.getElementById('main-ui');
 
             // Transition to main UI
             landingPage.style.display = 'none';
@@ -365,9 +365,9 @@
 
             // Now load and initialize app_modular.js
             console.log('📦 Loading app_modular.js...');
-            const script = document.createElement('script');
+            var script = document.createElement('script');
             script.src = "{{ url_for('static', filename='js/app_modular.js') }}";
-            script.onload = () => {
+            script.onload = function() {
                 console.log('✅ app_modular.js loaded');
                 // Manually instantiate VoiceBotApp since DOMContentLoaded already fired
                 try {
@@ -376,7 +376,7 @@
                         window.app = new VoiceBotApp();
                         
                         // Wait a moment then start name/phone collection
-                        setTimeout(() => {
+                        setTimeout(function() {
                             if (window.app && window.app.startNamePhoneCollection) {
                                 console.log('✅ Starting name/phone collection');
                                 window.app.startNamePhoneCollection();
@@ -391,7 +391,7 @@
                     console.error('❌ Error creating VoiceBotApp:', error);
                 }
             };
-            script.onerror = () => {
+            script.onerror = function() {
                 console.error('❌ Failed to load app_modular.js');
             };
             document.body.appendChild(script);
@@ -406,41 +406,42 @@
         }
 
         function setupLoginPopup() {
-            const cancelBtn = document.getElementById('login-popup-cancel');
-            const loginBtn = document.getElementById('login-popup-login');
+            var cancelBtn = document.getElementById('login-popup-cancel');
+            var loginBtn = document.getElementById('login-popup-login');
 
             if (cancelBtn) {
                 cancelBtn.addEventListener('click', hideLoginPopup);
             }
 
             if (loginBtn) {
-                loginBtn.addEventListener('click', () => {
+                loginBtn.addEventListener('click', function() {
                     window.location.href = '/login';
                 });
             }
         }
 
         function setupAccountDropdown() {
-            const accountBtn = document.getElementById('account-btn');
-            const dropdownMenu = document.getElementById('dropdown-menu');
-            const logoutBtn = document.getElementById('logout-btn');
+            var accountBtn = document.getElementById('account-btn');
+            var dropdownMenu = document.getElementById('dropdown-menu');
+            var logoutBtn = document.getElementById('logout-btn');
 
             if (accountBtn && dropdownMenu) {
-                accountBtn.addEventListener('click', () => {
+                accountBtn.addEventListener('click', function() {
                     dropdownMenu.classList.toggle('hidden');
                 });
 
-                document.addEventListener('click', (e) => {
+                document.addEventListener('click', function(e) {
                     if (!accountBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
                         dropdownMenu.classList.add('hidden');
                     }
                 });
 
                 if (logoutBtn) {
-                    logoutBtn.addEventListener('click', async () => {
+                    logoutBtn.addEventListener('click', function() {
                         if (window.deviceAuth) {
-                            await window.deviceAuth.logout();
-                            window.location.reload();
+                            window.deviceAuth.logout().then(function() {
+                                window.location.reload();
+                            });
                         }
                     });
                 }
@@ -448,21 +449,21 @@
         }
 
         function setupExitButton() {
-            const desktopExitBtn = document.getElementById('desktop-exit-btn');
+            var desktopExitBtn = document.getElementById('desktop-exit-btn');
             
             if (desktopExitBtn) {
-                desktopExitBtn.addEventListener('click', () => {
+                desktopExitBtn.addEventListener('click', function() {
                     window.location.reload();
                 });
             }
         }
 
-        async function checkAuthStatus() {
-            const authButtons = document.getElementById('auth-buttons');
-            const accountDropdown = document.getElementById('account-dropdown');
+        function checkAuthStatus() {
+            var authButtons = document.getElementById('auth-buttons');
+            var accountDropdown = document.getElementById('account-dropdown');
 
             if (window.deviceAuth && window.deviceAuth.checkAuth()) {
-                const deviceInfo = window.deviceAuth.getDeviceInfo();
+                var deviceInfo = window.deviceAuth.getDeviceInfo();
                 authButtons.classList.add('hidden');
                 accountDropdown.classList.remove('hidden');
                 document.getElementById('account-device-name').textContent = deviceInfo.deviceName || 'Device';
@@ -485,7 +486,7 @@
             
             // Enter: Start voice bot from landing
             if (landingPageActive && (event.key === 'Enter' || event.keyCode === 13)) {
-                const popup = document.getElementById('login-popup');
+                var popup = document.getElementById('login-popup');
                 if (popup && popup.classList.contains('hidden')) {
                     event.preventDefault();
                     console.log('🎹 Enter key pressed on landing page');
@@ -516,7 +517,7 @@
         console.log('📦 Modules loaded. Waiting for UI transition...');
         
         // Wait a moment then initialize UI functions
-        setTimeout(() => {
+        setTimeout(function() {
             checkAuthStatus();
             setupLoginPopup();
             setupExitButton();

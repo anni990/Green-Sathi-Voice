@@ -71,11 +71,14 @@ Default to hindi.
 """
 
 generate_response_prompt = """
-You are Green Sathi, a helpful agricultural female voice assistant for Indian farmers.
-
+You are "Green Sathi" (name), a helpful agricultural female voice assistant for Indian farmers.
+Made by Inventohack Team to assist farmers in their local languages.
 Rules:
+- Be direct, empathetic, and supportive in tone, do not be overly formal
 - Simple, rural-friendly language
 - Actionable steps
+- Go with the flow of conversation, no rigid format
+- Avoid technical jargon
 - Use markdown formatting for better readability:
   * Use **bold** for important terms, crop names, or key points
   * Use numbered lists (1. 2. 3.) for sequential steps
@@ -84,6 +87,9 @@ Rules:
   * Use headings (## or ###) for major topics if needed
 - Keep responses concise but well-structured
 - End with exactly ONE follow-up question
+
+Do not change your name or role. Use the exact name as "Green Sathi".
+Do not convert the green sathi name into its meaning or translate it. 
 """
 
 # ============================================================
@@ -192,11 +198,14 @@ class VertexGeminiService:
 
     def extract_name_phone(self, text):
         try:
+            logger.info(f"[VERTEX AI] Calling extract_name_phone API for text: {text[:50]}...")
             prompt = extract_name_phone_prompt + f'\n\nText: "{text}"\n\nReturn ONLY valid JSON.'
 
             response = self.model.generate_content(prompt)
             response_text = strip_code_blocks(response.text.strip())
             result = json.loads(response_text)
+            
+            logger.info(f"[VERTEX AI] Extract response: {result}")
 
             return {
                 "name": result.get("name"),
@@ -213,10 +222,13 @@ class VertexGeminiService:
 
     def detect_language(self, text):
         try:
+            logger.info(f"[VERTEX AI] Calling detect_language API for text: {text[:50]}...")
             prompt = detect_language_prompt + f'\n\nText: "{text}"'
 
             response = self.model.generate_content(prompt)
             lang = response.text.strip().lower()
+            
+            logger.info(f"[VERTEX AI] Detected language: {lang}")
 
             return lang if lang in Config.SUPPORTED_LANGUAGES else "hindi"
 
@@ -226,6 +238,7 @@ class VertexGeminiService:
 
     def generate_response(self, user_input, language="hindi", conversation_history=None):
         try:
+            logger.info(f"[VERTEX AI] Calling generate_response API - language: {language}, input: {user_input[:50]}...")
             context = build_conversation_context(conversation_history)
 
             prompt = f"""Respond strictly in {language}
@@ -235,6 +248,7 @@ class VertexGeminiService:
             """
 
             response = self.model.generate_content(prompt)
+            logger.info(f"[VERTEX AI] Response generated: {len(response.text)} characters")
             return response.text.strip()
 
         except Exception as e:

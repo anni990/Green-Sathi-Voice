@@ -115,3 +115,4 @@ static/audio/*.wav
 
 # GCP creds file
 vertex-gemini-service.json
+vertex-gemini-service-malay.json
