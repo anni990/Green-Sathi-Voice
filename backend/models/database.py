@@ -473,6 +473,56 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Failed to get device: {e}")
             return None
+
+    def get_device_by_android_id(self, android_id):
+        """Get device record by Android ID string"""
+        try:
+            return self.devices.find_one({'android_id': android_id})
+        except Exception as e:
+            logger.error(f"Failed to get device by android_id: {e}")
+            return None
+
+    def upsert_device_by_android_id(self, android_id, user_agent=None, source=None):
+        """Find device by android_id or create a new numeric device entry.
+
+        Returns the device document.
+        """
+        try:
+            device = self.get_device_by_android_id(android_id)
+            now = datetime.utcnow()
+            if device:
+                # Update last_login and metadata
+                update_fields = {'last_login': now}
+                if user_agent:
+                    update_fields['user_agent'] = user_agent
+                if source:
+                    update_fields['source'] = source
+                self.devices.update_one({'android_id': android_id}, {'$set': update_fields})
+                return self.devices.find_one({'android_id': android_id})
+            else:
+                # Create new numeric device_id and lightweight record
+                device_id = self.get_next_device_id()
+                device_name = f"Android-{str(device_id)}"
+                device_data = {
+                    'device_id': device_id,
+                    'device_name': device_name,
+                    'android_id': android_id,
+                    'user_agent': user_agent,
+                    'source': source,
+                    'created_at': now,
+                    'last_login': now,
+                    'pipeline_type': Config.DEFAULT_PIPELINE_TYPE,
+                    'llm_service': Config.DEFAULT_LLM_SERVICE_TYPE,
+                    # password_hash and tokens left as None for WebView-managed devices
+                    'password_hash': None,
+                    'access_token': None,
+                    'refresh_token': None
+                }
+                self.devices.insert_one(device_data)
+                return device_data
+        except Exception as e:
+            logger.error(f"Failed to upsert device by android_id: {e}")
+            raise
     
     def get_device_by_token(self, token, token_type='access'):
         """Get device by access or refresh token"""

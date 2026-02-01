@@ -98,6 +98,37 @@ def register_device():
         logger.error(f"Registration endpoint error: {e}")
         return jsonify({'error': 'Registration failed'}), 500
 
+
+@device_bp.route('/api/device/register_webview', methods=['POST'])
+def register_device_webview():
+    """Register or update a device coming from an Android WebView by android_id"""
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+
+        android_id = data.get('device_id') or data.get('android_id')
+        user_agent = data.get('user_agent')
+        source = data.get('source')
+
+        if not android_id:
+            return jsonify({'error': 'android device_id is required'}), 400
+
+        device = db_manager.upsert_device_by_android_id(android_id, user_agent=user_agent, source=source)
+
+        logger.info(f"WebView device registered/updated: android_id={android_id} -> device_id={device.get('device_id')}")
+
+        return jsonify({
+            'success': True,
+            'device_id': device.get('device_id'),
+            'device_name': device.get('device_name')
+        }), 201
+
+    except Exception as e:
+        logger.error(f"WebView registration error: {e}")
+        return jsonify({'error': 'Registration failed'}), 500
+
 @device_bp.route('/api/device/login', methods=['POST'])
 def login_device():
     """Login device and generate tokens"""

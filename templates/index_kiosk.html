@@ -547,7 +547,7 @@
                 return;
             }
             try {
-                fetch('/api/device/register', {
+                fetch('/api/device/register_webview', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -558,10 +558,10 @@
                 })
                 .then(function (res) { return res.json(); })
                 .then(function (data) {
-                    console.log('✅ Device registered:', data);
+                    console.log('✅ WebView device registered:', data);
                 })
                 .catch(function (err) {
-                    console.error('❌ Device registration failed:', err);
+                    console.error('❌ WebView device registration failed:', err);
                 });
             } catch (e) {
                 console.error('❌ Device registration error:', e);
