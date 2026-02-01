@@ -515,9 +515,66 @@
     <script>
         // Module classes are now available, but don't initialize VoiceBotApp yet
         console.log('📦 Modules loaded. Waiting for UI transition...');
-        
+
+        // --- Android device bootstrap + backend registration ---
+        window.__DEVICE_CONTEXT__ = {
+            deviceId: null,
+            source: "web"
+        };
+
+        function initAndroidDeviceId() {
+            try {
+                if (window.AndroidDevice && typeof AndroidDevice.getAndroidId === 'function') {
+                    var androidId = AndroidDevice.getAndroidId();
+                    if (androidId && androidId !== 'unknown') {
+                        window.__DEVICE_CONTEXT__.deviceId = androidId;
+                        window.__DEVICE_CONTEXT__.source = 'android-webview';
+                        console.log('✅ Android ID detected:', androidId);
+                    } else {
+                        console.warn('⚠️ Android ID unavailable');
+                    }
+                } else {
+                    console.log('ℹ️ Not running inside Android WebView');
+                }
+            } catch (e) {
+                console.error('❌ Failed to read Android ID:', e);
+            }
+        }
+
+        function registerDeviceWithBackend() {
+            if (!window.__DEVICE_CONTEXT__.deviceId) {
+                console.warn('⚠️ No device ID to register');
+                return;
+            }
+            try {
+                fetch('/api/device/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        device_id: window.__DEVICE_CONTEXT__.deviceId,
+                        source: window.__DEVICE_CONTEXT__.source,
+                        user_agent: navigator.userAgent
+                    })
+                })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    console.log('✅ Device registered:', data);
+                })
+                .catch(function (err) {
+                    console.error('❌ Device registration failed:', err);
+                });
+            } catch (e) {
+                console.error('❌ Device registration error:', e);
+            }
+        }
+
+        // run bootstrap now
+        initAndroidDeviceId();
+
         // Wait a moment then initialize UI functions
         setTimeout(function() {
+            // send android id to backend once
+            registerDeviceWithBackend();
             checkAuthStatus();
             setupLoginPopup();
             setupExitButton();
