@@ -478,6 +478,39 @@
     </script>
 
     <!-- JavaScript -->
+    <!-- CRITICAL: Initialize Android ID BEFORE DeviceAuthManager -->
+    <script>
+        // --- Android device bootstrap (MUST RUN FIRST) ---
+        console.log('🔍 Checking for Android WebView...');
+        
+        window.__DEVICE_CONTEXT__ = {
+            deviceId: null,
+            source: "web"
+        };
+
+        // PRIORITY 1: Try to get Android ID from WebView interface
+        try {
+            if (window.AndroidDevice && typeof AndroidDevice.getAndroidId === 'function') {
+                var androidId = AndroidDevice.getAndroidId();
+                if (androidId && androidId !== 'unknown') {
+                    window.__DEVICE_CONTEXT__.deviceId = androidId;
+                    window.__DEVICE_CONTEXT__.source = 'android-webview';
+                    console.log('✅ Android ID detected and set BEFORE DeviceAuthManager:', androidId);
+                } else {
+                    console.warn('⚠️ Android ID returned "unknown" - will use UUID fallback');
+                }
+            } else {
+                console.log('ℹ️ Not running inside Android WebView - will use UUID fallback');
+            }
+        } catch (e) {
+            console.error('❌ Failed to read Android ID:', e);
+            console.log('ℹ️ Will use UUID fallback');
+        }
+        
+        console.log('📱 Device context initialized:', window.__DEVICE_CONTEXT__);
+    </script>
+    
+    <!-- NOW load DeviceAuthManager - it will check window.__DEVICE_CONTEXT__ -->
     <script src="{{ url_for('static', filename='js/DeviceAuthManager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ElementManager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/StateManager.js') }}"></script>
@@ -490,41 +523,15 @@
     
     <!-- Initialize after all modules loaded -->
     <script>
-        // Module classes are now available, but don't initialize VoiceBotApp yet
         console.log('📦 Modules loaded. Waiting for UI transition...');
-
-        // --- Android device bootstrap + backend registration ---
-        window.__DEVICE_CONTEXT__ = {
-            deviceId: null,
-            source: "web"
-        };
-
-        function initAndroidDeviceId() {
-            try {
-                if (window.AndroidDevice && typeof AndroidDevice.getAndroidId === 'function') {
-                    var androidId = AndroidDevice.getAndroidId();
-                    if (androidId && androidId !== 'unknown') {
-                        window.__DEVICE_CONTEXT__.deviceId = androidId;
-                        window.__DEVICE_CONTEXT__.source = 'android-webview';
-                        console.log('✅ Android ID detected:', androidId);
-                    } else {
-                        console.warn('⚠️ Android ID unavailable');
-                    }
-                } else {
-                    console.log('ℹ️ Not running inside Android WebView');
-                }
-            } catch (e) {
-                console.error('❌ Failed to read Android ID:', e);
-            }
-        }
-
-        // run bootstrap now
-        initAndroidDeviceId();
 
         // Auto-register device with backend after device ID is initialized
         function autoRegisterDeviceOnLoad() {
             if (window.deviceAuth && window.deviceAuth.deviceId) {
                 console.log('🔄 Auto-registering device with backend...');
+                console.log('   Device ID:', window.deviceAuth.deviceId);
+                console.log('   Source:', window.deviceAuth.source);
+                
                 window.deviceAuth.autoRegisterDevice()
                     .then(function(result) {
                         if (result.success) {
