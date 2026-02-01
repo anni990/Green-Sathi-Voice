@@ -250,10 +250,8 @@ class AdminService:
             # Build match criteria
             match_criteria = {'timestamp': {'$gte': start_date}}
             if device_id and device_id != 'all':
-                try:
-                    match_criteria['device_id'] = int(device_id)
-                except (ValueError, TypeError):
-                    match_criteria['device_id'] = device_id
+                # Accept any device_id format (UUID, Android ID, legacy numeric string)
+                match_criteria['device_id'] = device_id
             
             # Aggregation pipeline to get conversations with user data
             pipeline = [
@@ -346,10 +344,11 @@ class AdminService:
     def get_device_details(self, device_id):
         """Get detailed device information"""
         try:
-            device = db_manager.get_device_by_id(int(device_id))
+            # Accept any device_id format (UUID, Android ID, legacy numeric string)
+            device = db_manager.get_device_by_id(device_id)
             if device:
                 # Get user count for this device
-                user_count = db_manager.users.count_documents({'device_id': int(device_id)})
+                user_count = db_manager.users.count_documents({'device_id': device_id})
                 device['user_count'] = user_count
                 
                 # Remove sensitive data
@@ -365,7 +364,8 @@ class AdminService:
     def update_device_pipeline(self, device_id, pipeline_type=None, llm_service=None):
         """Update device pipeline configuration"""
         try:
-            return db_manager.update_device_pipeline_config(int(device_id), pipeline_type, llm_service)
+            # Accept any device_id format (UUID, Android ID, legacy numeric string)
+            return db_manager.update_device_pipeline_config(device_id, pipeline_type, llm_service)
         except Exception as e:
             logger.error(f"Failed to update device pipeline: {e}")
             return False

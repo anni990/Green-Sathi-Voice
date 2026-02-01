@@ -48,13 +48,13 @@ class Config:
     DHENU_API_KEY = os.getenv('DHENU_API_KEY')
     
     # Default LLM Service
-    DEFAULT_LLM_SERVICE = os.getenv('DEFAULT_LLM_SERVICE', 'azure_openai')
+    DEFAULT_LLM_SERVICE = os.getenv('DEFAULT_LLM_SERVICE', 'vertex')
     
     # Pipeline Configuration
     VALID_PIPELINE_TYPES = ['library', 'api']
     VALID_LLM_SERVICES = ['gemini', 'openai', 'azure_openai', 'vertex']
     DEFAULT_PIPELINE_TYPE = 'library'
-    DEFAULT_LLM_SERVICE_TYPE = 'azure_openai'
+    DEFAULT_LLM_SERVICE_TYPE = 'vertex'  # Changed from azure_openai to vertex
     
     # Device Authentication Configuration
     JWT_SECRET_KEY = os.getenv('JWT_SECRET_KEY', 'jwt-secret-key-change-in-production')

@@ -1,87 +1,196 @@
 /**
- * DeviceAuthManager - Handles device authentication, token management, and session persistence
+ * DeviceAuthManager - Handles device identification and configuration (NO AUTHENTICATION)
  * ES5 Compatible - No classes, async/await, arrow functions, template literals, or spread operators
+ * Refactored for Android ID-based device tracking without login/logout/session management
  */
 
-function DeviceAuthManager() {
-    this.accessToken = null;
-    this.refreshToken = null;
+function DeviceAuthManager(options) {
+    options = options || {};
+    this.mode = options.mode || 'auto';  // 'auto' (default), 'web-only', 'android-only'
     this.deviceId = null;
     this.deviceName = null;
     this.pipelineType = null;
     this.llmService = null;
-    this.isAuthenticated = false;
+    this.source = 'web';
+    this.isRegistered = false;
     
-    // Load tokens from localStorage on initialization
+    // Load device info from localStorage on initialization
     this.loadFromStorage();
+    
+    // Initialize device ID from injected context or generate UUID
+    this.initDeviceId();
 }
 
 /**
- * Load authentication data from localStorage
+ * Load device data from localStorage
  */
 DeviceAuthManager.prototype.loadFromStorage = function() {
-    this.accessToken = localStorage.getItem('access_token');
-    this.refreshToken = localStorage.getItem('refresh_token');
     this.deviceId = localStorage.getItem('device_id');
     this.deviceName = localStorage.getItem('device_name');
-    this.pipelineType = localStorage.getItem('pipeline_type');
-    this.llmService = localStorage.getItem('llm_service');
-    this.isAuthenticated = !!(this.accessToken && this.deviceId);
+    this.pipelineType = localStorage.getItem('pipeline_type') || 'library';
+    this.llmService = localStorage.getItem('llm_service') || 'vertex';
+    this.source = localStorage.getItem('device_source') || 'web';
+    this.isRegistered = !!(this.deviceId && localStorage.getItem('device_registered') === 'true');
 };
 
 /**
- * Save authentication data to localStorage
+ * Initialize device ID from Android WebView or generate UUID fallback
+ * CRITICAL: Only saves to localStorage AFTER backend confirms registration
  */
-DeviceAuthManager.prototype.saveToStorage = function(accessToken, refreshToken, deviceId, deviceName, pipelineType, llmService) {
-    if (typeof pipelineType === 'undefined') pipelineType = null;
-    if (typeof llmService === 'undefined') llmService = null;
+DeviceAuthManager.prototype.initDeviceId = function() {
+    var self = this;
     
-    localStorage.setItem('access_token', accessToken);
-    localStorage.setItem('refresh_token', refreshToken);
-    localStorage.setItem('device_id', deviceId);
-    localStorage.setItem('device_name', deviceName);
-    
-    if (pipelineType) {
-        localStorage.setItem('pipeline_type', pipelineType);
-        this.pipelineType = pipelineType;
-    }
-    if (llmService) {
-        localStorage.setItem('llm_service', llmService);
-        this.llmService = llmService;
+    // Priority 1: Check if already in localStorage (fully registered device)
+    if (this.deviceId && this.isRegistered) {
+        console.log('✅ Device ID loaded from storage:', this.deviceId);
+        return;
     }
     
-    this.accessToken = accessToken;
-    this.refreshToken = refreshToken;
-    this.deviceId = deviceId;
-    this.deviceName = deviceName;
-    this.isAuthenticated = true;
+    // Priority 2: Check Android WebView injection (ONLY if mode allows it)
+    if (this.mode !== 'web-only' && window.__DEVICE_CONTEXT__ && window.__DEVICE_CONTEXT__.deviceId) {
+        this.deviceId = window.__DEVICE_CONTEXT__.deviceId;
+        this.source = 'android-webview';
+        this.deviceName = 'Device-' + this.deviceId.substring(0, 8);
+        // DON'T save yet - will save after backend confirms registration
+        console.log('📱 Android ID detected:', this.deviceId);
+        return;
+    }
+    
+    // Priority 3: Generate UUID fallback for web browsers
+    // In 'web-only' mode, this is the ONLY option (no Android check)
+    // In 'auto' mode, this is fallback when no Android ID exists
+    this.deviceId = this.generateUUID();
+    this.source = 'web';
+    this.deviceName = 'Web-' + this.deviceId.substring(0, 8);
+    // DON'T save yet - will save after backend confirms registration
+    console.log('🌐 UUID generated for web (mode: ' + this.mode + '):', this.deviceId);
 };
 
 /**
- * Clear authentication data from localStorage
+ * Generate UUID v4 (ES5 compatible)
+ */
+DeviceAuthManager.prototype.generateUUID = function() {
+    var d = new Date().getTime();
+    var d2 = (performance && performance.now && (performance.now() * 1000)) || 0;
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16;
+        if (d > 0) {
+            r = (d + r) % 16 | 0;
+            d = Math.floor(d / 16);
+        } else {
+            r = (d2 + r) % 16 | 0;
+            d2 = Math.floor(d2 / 16);
+        }
+        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+};
+
+/**
+ * Save device data to localStorage (ONLY after backend confirms registration)
+ */
+DeviceAuthManager.prototype.saveToStorage = function() {
+    if (this.deviceId) {
+        localStorage.setItem('device_id', this.deviceId);
+    }
+    if (this.deviceName) {
+        localStorage.setItem('device_name', this.deviceName);
+    }
+    if (this.pipelineType) {
+        localStorage.setItem('pipeline_type', this.pipelineType);
+    }
+    if (this.llmService) {
+        localStorage.setItem('llm_service', this.llmService);
+    }
+    if (this.source) {
+        localStorage.setItem('device_source', this.source);
+    }
+    // Mark as registered to prevent re-initialization
+    localStorage.setItem('device_registered', 'true');
+    this.isRegistered = true;
+    console.log('💾 Device saved to localStorage:', this.deviceId);
+};
+
+/**
+ * Auto-register device with backend
+ * CRITICAL: Only saves to localStorage AFTER backend confirms success
+ */
+DeviceAuthManager.prototype.autoRegisterDevice = function() {
+    var self = this;
+    
+    if (!this.deviceId) {
+        console.error('❌ No device ID available for registration');
+        return Promise.resolve({ success: false, error: 'No device ID' });
+    }
+    
+    // If already registered, skip
+    if (this.isRegistered) {
+        console.log('✅ Device already registered, skipping:', this.deviceId);
+        return Promise.resolve({ success: true, already_registered: true });
+    }
+    
+    console.log('🔄 Auto-registering device:', this.deviceId);
+    
+    // Use defaults: library + vertex (as specified by user)
+    var requestPipelineType = this.pipelineType || 'library';
+    var requestLlmService = this.llmService || 'vertex';
+    
+    return fetch('/api/device/auto_register', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            android_id: this.deviceId,
+            source: this.source,
+            pipeline_type: requestPipelineType,
+            llm_service: requestLlmService
+        })
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            // Update with backend response
+            self.deviceId = data.device_id;
+            self.deviceName = data.device_name;
+            self.pipelineType = data.pipeline_type;
+            self.llmService = data.llm_service;
+            
+            // ONLY NOW save to localStorage (prevents duplicate registrations)
+            self.saveToStorage();
+            
+            console.log('✅ Device registered:', data.already_registered ? 'existing' : 'new');
+            return { success: true, data: data };
+        } else {
+            console.error('❌ Auto-registration failed:', data.error);
+            return { success: false, error: data.error };
+        }
+    })
+    .catch(function(error) {
+        console.error('❌ Auto-registration error:', error);
+        return { success: false, error: error.toString() };
+    });
+};
+
+/**
+ * Clear device data from localStorage (for testing/debugging only)
  */
 DeviceAuthManager.prototype.clearStorage = function() {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
     localStorage.removeItem('device_id');
     localStorage.removeItem('device_name');
     localStorage.removeItem('pipeline_type');
     localStorage.removeItem('llm_service');
+    localStorage.removeItem('device_source');
+    localStorage.removeItem('device_registered');
     
-    this.accessToken = null;
-    this.refreshToken = null;
     this.deviceId = null;
     this.deviceName = null;
     this.pipelineType = null;
     this.llmService = null;
-    this.isAuthenticated = false;
-};
-
-/**
- * Get access token for API requests
- */
-DeviceAuthManager.prototype.getAccessToken = function() {
-    return this.accessToken;
+    this.source = 'web';
+    this.isRegistered = false;
+    console.log('🗑️ Device storage cleared');
 };
 
 /**
@@ -93,176 +202,31 @@ DeviceAuthManager.prototype.getDeviceInfo = function() {
         deviceName: this.deviceName,
         pipelineType: this.pipelineType,
         llmService: this.llmService,
-        isAuthenticated: this.isAuthenticated
+        source: this.source,
+        isRegistered: this.isRegistered
     };
 };
 
 /**
- * Check if user is authenticated
+ * Get device headers for API requests (X-Device-ID)
+ */
+DeviceAuthManager.prototype.getDeviceHeaders = function() {
+    var headers = {};
+    if (this.deviceId) {
+        headers['X-Device-ID'] = this.deviceId;
+    }
+    if (this.deviceName) {
+        headers['X-Device-Name'] = this.deviceName;
+    }
+    return headers;
+};
+
+/**
+ * Check if device is registered (always true if device ID exists)
  */
 DeviceAuthManager.prototype.checkAuth = function() {
-    return this.isAuthenticated && this.accessToken;
-};
-
-/**
- * Validate access token with backend
- */
-DeviceAuthManager.prototype.validateToken = function() {
-    var self = this;
-    
-    if (!this.accessToken) {
-        return Promise.resolve(false);
-    }
-
-    return fetch('/api/device/validate', {
-        method: 'POST',
-        headers: {
-            'Authorization': 'Bearer ' + this.accessToken
-        }
-    })
-    .then(function(response) {
-        return response.json();
-    })
-    .then(function(data) {
-        if (data.valid) {
-            // Update device info if returned
-            if (data.device_id && data.device_name) {
-                self.deviceId = data.device_id;
-                self.deviceName = data.device_name;
-                localStorage.setItem('device_id', data.device_id);
-                localStorage.setItem('device_name', data.device_name);
-            }
-            self.isAuthenticated = true;
-            return true;
-        } else {
-            // Token invalid, try to refresh
-            return self.refreshAccessToken();
-        }
-    })
-    .catch(function(error) {
-        console.error('Token validation error:', error);
-        // Try to refresh token on error
-        return self.refreshAccessToken();
-    });
-};
-
-/**
- * Refresh access token using refresh token
- */
-DeviceAuthManager.prototype.refreshAccessToken = function() {
-    var self = this;
-    
-    if (!this.refreshToken) {
-        this.clearStorage();
-        return Promise.resolve(false);
-    }
-
-    return fetch('/api/device/refresh', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            refresh_token: this.refreshToken
-        })
-    })
-    .then(function(response) {
-        return response.json().then(function(data) {
-            return { response: response, data: data };
-        });
-    })
-    .then(function(result) {
-        if (result.response.ok && result.data.success && result.data.access_token) {
-            // Update access token
-            self.accessToken = result.data.access_token;
-            localStorage.setItem('access_token', result.data.access_token);
-            self.isAuthenticated = true;
-            console.log('Access token refreshed successfully');
-            return true;
-        } else {
-            // Refresh failed, clear storage and redirect to login
-            console.error('Token refresh failed:', result.data.error);
-            self.clearStorage();
-            return false;
-        }
-    })
-    .catch(function(error) {
-        console.error('Token refresh error:', error);
-        self.clearStorage();
-        return false;
-    });
-};
-
-/**
- * Logout device
- */
-DeviceAuthManager.prototype.logout = function() {
-    var self = this;
-    
-    if (this.accessToken) {
-        return fetch('/api/device/logout', {
-            method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + this.accessToken
-            }
-        })
-        .catch(function(error) {
-            console.error('Logout error:', error);
-        })
-        .then(function() {
-            // Clear local storage regardless of API response
-            self.clearStorage();
-        });
-    } else {
-        // Clear local storage regardless of API response
-        this.clearStorage();
-        return Promise.resolve();
-    }
-};
-
-/**
- * Redirect to login page
- */
-DeviceAuthManager.prototype.redirectToLogin = function() {
-    window.location.href = '/login';
-};
-
-/**
- * Redirect to landing page
- */
-DeviceAuthManager.prototype.redirectToLanding = function() {
-    window.location.href = '/';
-};
-
-/**
- * Ensure user is authenticated, redirect to login if not
- */
-DeviceAuthManager.prototype.ensureAuthenticated = function() {
-    var self = this;
-    
-    if (!this.checkAuth()) {
-        this.redirectToLogin();
-        return Promise.resolve(false);
-    }
-
-    // Validate token
-    return this.validateToken().then(function(isValid) {
-        if (!isValid) {
-            self.redirectToLogin();
-            return false;
-        }
-        return true;
-    });
-};
-
-/**
- * Get authorization header for API requests
- */
-DeviceAuthManager.prototype.getAuthHeader = function() {
-    if (this.accessToken) {
-        return { 'Authorization': 'Bearer ' + this.accessToken };
-    }
-    return {};
+    // Backward compatibility: always return true if device ID exists
+    return !!this.deviceId;
 };
 
 /**
@@ -271,14 +235,16 @@ DeviceAuthManager.prototype.getAuthHeader = function() {
 DeviceAuthManager.prototype.fetchPipelineConfig = function() {
     var self = this;
     
-    if (!this.isAuthenticated) {
-        console.error('Not authenticated');
+    if (!this.deviceId) {
+        console.error('No device ID available');
         return Promise.resolve(null);
     }
 
+    var headers = this.getDeviceHeaders();
+    
     return fetch('/api/device/config', {
         method: 'GET',
-        headers: this.getAuthHeader()
+        headers: headers
     })
     .then(function(response) {
         if (response.ok) {
@@ -290,15 +256,7 @@ DeviceAuthManager.prototype.fetchPipelineConfig = function() {
         if (data && data.success && data.config) {
             self.pipelineType = data.config.pipeline_type;
             self.llmService = data.config.llm_service;
-            
-            // Update localStorage
-            if (self.pipelineType) {
-                localStorage.setItem('pipeline_type', self.pipelineType);
-            }
-            if (self.llmService) {
-                localStorage.setItem('llm_service', self.llmService);
-            }
-            
+            self.saveToStorage();
             return data.config;
         }
         return null;
@@ -315,21 +273,13 @@ DeviceAuthManager.prototype.fetchPipelineConfig = function() {
 DeviceAuthManager.prototype.updatePipelineConfig = function(pipelineType, llmService) {
     var self = this;
     
-    if (!this.isAuthenticated) {
-        console.error('Not authenticated');
-        return Promise.resolve({ success: false, error: 'Not authenticated' });
+    if (!this.deviceId) {
+        console.error('No device ID available');
+        return Promise.resolve({ success: false, error: 'No device ID' });
     }
 
-    // Manually merge headers (no spread operator)
-    var headers = {
-        'Content-Type': 'application/json'
-    };
-    var authHeader = this.getAuthHeader();
-    for (var key in authHeader) {
-        if (authHeader.hasOwnProperty(key)) {
-            headers[key] = authHeader[key];
-        }
-    }
+    var headers = this.getDeviceHeaders();
+    headers['Content-Type'] = 'application/json';
 
     return fetch('/api/device/config', {
         method: 'PUT',
@@ -340,24 +290,21 @@ DeviceAuthManager.prototype.updatePipelineConfig = function(pipelineType, llmSer
         })
     })
     .then(function(response) {
-        return response.json().then(function(data) {
-            return { response: response, data: data };
-        });
+        return response.json();
     })
-    .then(function(result) {
-        if (result.response.ok && result.data.success) {
+    .then(function(data) {
+        if (data.success) {
             // Update local state and storage
             if (pipelineType) {
                 self.pipelineType = pipelineType;
-                localStorage.setItem('pipeline_type', pipelineType);
             }
             if (llmService) {
                 self.llmService = llmService;
-                localStorage.setItem('llm_service', llmService);
             }
+            self.saveToStorage();
             return { success: true };
         } else {
-            return { success: false, error: result.data.error };
+            return { success: false, error: data.error };
         }
     })
     .catch(function(error) {
@@ -384,6 +331,41 @@ DeviceAuthManager.prototype.getAvailableOptions = function() {
             console.error('Error fetching available options:', error);
             return null;
         });
+};
+
+// Deprecated methods (kept for backward compatibility, do nothing)
+DeviceAuthManager.prototype.getAccessToken = function() {
+    return null;
+};
+
+DeviceAuthManager.prototype.validateToken = function() {
+    return Promise.resolve(true);
+};
+
+DeviceAuthManager.prototype.refreshAccessToken = function() {
+    return Promise.resolve(true);
+};
+
+DeviceAuthManager.prototype.logout = function() {
+    // No-op: no session management
+    return Promise.resolve();
+};
+
+DeviceAuthManager.prototype.redirectToLogin = function() {
+    // No-op: no login required
+};
+
+DeviceAuthManager.prototype.redirectToLanding = function() {
+    window.location.href = '/';
+};
+
+DeviceAuthManager.prototype.ensureAuthenticated = function() {
+    return Promise.resolve(true);
+};
+
+DeviceAuthManager.prototype.getAuthHeader = function() {
+    // Deprecated: use getDeviceHeaders() instead
+    return this.getDeviceHeaders();
 };
 
 // Create global instance

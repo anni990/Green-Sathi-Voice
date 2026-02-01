@@ -36,23 +36,20 @@
                 </div>
             </div>
             <div class="flex gap-2 md:gap-4 w-full md:w-auto justify-center">
-                <!-- Auth Buttons (shown when not logged in) -->
-                <div id="auth-buttons" class="flex gap-2 md:gap-4">
-                    <a href="/kiosk-test"
+                <!-- Device Info Display (No Auth) -->
+                <div id="device-info-display" class="flex gap-2 md:gap-4">
+                    <a href="/kiosk"
                         class="px-4 py-2 md:px-8 md:py-3 text-sm md:text-base rounded-full bg-white shadow-md font-bold border-2 border-green-100 flex items-center gap-2 transition-all hover:bg-green-50">
-                        <i class="fas fa-sign-in-alt text-green-600"></i> <span class="hidden md:inline">KTest</span>
+                        <i class="fas fa-tablet-alt text-green-600"></i> <span class="hidden md:inline">Kiosk</span>
                     </a>
-                    <a href="/login"
-                        class="px-4 py-2 md:px-8 md:py-3 text-sm md:text-base rounded-full bg-white shadow-md font-bold border-2 border-green-100 flex items-center gap-2 transition-all hover:bg-green-50">
-                        <i class="fas fa-sign-in-alt text-green-600"></i> <span class="hidden md:inline">Login</span>
-                    </a>
-                    <a href="/register"
-                        class="px-4 py-2 md:px-8 md:py-3 text-sm md:text-base rounded-full bg-yellow-400 shadow-lg shadow-yellow-200 font-bold transition-all hover:bg-yellow-500">
-                        <i class="fas fa-user-plus"></i> <span class="hidden md:inline">Register</span>
-                    </a>
+                    <button id="device-info-btn"
+                        class="px-4 py-2 md:px-8 md:py-3 text-sm md:text-base rounded-full bg-green-600 text-white shadow-lg font-bold flex items-center gap-2 transition-all hover:bg-green-700">
+                        <i class="fas fa-fingerprint text-lg"></i>
+                        <span id="device-id-short" class="hidden md:inline font-mono text-xs">Loading...</span>
+                    </button>
                 </div>
                 
-                <!-- Account Dropdown (shown when logged in) -->
+                <!-- OLD AUTH REMOVED - Device Dropdown (display only, no logout) -->
                 <div id="account-dropdown" class="hidden relative">
                     <button id="account-btn"
                         class="px-4 py-2 md:px-8 md:py-3 text-sm md:text-base rounded-full bg-green-600 text-white shadow-lg font-bold flex items-center gap-2 transition-all hover:bg-green-700">
@@ -61,9 +58,9 @@
                         <i class="fas fa-chevron-down text-xs"></i>
                     </button>
                     
-                    <!-- Dropdown Menu -->
+                    <!-- Dropdown Menu (NO LOGOUT) -->
                     <div id="dropdown-menu" class="hidden absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50">
-                        <div class="p-4 border-b border-gray-200">
+                        <div class="p-4">
                             <p class="text-xs text-gray-500 uppercase font-semibold mb-1">Device Information</p>
                             <p class="font-bold text-gray-800 text-sm" id="dropdown-device-name">Loading...</p>
                             <p class="text-xs text-gray-600 mt-1">
@@ -71,10 +68,6 @@
                                 <span>ID: </span><span id="dropdown-device-id" class="font-mono">...</span>
                             </p>
                         </div>
-                        <button id="logout-btn"
-                            class="w-full px-4 py-3 text-left text-red-600 hover:bg-red-50 font-semibold flex items-center gap-2 rounded-b-2xl transition-colors">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </button>
                     </div>
                 </div>
             </div>
@@ -452,32 +445,15 @@
         </div>
     </div>
 
-    <!-- Login Required Popup -->
-    <div id="login-popup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="glass-card rounded-2xl p-6 text-center max-w-sm mx-4">
-            <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
-            <h3 class="text-lg font-bold text-gray-800 mb-4">Login Required</h3>
-            <p class="text-gray-600 mb-6">Please login to use the voice assistant.</p>
-            <div class="flex gap-4 justify-center">
-                <button id="login-popup-cancel" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-full font-semibold hover:bg-gray-400 transition-colors">Cancel</button>
-                <button id="login-popup-login" class="px-4 py-2 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700 transition-colors">Login</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Landing Page Interaction Logic -->
     <script>
         let landingPageActive = true;
 
-        // Add keyboard listener for landing page
+        // Add keyboard listener for landing page (NO AUTH CHECK)
         document.addEventListener('keydown', function (event) {
-            if (landingPageActive && (event.key === 'Enter' || event.keyCode === 13) && document.getElementById('login-popup').classList.contains('hidden')) {
+            if (landingPageActive && (event.key === 'Enter' || event.keyCode === 13)) {
                 event.preventDefault();
-                if (window.deviceAuth && !window.deviceAuth.checkAuth()) {
-                    showLoginPopup();
-                } else {
-                    startVoiceBot();
-                }
+                startVoiceBot();  // Direct call, no auth check
             }
         });
 
@@ -503,104 +479,62 @@
             }, 100); // Small delay to ensure UI is ready
         }
 
-        function showLoginPopup() {
-            document.getElementById('login-popup').classList.remove('hidden');
-        }
-
-        function hideLoginPopup() {
-            document.getElementById('login-popup').classList.add('hidden');
-        }
-
-        // Setup login popup event listeners
-        function setupLoginPopup() {
-            const cancelBtn = document.getElementById('login-popup-cancel');
-            const loginBtn = document.getElementById('login-popup-login');
-
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', hideLoginPopup);
-            }
-
-            if (loginBtn) {
-                loginBtn.addEventListener('click', () => {
-                    window.location.href = '/login';
-                });
-            }
-        }
-
-        // Account dropdown functionality
-        function setupAccountDropdown() {
-            const accountBtn = document.getElementById('account-btn');
-            const dropdownMenu = document.getElementById('dropdown-menu');
-            const logoutBtn = document.getElementById('logout-btn');
-
-            if (accountBtn && dropdownMenu) {
-                // Toggle dropdown
-                accountBtn.addEventListener('click', () => {
-                    dropdownMenu.classList.toggle('hidden');
-                });
-
-                // Close dropdown when clicking outside
-                document.addEventListener('click', (e) => {
-                    if (!accountBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                        dropdownMenu.classList.add('hidden');
-                    }
-                });
-
-                // Handle logout
-                if (logoutBtn) {
-                    logoutBtn.addEventListener('click', async () => {
-                        if (window.deviceAuth) {
-                            await window.deviceAuth.logout();
-                            window.location.reload();
+        // Auto-register device on page load (Web-only mode - UUID only, no Android ID)
+        function autoRegisterDeviceWebOnly() {
+            if (window.deviceAuth) {
+                console.log('\ud83d\udd04 Auto-registering web device...');
+                window.deviceAuth.autoRegisterDevice()
+                    .then(function(data) {
+                        if (data && data.success) {
+                            console.log('\u2705 Web device auto-registered');
+                            updateDeviceDisplay();
                         }
+                    })
+                    .catch(function(err) {
+                        console.error('\u274c Auto-register failed:', err);
                     });
+            }
+        }
+
+        // Update device info display in header
+        function updateDeviceDisplay() {
+            if (window.deviceAuth) {
+                var deviceInfo = window.deviceAuth.getDeviceInfo();
+                var shortId = document.getElementById('device-id-short');
+                
+                if (shortId && deviceInfo.deviceId) {
+                    shortId.textContent = deviceInfo.deviceId.substring(0, 8) + '...';
+                }
+                
+                var dropdownName = document.getElementById('dropdown-device-name');
+                var dropdownId = document.getElementById('dropdown-device-id');
+                
+                if (dropdownName) {
+                    dropdownName.textContent = deviceInfo.deviceName || 'Web Device';
+                }
+                if (dropdownId) {
+                    dropdownId.textContent = deviceInfo.deviceId || 'N/A';
                 }
             }
         }
 
-        // Check authentication status and update UI
-        async function checkAuthStatus() {
-            const authButtons = document.getElementById('auth-buttons');
-            const accountDropdown = document.getElementById('account-dropdown');
-
-            if (window.deviceAuth && window.deviceAuth.checkAuth()) {
-                // User is logged in
-                const deviceInfo = window.deviceAuth.getDeviceInfo();
-
-                // Hide auth buttons, show account dropdown
-                authButtons.classList.add('hidden');
-                accountDropdown.classList.remove('hidden');
-
-                // Update dropdown content
-                document.getElementById('account-device-name').textContent = deviceInfo.deviceName || 'Device';
-                document.getElementById('dropdown-device-name').textContent = deviceInfo.deviceName || 'Unknown Device';
-                document.getElementById('dropdown-device-id').textContent = deviceInfo.deviceId || 'N/A';
-
-                // Setup dropdown interactions
-                setupAccountDropdown();
-            } else {
-                // User is not logged in
-                authButtons.classList.remove('hidden');
-                accountDropdown.classList.add('hidden');
-            }
-        }
-
-        // Initialize auth check when DOM is ready
+        // Initialize device auto-registration when DOM is ready (NO AUTH CHECK)
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', () => {
-                checkAuthStatus();
-                setupLoginPopup();
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(autoRegisterDeviceWebOnly, 100);
             });
         } else {
-            checkAuthStatus();
-            setupLoginPopup();
+            setTimeout(autoRegisterDeviceWebOnly, 100);
         }
     </script>
 
     <!-- JavaScript -->
-    <!-- Kiosk Mode must load first for proper screen detection -->
-    <!-- <script src="https://greensathi.aiproducts.tech/static/js/kiosk-mode.js"></script> -->
     <script src="https://greensathi.aiproducts.tech/static/js/DeviceAuthManager.js"></script>
+    <script>
+        // Initialize DeviceAuthManager in WEB-ONLY mode (UUID only, no Android ID check)
+        var deviceAuth = new DeviceAuthManager({ mode: 'web-only' });
+        window.deviceAuth = deviceAuth;
+    </script>
     <script src="https://greensathi.aiproducts.tech/static/js/ElementManager.js"></script>
     <script src="https://greensathi.aiproducts.tech/static/js/StateManager.js"></script>
     <script src="https://greensathi.aiproducts.tech/static/js/UIController.js"></script>

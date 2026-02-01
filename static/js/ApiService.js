@@ -14,25 +14,23 @@ ApiService.prototype.getAuthHeaders = function() {
         'Content-Type': 'application/json'
     };
     
-    if (window.deviceAuth && window.deviceAuth.getAccessToken()) {
-        headers['Authorization'] = 'Bearer ' + window.deviceAuth.getAccessToken();
+    // Use device ID headers (no Bearer token auth)
+    if (window.deviceAuth) {
+        var deviceHeaders = window.deviceAuth.getDeviceHeaders();
+        for (var key in deviceHeaders) {
+            if (deviceHeaders.hasOwnProperty(key)) {
+                headers[key] = deviceHeaders[key];
+            }
+        }
     }
     
     return headers;
 };
 
 ApiService.prototype.handleApiError = function(response, retryFn) {
-    if (response.status === 401) {
-        if (window.deviceAuth) {
-            return window.deviceAuth.refreshAccessToken().then(function(refreshed) {
-                if (refreshed && retryFn) {
-                    return retryFn();
-                } else {
-                    window.deviceAuth.redirectToLogin();
-                    return null;
-                }
-            });
-        }
+    // No 401 token refresh logic needed - device ID is always valid
+    if (response.status >= 500) {
+        console.error('Server error:', response.status);
     }
     return Promise.resolve(null);
 };
@@ -53,11 +51,6 @@ ApiService.prototype.extractUserInfo = function(text) {
         body: JSON.stringify(requestBody)
     })
     .then(function(response) {
-        if (response.status === 401) {
-            return self.handleApiError(response, function() {
-                return self.extractUserInfo(text);
-            });
-        }
         return response.json();
     })
     .then(function(data) {
@@ -186,11 +179,6 @@ ApiService.prototype.detectLanguage = function(text, attempt) {
         body: JSON.stringify(requestBody)
     })
     .then(function(response) {
-        if (response.status === 401) {
-            return self.handleApiError(response, function() {
-                return self.detectLanguage(text, attempt);
-            });
-        }
         return response.json();
     })
     .then(function(data) {
@@ -274,11 +262,6 @@ ApiService.prototype.registerUser = function() {
         })
     })
     .then(function(response) {
-        if (response.status === 401) {
-            return self.handleApiError(response, function() {
-                return self.registerUser();
-            });
-        }
         return response.json();
     })
     .then(function(data) {
@@ -312,11 +295,6 @@ ApiService.prototype.processConversation = function(text) {
         })
     })
     .then(function(response) {
-        if (response.status === 401) {
-            return self.handleApiError(response, function() {
-                return self.processConversation(text);
-            });
-        }
         return response.json();
     })
     .then(function(data) {

@@ -80,7 +80,7 @@ class DevicesController {
                 </td>
                 <td class="py-4 px-6">
                     <button 
-                        onclick="devicesController.showDeviceDetails(${device.device_id})"
+                        onclick="devicesController.showDeviceDetails('${device.device_id}')"
                         class="text-green-600 hover:text-green-700 font-medium text-sm"
                     >
                         <i class="fas fa-cog mr-1"></i>Configure
