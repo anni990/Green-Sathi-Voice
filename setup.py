@@ -85,12 +85,12 @@ def main():
         sys.exit(1)
     
     # Setup directories
-    print("\n1. Setting up directories...")
-    setup_directories()
+    # print("\n1. Setting up directories...")
+    # setup_directories()
     
     # Check environment
-    print("\n2. Checking environment...")
-    check_environment()
+    # print("\n2. Checking environment...")
+    # check_environment()
     
     # Generate static audio (only if environment is properly set)
     if os.getenv('GEMINI_API_KEY'):
@@ -104,10 +104,10 @@ def main():
         print("\n3. Skipping audio generation (GEMINI_API_KEY not set)")
     
     print("\n🎉 Setup completed!")
-    print("\nNext steps:")
-    print("1. Copy .env.example to .env and fill in your API keys")
-    print("2. Install dependencies: pip install -r requirements.txt")
-    print("3. Start the application: python app.py")
+    # print("\nNext steps:")
+    # print("1. Copy .env.example to .env and fill in your API keys")
+    # print("2. Install dependencies: pip install -r requirements.txt")
+    # print("3. Start the application: python app.py")
 
 if __name__ == "__main__":
     main()
