@@ -16,13 +16,11 @@
 
 <body class="min-h-screen">
     <!-- Landing Page (Initially Visible) -->
-    <div id="landing-page"
-        class="flex flex-col items-center justify-between text-slate-800 min-h-screen w-full box-border">
+    <div id="landing-page" class="flex flex-col items-center justify-between text-slate-800 min-h-screen w-full box-border">
 
         <header class="w-full flex flex-row justify-between items-center gap-6 animate__animated animate__fadeInDown">
             <div class="flex items-center gap-4">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Green Sathi Logo"
-                    class="rounded-full object-contain">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Green Sathi Logo" class="rounded-full object-contain">
                 <div>
                     <h1 class="font-extrabold tracking-tight text-green-700 leading-none">
                         Green<span class="text-orange-500">Sathi</span></h1>
@@ -32,24 +30,21 @@
             <div class="flex gap-4">
                 <!-- Auth Buttons (shown when not logged in) -->
                 <div id="auth-buttons" class="flex gap-4">
-                    <a href="/kiosk-test"
-                        class="rounded-full bg-white shadow-md font-bold border-2 border-green-100 flex items-center gap-2 transition-all hover:bg-green-50">
+                    <a href="/kiosk-test" class="rounded-full bg-white shadow-md font-bold border-2 border-green-100 flex items-center gap-2 transition-all hover:bg-green-50">
                         <i class="fas fa-sign-in-alt text-green-600"></i> <span>KTest</span>
                     </a>
                 </div>
-
+                
                 <!-- Account Dropdown (shown when logged in) -->
                 <div id="account-dropdown" class="hidden relative">
-                    <button id="account-btn"
-                        class="rounded-full bg-green-600 text-white shadow-lg font-bold flex items-center gap-2 transition-all hover:bg-green-700">
+                    <button id="account-btn" class="rounded-full bg-green-600 text-white shadow-lg font-bold flex items-center gap-2 transition-all hover:bg-green-700">
                         <i class="fas fa-user-circle"></i>
                         <span id="account-device-name">Device</span>
                         <i class="fas fa-chevron-down"></i>
                     </button>
-
+                    
                     <!-- Dropdown Menu -->
-                    <div id="dropdown-menu"
-                        class="hidden absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50">
+                    <div id="dropdown-menu" class="hidden absolute right-0 top-full mt-2 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50">
                         <div class="p-4 border-b border-gray-200">
                             <p class="text-gray-500 uppercase font-semibold mb-1">Device Information</p>
                             <p class="font-bold text-gray-800" id="dropdown-device-name">Loading...</p>
@@ -58,8 +53,7 @@
                                 <span>ID: </span><span id="dropdown-device-id" class="font-mono">...</span>
                             </p>
                         </div>
-                        <button id="logout-btn"
-                            class="w-full text-left text-red-600 hover:bg-red-50 font-semibold flex items-center gap-2 rounded-b-2xl transition-colors">
+                        <button id="logout-btn" class="w-full text-left text-red-600 hover:bg-red-50 font-semibold flex items-center gap-2 rounded-b-2xl transition-colors">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </button>
                     </div>
@@ -71,8 +65,7 @@
 
             <div class="space-y-6 animate__animated animate__fadeInLeft text-left">
                 <div class="space-y-2">
-                    <h2 class="font-extrabold leading-tight">नमस्ते, <br><span class="text-green-600">I am
-                            listening.</span></h2>
+                    <h2 class="font-extrabold leading-tight">नमस्ते, <br><span class="text-green-600">I am listening.</span></h2>
                     <p class="text-slate-600 leading-relaxed max-w-lg font-light">
                         आज मैं आपकी कैसे मदद कर सकता हूँ? बस बटन पर टैप करें और अपनी भाषा में अपना प्रश्न बोलें।
                     </p>
@@ -100,16 +93,13 @@
                 <div class="relative cursor-pointer group" onclick="startVoiceBot()">
 
                     <div class="absolute -top-10 -left-10 leaf-float opacity-80">🍃</div>
-                    <div class="absolute -bottom-10 -right-10 leaf-float opacity-80" style="animation-delay: 1s">🌱
-                    </div>
+                    <div class="absolute -bottom-10 -right-10 leaf-float opacity-80" style="animation-delay: 1s">🌱</div>
 
                     <div id="landing-mic-container" class="relative flex items-center justify-center">
                         <div class="absolute inset-0 rounded-full bg-green-200 animate-ping opacity-20 scale-125"></div>
 
-                        <div id="landing-mic-icon"
-                            class="relative z-10 flex items-center justify-center bg-green-600 rounded-full shadow-2xl transition-transform duration-300 group-hover:scale-105 active:scale-95">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <div id="landing-mic-icon" class="relative z-10 flex items-center justify-center bg-green-600 rounded-full shadow-2xl transition-transform duration-300 group-hover:scale-105 active:scale-95">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
                                 <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
                                 <line x1="12" x2="12" y1="19" y2="22" />
@@ -164,8 +154,7 @@
     <div id="main-ui" class="hidden min-h-screen">
         <header class="flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Green Sathi Logo"
-                    class="rounded-full object-contain">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Green Sathi Logo" class="rounded-full object-contain">
                 <div>
                     <h1 class="font-extrabold tracking-tight text-green-700 leading-none">
                         Green<span class="text-orange-500">Sathi</span></h1>
@@ -175,21 +164,16 @@
 
             <div class="flex items-center space-x-4">
                 <!-- Desktop Keyboard Shortcuts Info -->
-                <div id="keyboard-shortcuts-desktop"
-                    class="flex bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
+                <div id="keyboard-shortcuts-desktop" class="flex bg-blue-50 border border-blue-200 rounded-lg text-blue-800">
                     <div class="flex items-center space-x-4">
-                        <span class="flex items-center"><i
-                                class="fas fa-keyboard mr-1"></i><strong>शॉर्टकट:</strong></span>
+                        <span class="flex items-center"><i class="fas fa-keyboard mr-1"></i><strong>शॉर्टकट:</strong></span>
                         <span><kbd class="bg-blue-100 rounded">Enter</kbd> = रिकॉर्ड</span>
                         <span><kbd class="bg-blue-100 rounded">Backspace</kbd> = बाहर</span>
                     </div>
                 </div>
 
                 <!-- Desktop Exit Button -->
-                <button id="desktop-exit-btn"
-                    class="flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white hover:shadow-lg transition-all duration-300 hover:scale-105"
-                    tabindex="0" aria-label="बाहर निकलें - Backspace या click करें"
-                    title="बाहर निकलने के लिए Backspace दबाएं या click करें">
+                <button id="desktop-exit-btn" class="flex items-center justify-center rounded-full bg-gradient-to-r from-red-500 to-red-600 text-white hover:shadow-lg transition-all duration-300 hover:scale-105" tabindex="0" aria-label="बाहर निकलें - Backspace या click करें" title="बाहर निकलने के लिए Backspace दबाएं या click करें">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -215,12 +199,9 @@
                             <i class="fas fa-user mr-2"></i> उपयोगकर्ता जानकारी
                         </h3>
                         <div class="space-y-3 text-gray-800">
-                            <p class="flex justify-between"><strong>नाम:</strong> <span id="user-name"
-                                    class="font-medium text-green-700">-</span></p>
-                            <p class="flex justify-between"><strong>फोन:</strong> <span id="user-phone"
-                                    class="font-medium text-green-700">-</span></p>
-                            <p class="flex justify-between"><strong>भाषा:</strong> <span id="user-language"
-                                    class="font-medium text-green-700">-</span></p>
+                            <p class="flex justify-between"><strong>नाम:</strong> <span id="user-name" class="font-medium text-green-700">-</span></p>
+                            <p class="flex justify-between"><strong>फोन:</strong> <span id="user-phone" class="font-medium text-green-700">-</span></p>
+                            <p class="flex justify-between"><strong>भाषा:</strong> <span id="user-language" class="font-medium text-green-700">-</span></p>
                         </div>
                     </div>
 
@@ -255,9 +236,7 @@
 
                 <!-- Desktop Action Button Area -->
                 <div class="desktop-sidebar-button flex justify-center items-center">
-                    <button id="desktop-main-action-btn" class="main-button text-white" tabindex="0"
-                        aria-label="मुख्य रिकॉर्डिंग बटन - Enter या click करें"
-                        title="आवाज़ रिकॉर्डिंग शुरू करने के लिए Enter दबाएं या click करें">
+                    <button id="desktop-main-action-btn" class="main-button text-white" tabindex="0" aria-label="मुख्य रिकॉर्डिंग बटन - Enter या click करें" title="आवाज़ रिकॉर्डिंग शुरू करने के लिए Enter दबाएं या click करें">
                         <i class="fas fa-microphone"></i>
                     </button>
                 </div>
@@ -275,14 +254,12 @@
 
                             <div id="conversation-history" class="flex-1 space-y-4 conversation-scroll">
                                 <!-- Empty State Placeholder -->
-                                <div id="conversation-empty-state"
-                                    class="flex flex-col items-center justify-center h-full text-center">
+                                <div id="conversation-empty-state" class="flex flex-col items-center justify-center h-full text-center">
                                     <div class="text-gray-300">
                                         <i class="fas fa-comments"></i>
                                     </div>
                                     <h4 class="font-semibold text-gray-600">वार्तालाप शुरू करें</h4>
-                                    <p class="text-gray-500 max-w-xs">माइक्रोफोन बटन पर क्लिक करें या Enter दबाएं और
-                                        अपनी कृषि संबंधी जिज्ञासाएं पूछें</p>
+                                    <p class="text-gray-500 max-w-xs">माइक्रोफोन बटन पर क्लिक करें या Enter दबाएं और अपनी कृषि संबंधी जिज्ञासाएं पूछें</p>
                                 </div>
                                 <!-- Conversation bubbles will be added here -->
                             </div>
@@ -293,8 +270,7 @@
         </div>
 
         <!-- Loading Spinner -->
-        <div id="loading-spinner"
-            class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div id="loading-spinner" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="glass-card text-center">
                 <div class="animate-spin rounded-full border-4 border-green-200 border-t-green-600 mx-auto"></div>
                 <p class="text-gray-800 font-semibold">प्रसंस्करण...</p>
@@ -304,7 +280,7 @@
         <!-- Audio Elements -->
         <audio id="audio-player" preload="auto"></audio>
         <audio id="static-audio" preload="auto"></audio>
-
+        
         <!-- Hidden placeholder buttons for app_modular.js compatibility -->
         <button id="main-action-btn" style="display:none;"></button>
         <button id="bottom-action-btn" style="display:none;"></button>
@@ -329,8 +305,7 @@
         <!-- Top Half: QR Code and Title -->
         <div
             class="h-1/2 flex flex-col items-center justify-center p-4 ad-qr bg-gradient-to-b from-green-50 to-green-100">
-            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="QR Code"
-                class="w-20 h-20 mb-3 rounded-lg shadow-md">
+            <img src="{{ url_for('static', filename='images/qr-code.png') }}" alt="QR Code" class="w-20 h-20 mb-3 rounded-lg shadow-md">
             <h4 class="text-sm font-bold text-center text-gray-800 mb-2">Scan to Download App</h4>
             <p class="text-xs text-center text-gray-600">Get instant farming advice on your phone</p>
         </div>
@@ -373,16 +348,16 @@
             console.log('📦 Loading app_modular.js...');
             var script = document.createElement('script');
             script.src = "{{ url_for('static', filename='js/app_modular.js') }}";
-            script.onload = function () {
+            script.onload = function() {
                 console.log('✅ app_modular.js loaded');
                 // Manually instantiate VoiceBotApp since DOMContentLoaded already fired
                 try {
                     if (typeof VoiceBotApp !== 'undefined') {
                         console.log('✅ VoiceBotApp class found, creating instance...');
                         window.app = new VoiceBotApp();
-
+                        
                         // Wait a moment then start name/phone collection
-                        setTimeout(function () {
+                        setTimeout(function() {
                             if (window.app && window.app.startNamePhoneCollection) {
                                 console.log('✅ Starting name/phone collection');
                                 window.app.startNamePhoneCollection();
@@ -397,7 +372,7 @@
                     console.error('❌ Error creating VoiceBotApp:', error);
                 }
             };
-            script.onerror = function () {
+            script.onerror = function() {
                 console.error('❌ Failed to load app_modular.js');
             };
             document.body.appendChild(script);
@@ -422,9 +397,9 @@
 
         function setupExitButton() {
             var desktopExitBtn = document.getElementById('desktop-exit-btn');
-
+            
             if (desktopExitBtn) {
-                desktopExitBtn.addEventListener('click', function () {
+                desktopExitBtn.addEventListener('click', function() {
                     window.location.reload();
                 });
             }
@@ -432,16 +407,16 @@
 
         function checkAuthStatus() {
             var accountDropdown = document.getElementById('account-dropdown');
-
+            
             // Show device info if available
             if (accountDropdown && window.deviceAuth && window.deviceAuth.deviceId) {
                 var deviceInfo = window.deviceAuth.getDeviceInfo();
                 accountDropdown.classList.remove('hidden');
-
+                
                 var accountDeviceName = document.getElementById('account-device-name');
                 var dropdownDeviceName = document.getElementById('dropdown-device-name');
                 var dropdownDeviceId = document.getElementById('dropdown-device-id');
-
+                
                 if (accountDeviceName) {
                     accountDeviceName.textContent = deviceInfo.deviceName || 'Device';
                 }
@@ -451,27 +426,27 @@
                 if (dropdownDeviceId) {
                     dropdownDeviceId.textContent = deviceInfo.deviceId ? deviceInfo.deviceId.substring(0, 16) : 'N/A';
                 }
-
+                
                 // Setup dropdown toggle
                 var accountBtn = document.getElementById('account-btn');
                 var dropdownMenu = document.getElementById('dropdown-menu');
                 var logoutBtn = document.getElementById('logout-btn');
-
+                
                 if (accountBtn && dropdownMenu) {
-                    accountBtn.addEventListener('click', function () {
+                    accountBtn.addEventListener('click', function() {
                         dropdownMenu.classList.toggle('hidden');
                     });
 
-                    document.addEventListener('click', function (e) {
+                    document.addEventListener('click', function(e) {
                         if (!accountBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
                             dropdownMenu.classList.add('hidden');
                         }
                     });
                 }
-
+                
                 // Logout button (for clearing device ID - debugging only)
                 if (logoutBtn) {
-                    logoutBtn.addEventListener('click', function () {
+                    logoutBtn.addEventListener('click', function() {
                         if (window.deviceAuth) {
                             window.deviceAuth.clearStorage();
                             window.location.reload();
@@ -492,7 +467,7 @@
                 event.preventDefault();
                 window.location.reload();
             }
-
+            
             // Enter: Start voice bot from landing (no auth check)
             if (landingPageActive && (event.key === 'Enter' || event.keyCode === 13)) {
                 event.preventDefault();
@@ -505,35 +480,36 @@
     <!-- JavaScript -->
     <!-- CRITICAL: Initialize Android ID BEFORE DeviceAuthManager -->
     <script>
+        // --- Android device bootstrap (MUST RUN FIRST) ---
         console.log('🔍 Checking for Android WebView...');
-
-        window._DEVICE_CONTEXT_ = {
+        
+        window.__DEVICE_CONTEXT__ = {
             deviceId: null,
             source: "web"
         };
 
+        // PRIORITY 1: Try to get Android ID from WebView interface (DeviceBridge)
         try {
-            if (window.DeviceBridge && typeof window.DeviceBridge.getAndroidId === 'function') {
-                var androidId = window.DeviceBridge.getAndroidId();
-
-                if (androidId && androidId !== 'unknown') {
-                    window._DEVICE_CONTEXT_.deviceId = androidId;
-                    window._DEVICE_CONTEXT_.source = 'android-webview';
+            if (window.DeviceBridge && typeof DeviceBridge.getAndroidId === 'function') {
+                var androidId = DeviceBridge.getAndroidId();
+                if (androidId && androidId !== 'unknown' && androidId.trim() !== '') {
+                    window.__DEVICE_CONTEXT__.deviceId = androidId;
+                    window.__DEVICE_CONTEXT__.source = 'android-webview';
                     console.log('✅ Android ID detected and set BEFORE DeviceAuthManager:', androidId);
                 } else {
-                    console.warn('⚠️ Android ID returned "unknown" - will use UUID fallback');
+                    console.warn('⚠️ Android ID returned "unknown" or empty - will use UUID fallback');
                 }
             } else {
-                console.log('ℹ️ DeviceBridge not found - not running in Android WebView');
+                console.log('ℹ️ Not running inside Android WebView (DeviceBridge not found) - will use UUID fallback');
             }
         } catch (e) {
-            console.error('❌ Failed to read Android ID:', e);
+            console.error('❌ Failed to read Android ID from DeviceBridge:', e);
             console.log('ℹ️ Will use UUID fallback');
         }
-
-        console.log('📱 Device context initialized:', window._DEVICE_CONTEXT_);
+        
+        console.log('📱 Device context initialized:', window.__DEVICE_CONTEXT__);
     </script>
-
+    
     <!-- NOW load DeviceAuthManager - it will check window.__DEVICE_CONTEXT__ -->
     <script src="{{ url_for('static', filename='js/DeviceAuthManager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ElementManager.js') }}"></script>
@@ -544,7 +520,7 @@
     <script src="{{ url_for('static', filename='js/ApiService.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ConversationManager.js') }}"></script>
     <!-- Don't load app_modular.js yet - will load after UI transition -->
-
+    
     <!-- Initialize after all modules loaded -->
     <script>
         console.log('📦 Modules loaded. Waiting for UI transition...');
@@ -555,16 +531,16 @@
                 console.log('🔄 Auto-registering device with backend...');
                 console.log('   Device ID:', window.deviceAuth.deviceId);
                 console.log('   Source:', window.deviceAuth.source);
-
+                
                 window.deviceAuth.autoRegisterDevice()
-                    .then(function (result) {
+                    .then(function(result) {
                         if (result.success) {
                             console.log('✅ Device auto-registered successfully');
                         } else {
                             console.warn('⚠️ Device auto-registration failed:', result.error);
                         }
                     })
-                    .catch(function (error) {
+                    .catch(function(error) {
                         console.error('❌ Device auto-registration error:', error);
                     });
             } else {
@@ -573,14 +549,14 @@
         }
 
         // Wait a moment then initialize UI functions
-        setTimeout(function () {
+        setTimeout(function() {
             checkAuthStatus();
             setupLoginPopup();
             setupExitButton();
-
+            
             // Auto-register device after DeviceAuthManager is loaded
             autoRegisterDeviceOnLoad();
-
+            
             console.log('✅ UI functions initialized');
         }, 300);
     </script>
