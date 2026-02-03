@@ -8,7 +8,6 @@ logger = logging.getLogger(__name__)
 user_bp = Blueprint('user', __name__)
 
 @user_bp.route('/register', methods=['POST'])
-@device_auth_required
 def register_user():
     """Register a new user with name, phone, and language"""
     try:
@@ -16,7 +15,9 @@ def register_user():
         name = data.get('name', '').strip()
         phone = data.get('phone', '').strip()
         language = data.get('language', 'english').strip().lower()
-        device_id = request.device_id  # From device_auth_required decorator
+        
+        # Get device_id from header or body (no auth required)
+        device_id = request.headers.get('X-Device-ID') or data.get('device_id')
         
         if not name or not phone:
             return jsonify({'error': 'Name and phone are required'}), 400
@@ -42,11 +43,11 @@ def register_user():
         return jsonify({'error': 'Internal server error'}), 500
 
 @user_bp.route('/profile/<phone>', methods=['GET'])
-@device_auth_required
 def get_user_profile(phone):
     """Get user profile by phone number"""
     try:
-        device_id = request.device_id
+        # Get device_id from header (no auth required)
+        device_id = request.headers.get('X-Device-ID')
         user = db_manager.get_user(phone)
         
         if user:
@@ -69,7 +70,6 @@ def get_user_profile(phone):
         return jsonify({'error': 'Internal server error'}), 500
 
 @user_bp.route('/conversation_history/<user_id>', methods=['GET'])
-@device_auth_required
 def get_conversation_history(user_id):
     """Get conversation history for a user"""
     try:
@@ -97,7 +97,6 @@ def get_conversation_history(user_id):
         return jsonify({'error': 'Internal server error'}), 500
 
 @user_bp.route('/session/<user_id>', methods=['POST'])
-@device_auth_required
 def create_new_session(user_id):
     """Create a new conversation session for user"""
     try:

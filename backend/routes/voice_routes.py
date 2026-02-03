@@ -44,13 +44,7 @@ def process_audio():
         
         # Use pipeline service if device_id is provided, otherwise use legacy speech_service
         if device_id:
-            try:
-                device_id = int(device_id)
-                text = pipeline_service.speech_to_text(device_id, audio_file, lang_code)
-            except (ValueError, TypeError):
-                logger.warning(f"Invalid device_id format: {device_id}, falling back to legacy service")
-                filename = f"{uuid.uuid4()}_{audio_file.filename}"
-                text = speech_service.process_uploaded_audio(audio_file.read(), filename, language)
+            text = pipeline_service.speech_to_text(device_id, audio_file, lang_code)
         else:
             # Legacy path for backward compatibility
             filename = f"{uuid.uuid4()}_{audio_file.filename}"
@@ -92,13 +86,8 @@ def extract_user_info():
         
         # Use pipeline service if device_id is provided
         if device_id:
-            try:
-                device_id = int(device_id)
-                logger.info(f"Using pipeline_service for device {device_id}")
-                info = pipeline_service.extract_name_phone(device_id, text)
-            except (ValueError, TypeError):
-                logger.warning(f"Invalid device_id format: {device_id}, using default LLM")
-                info = current_llm_service.extract_name_phone(text)
+            logger.info(f"Using pipeline_service for device {device_id}")
+            info = pipeline_service.extract_name_phone(device_id, text)
         else:
             # Legacy path - use default LLM service
             info = current_llm_service.extract_name_phone(text)
@@ -148,13 +137,8 @@ def detect_language():
         
         # Use pipeline service if device_id is provided
         if device_id:
-            try:
-                device_id = int(device_id)
-                logger.info(f"Using pipeline_service for device {device_id}")
-                language = pipeline_service.detect_language(device_id, text)
-            except (ValueError, TypeError):
-                logger.warning(f"Invalid device_id format: {device_id}, using default LLM")
-                language = current_llm_service.detect_language(text)
+            logger.info(f"Using pipeline_service for device {device_id}")
+            language = pipeline_service.detect_language(device_id, text)
         else:
             # Legacy path - use default LLM service
             language = current_llm_service.detect_language(text)
@@ -186,7 +170,6 @@ def detect_language():
         }), 200
 
 @voice_bp.route('/generate_response', methods=['POST'])
-@device_auth_required
 def generate_response():
     """Generate AI response to user input"""
     try:
@@ -195,7 +178,9 @@ def generate_response():
         language = data.get('language', 'hindi')
         user_id = data.get('user_id')
         session_id = data.get('session_id')
-        device_id = request.device_id  # From device_auth_required decorator
+        
+        # Get device_id from header or body (no auth required)
+        device_id = request.headers.get('X-Device-ID') or data.get('device_id')
         
         if not user_input:
             return jsonify({'error': 'No text provided'}), 400
@@ -244,13 +229,8 @@ def text_to_speech():
         
         # Use pipeline service if device_id is provided
         if device_id:
-            try:
-                device_id = int(device_id)
-                # For TTS, use 2-letter language code (e.g., 'hi', 'bn') - gTTS format
-                audio_path = pipeline_service.text_to_speech(device_id, text, language_code)
-            except (ValueError, TypeError):
-                logger.warning(f"Invalid device_id format: {device_id}, using legacy TTS")
-                audio_path = speech_service.text_to_speech(text, language_code)
+            # For TTS, use 2-letter language code (e.g., 'hi', 'bn') - gTTS format
+            audio_path = pipeline_service.text_to_speech(device_id, text, language_code)
         else:
             # Legacy path - use speech_service directly
             audio_path = speech_service.text_to_speech(text, language_code)

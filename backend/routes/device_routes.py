@@ -24,6 +24,66 @@ def settings_page():
     """Render device settings page"""
     return render_template('device_settings.html')
 
+@device_bp.route('/api/device/auto_register', methods=['POST'])
+def auto_register_device():
+    """Auto-register device using Android ID or generate UUID (no authentication required)"""
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        android_id = data.get('android_id', '').strip()
+        source = data.get('source', 'web')
+        
+        if not android_id:
+            return jsonify({'error': 'android_id is required'}), 400
+        
+        # Check if device already exists
+        existing_device = db_manager.get_device_by_android_id(android_id)
+        
+        if existing_device:
+            # Device already registered, update last_active and return existing info
+            db_manager.update_device_last_active(android_id)
+            logger.info(f"Device already exists: {android_id}")
+            
+            return jsonify({
+                'success': True,
+                'already_registered': True,
+                'device_id': existing_device['device_id'],
+                'device_name': existing_device.get('device_name', f"Device-{android_id[:8]}"),
+                'pipeline_type': existing_device.get('pipeline_type', 'library'),
+                'llm_service': existing_device.get('llm_service', 'vertex')
+            }), 200
+        
+        # Create new device
+        pipeline_type = data.get('pipeline_type', Config.DEFAULT_PIPELINE_TYPE)
+        llm_service = data.get('llm_service', Config.DEFAULT_LLM_SERVICE_TYPE)
+        
+        db_manager.create_device_for_android_id(
+            android_id=android_id,
+            source=source,
+            pipeline_type=pipeline_type,
+            llm_service=llm_service
+        )
+        
+        device_name = f"Device-{android_id[:8]}" if len(android_id) > 8 else f"Device-{android_id}"
+        
+        logger.info(f"New device auto-registered: {android_id}")
+        
+        return jsonify({
+            'success': True,
+            'already_registered': False,
+            'device_id': android_id,
+            'device_name': device_name,
+            'pipeline_type': pipeline_type,
+            'llm_service': llm_service
+        }), 201
+        
+    except Exception as e:
+        logger.error(f"Auto-register endpoint error: {e}")
+        return jsonify({'error': 'Auto-registration failed'}), 500
+
 @device_bp.route('/api/device/suggest_id', methods=['GET'])
 def suggest_device_id():
     """Get the next available device ID for registration"""
@@ -114,10 +174,8 @@ def login_device():
         if not device_id:
             return jsonify({'error': 'Device ID is required'}), 400
         
-        try:
-            device_id = int(device_id)
-        except (ValueError, TypeError):
-            return jsonify({'error': 'Invalid device ID format'}), 400
+        # Legacy endpoint - accept any device_id format (string, UUID, Android ID)
+        # No int() conversion needed - device_id stored as string in database
         
         if not password:
             return jsonify({'error': 'Password is required'}), 400

@@ -474,6 +474,48 @@ class DatabaseManager:
             logger.error(f"Failed to get device: {e}")
             return None
     
+    def get_device_by_android_id(self, android_id):
+        """Get device by Android ID (for kiosk mode)"""
+        try:
+            return self.devices.find_one({'device_id': android_id})
+        except Exception as e:
+            logger.error(f"Failed to get device by Android ID: {e}")
+            return None
+    
+    def create_device_for_android_id(self, android_id, source='android-webview', pipeline_type='library', llm_service='gemini'):
+        """Create a new device record using Android ID as device_id (no auth)"""
+        try:
+            device_name = f"Device-{android_id[:8]}" if len(android_id) > 8 else f"Device-{android_id}"
+            
+            device_data = {
+                'device_id': android_id,  # Android ID as primary key
+                'device_name': device_name,
+                'source': source,  # 'android-webview' or 'web'
+                'pipeline_type': pipeline_type,
+                'llm_service': llm_service,
+                'created_at': datetime.utcnow(),
+                'last_active': datetime.utcnow()
+            }
+            
+            result = self.devices.insert_one(device_data)
+            logger.info(f"Created device with Android ID: {android_id}")
+            return result.inserted_id
+        except Exception as e:
+            logger.error(f"Failed to create device for Android ID: {e}")
+            raise
+    
+    def update_device_last_active(self, device_id):
+        """Update last_active timestamp for device"""
+        try:
+            result = self.devices.update_one(
+                {'device_id': device_id},
+                {'$set': {'last_active': datetime.utcnow()}}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Failed to update device last_active: {e}")
+            return False
+   
     def get_device_by_token(self, token, token_type='access'):
         """Get device by access or refresh token"""
         try:

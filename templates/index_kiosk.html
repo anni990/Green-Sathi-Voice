@@ -33,12 +33,6 @@
                     <a href="/kiosk-test" class="rounded-full bg-white shadow-md font-bold border-2 border-green-100 flex items-center gap-2 transition-all hover:bg-green-50">
                         <i class="fas fa-sign-in-alt text-green-600"></i> <span>KTest</span>
                     </a>
-                    <a href="/login" class="rounded-full bg-white shadow-md font-bold border-2 border-green-100 flex items-center gap-2 transition-all hover:bg-green-50">
-                        <i class="fas fa-sign-in-alt text-green-600"></i> <span>Login</span>
-                    </a>
-                    <a href="/register" class="rounded-full bg-yellow-400 shadow-lg shadow-yellow-200 font-bold transition-all hover:bg-yellow-500">
-                        <i class="fas fa-user-plus"></i> <span>Register</span>
-                    </a>
                 </div>
                 
                 <!-- Account Dropdown (shown when logged in) -->
@@ -333,19 +327,6 @@
         </div>
     </div>
 
-    <!-- Login Required Popup -->
-    <div id="login-popup" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="glass-card text-center max-w-sm mx-4">
-            <i class="fas fa-exclamation-triangle text-yellow-500"></i>
-            <h3 class="font-bold text-gray-800">Login Required</h3>
-            <p class="text-gray-600">Please login to use the voice assistant.</p>
-            <div class="flex gap-4 justify-center">
-                <button id="login-popup-cancel" class="bg-gray-300 text-gray-800 rounded-full font-semibold hover:bg-gray-400 transition-colors">Cancel</button>
-                <button id="login-popup-login" class="bg-green-600 text-white rounded-full font-semibold hover:bg-green-700 transition-colors">Login</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Landing Page Interaction Logic -->
     <script>
         // Global variables
@@ -357,7 +338,7 @@
             var landingPage = document.getElementById('landing-page');
             var mainUI = document.getElementById('main-ui');
 
-            // Transition to main UI
+            // Transition to main UI (no auth check needed)
             landingPage.style.display = 'none';
             mainUI.classList.remove('hidden');
             mainUI.style.display = 'block';
@@ -398,54 +379,20 @@
         }
 
         function showLoginPopup() {
-            document.getElementById('login-popup').classList.remove('hidden');
+            // No-op: login not required anymore
+            console.log('ℹ️ Login popup disabled - using device ID auth');
         }
 
         function hideLoginPopup() {
-            document.getElementById('login-popup').classList.add('hidden');
+            // No-op: login not required anymore
         }
 
         function setupLoginPopup() {
-            var cancelBtn = document.getElementById('login-popup-cancel');
-            var loginBtn = document.getElementById('login-popup-login');
-
-            if (cancelBtn) {
-                cancelBtn.addEventListener('click', hideLoginPopup);
-            }
-
-            if (loginBtn) {
-                loginBtn.addEventListener('click', function() {
-                    window.location.href = '/login';
-                });
-            }
+            // No-op: login not required anymore
         }
 
         function setupAccountDropdown() {
-            var accountBtn = document.getElementById('account-btn');
-            var dropdownMenu = document.getElementById('dropdown-menu');
-            var logoutBtn = document.getElementById('logout-btn');
-
-            if (accountBtn && dropdownMenu) {
-                accountBtn.addEventListener('click', function() {
-                    dropdownMenu.classList.toggle('hidden');
-                });
-
-                document.addEventListener('click', function(e) {
-                    if (!accountBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                        dropdownMenu.classList.add('hidden');
-                    }
-                });
-
-                if (logoutBtn) {
-                    logoutBtn.addEventListener('click', function() {
-                        if (window.deviceAuth) {
-                            window.deviceAuth.logout().then(function() {
-                                window.location.reload();
-                            });
-                        }
-                    });
-                }
-            }
+            // No-op: account dropdown setup handled in checkAuthStatus
         }
 
         function setupExitButton() {
@@ -459,20 +406,57 @@
         }
 
         function checkAuthStatus() {
-            var authButtons = document.getElementById('auth-buttons');
             var accountDropdown = document.getElementById('account-dropdown');
-
-            if (window.deviceAuth && window.deviceAuth.checkAuth()) {
+            
+            // Show device info if available
+            if (accountDropdown && window.deviceAuth && window.deviceAuth.deviceId) {
                 var deviceInfo = window.deviceAuth.getDeviceInfo();
-                authButtons.classList.add('hidden');
                 accountDropdown.classList.remove('hidden');
-                document.getElementById('account-device-name').textContent = deviceInfo.deviceName || 'Device';
-                document.getElementById('dropdown-device-name').textContent = deviceInfo.deviceName || 'Unknown Device';
-                document.getElementById('dropdown-device-id').textContent = deviceInfo.deviceId || 'N/A';
-                setupAccountDropdown();
+                
+                var accountDeviceName = document.getElementById('account-device-name');
+                var dropdownDeviceName = document.getElementById('dropdown-device-name');
+                var dropdownDeviceId = document.getElementById('dropdown-device-id');
+                
+                if (accountDeviceName) {
+                    accountDeviceName.textContent = deviceInfo.deviceName || 'Device';
+                }
+                if (dropdownDeviceName) {
+                    dropdownDeviceName.textContent = deviceInfo.deviceName || 'Unknown Device';
+                }
+                if (dropdownDeviceId) {
+                    dropdownDeviceId.textContent = deviceInfo.deviceId ? deviceInfo.deviceId.substring(0, 16) : 'N/A';
+                }
+                
+                // Setup dropdown toggle
+                var accountBtn = document.getElementById('account-btn');
+                var dropdownMenu = document.getElementById('dropdown-menu');
+                var logoutBtn = document.getElementById('logout-btn');
+                
+                if (accountBtn && dropdownMenu) {
+                    accountBtn.addEventListener('click', function() {
+                        dropdownMenu.classList.toggle('hidden');
+                    });
+
+                    document.addEventListener('click', function(e) {
+                        if (!accountBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                            dropdownMenu.classList.add('hidden');
+                        }
+                    });
+                }
+                
+                // Logout button (for clearing device ID - debugging only)
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', function() {
+                        if (window.deviceAuth) {
+                            window.deviceAuth.clearStorage();
+                            window.location.reload();
+                        }
+                    });
+                }
             } else {
-                authButtons.classList.remove('hidden');
-                accountDropdown.classList.add('hidden');
+                if (accountDropdown) {
+                    accountDropdown.classList.add('hidden');
+                }
             }
         }
 
@@ -484,23 +468,49 @@
                 window.location.reload();
             }
             
-            // Enter: Start voice bot from landing
+            // Enter: Start voice bot from landing (no auth check)
             if (landingPageActive && (event.key === 'Enter' || event.keyCode === 13)) {
-                var popup = document.getElementById('login-popup');
-                if (popup && popup.classList.contains('hidden')) {
-                    event.preventDefault();
-                    console.log('🎹 Enter key pressed on landing page');
-                    if (window.deviceAuth && !window.deviceAuth.checkAuth()) {
-                        showLoginPopup();
-                    } else {
-                        startVoiceBot();
-                    }
-                }
+                event.preventDefault();
+                console.log('🎹 Enter key pressed on landing page');
+                startVoiceBot();
             }
         });
     </script>
 
     <!-- JavaScript -->
+    <!-- CRITICAL: Initialize Android ID BEFORE DeviceAuthManager -->
+    <script>
+        // --- Android device bootstrap (MUST RUN FIRST) ---
+        console.log('🔍 Checking for Android WebView...');
+        
+        window.__DEVICE_CONTEXT__ = {
+            deviceId: null,
+            source: "web"
+        };
+
+        // PRIORITY 1: Try to get Android ID from WebView interface (DeviceBridge)
+        try {
+            if (window.DeviceBridge && typeof DeviceBridge.getAndroidId === 'function') {
+                var androidId = DeviceBridge.getAndroidId();
+                if (androidId && androidId !== 'unknown' && androidId.trim() !== '') {
+                    window.__DEVICE_CONTEXT__.deviceId = androidId;
+                    window.__DEVICE_CONTEXT__.source = 'android-webview';
+                    console.log('✅ Android ID detected and set BEFORE DeviceAuthManager:', androidId);
+                } else {
+                    console.warn('⚠️ Android ID returned "unknown" or empty - will use UUID fallback');
+                }
+            } else {
+                console.log('ℹ️ Not running inside Android WebView (DeviceBridge not found) - will use UUID fallback');
+            }
+        } catch (e) {
+            console.error('❌ Failed to read Android ID from DeviceBridge:', e);
+            console.log('ℹ️ Will use UUID fallback');
+        }
+        
+        console.log('📱 Device context initialized:', window.__DEVICE_CONTEXT__);
+    </script>
+    
+    <!-- NOW load DeviceAuthManager - it will check window.__DEVICE_CONTEXT__ -->
     <script src="{{ url_for('static', filename='js/DeviceAuthManager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ElementManager.js') }}"></script>
     <script src="{{ url_for('static', filename='js/StateManager.js') }}"></script>
@@ -513,14 +523,40 @@
     
     <!-- Initialize after all modules loaded -->
     <script>
-        // Module classes are now available, but don't initialize VoiceBotApp yet
         console.log('📦 Modules loaded. Waiting for UI transition...');
-        
+
+        // Auto-register device with backend after device ID is initialized
+        function autoRegisterDeviceOnLoad() {
+            if (window.deviceAuth && window.deviceAuth.deviceId) {
+                console.log('🔄 Auto-registering device with backend...');
+                console.log('   Device ID:', window.deviceAuth.deviceId);
+                console.log('   Source:', window.deviceAuth.source);
+                
+                window.deviceAuth.autoRegisterDevice()
+                    .then(function(result) {
+                        if (result.success) {
+                            console.log('✅ Device auto-registered successfully');
+                        } else {
+                            console.warn('⚠️ Device auto-registration failed:', result.error);
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error('❌ Device auto-registration error:', error);
+                    });
+            } else {
+                console.warn('⚠️ No device ID available for auto-registration');
+            }
+        }
+
         // Wait a moment then initialize UI functions
         setTimeout(function() {
             checkAuthStatus();
             setupLoginPopup();
             setupExitButton();
+            
+            // Auto-register device after DeviceAuthManager is loaded
+            autoRegisterDeviceOnLoad();
+            
             console.log('✅ UI functions initialized');
         }, 300);
     </script>
