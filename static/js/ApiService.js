@@ -96,6 +96,10 @@ ApiService.prototype.showConfirmationPopup = function(name, phone, isError) {
     modal.innerHTML = '<h2 style="color:#16A34A;margin-bottom:20px;text-align:center;">' + titleText + '</h2>' +
         '<div style="margin-bottom:20px;">' +
             '<p style="text-align:center;color:#666;margin-bottom:15px;font-size:14px;">' + instructionText + '</p>' +
+            '<div id="numLockStatus" style="background:#E0E7FF;padding:10px;border-radius:8px;margin-bottom:10px;text-align:center;border:2px solid #6366F1;">' +
+                '<span style="font-weight:700;color:#4338CA;">NumLock:</span> ' +
+                '<span id="numLockIndicator" style="font-weight:800;font-size:16px;color:#6366F1;">जाँच हो रही है...</span>' +
+            '</div>' +
             '<div style="background:#F0FDF4;padding:15px;border-radius:10px;margin-bottom:10px;">' +
                 '<p style="color:#166534;font-weight:600;margin-bottom:8px;">👤 नाम:</p>' +
                 '<p id="displayName" style="color:#15803D;font-size:20px;font-weight:700;text-align:center;">' + (name || 'उपयोगकर्ता') + '</p>' +
@@ -120,6 +124,57 @@ ApiService.prototype.showConfirmationPopup = function(name, phone, isError) {
     var phoneInput = document.getElementById('phoneInputConfirm');
     var confirmBtn = document.getElementById('confirmBtn');
     var errorMsg = document.getElementById('phoneConfirmError');
+    var numLockIndicator = document.getElementById('numLockIndicator');
+    var numLockStatus = document.getElementById('numLockStatus');
+    
+    // NumLock detection and real-time update
+    var updateNumLockStatus = function(e) {
+        var isNumLockOn = e.getModifierState && e.getModifierState('NumLock');
+        
+        if (isNumLockOn) {
+            numLockIndicator.textContent = '✅ ON (चालू)';
+            numLockIndicator.style.color = '#16A34A';
+            numLockStatus.style.background = '#F0FDF4';
+            numLockStatus.style.borderColor = '#16A34A';
+            console.log('🔢 NumLock is ON');
+        } else {
+            numLockIndicator.textContent = '❌ OFF (बंद)';
+            numLockIndicator.style.color = '#DC2626';
+            numLockStatus.style.background = '#FEF2F2';
+            numLockStatus.style.borderColor = '#DC2626';
+            console.log('⚠️ NumLock is OFF');
+        }
+    };
+    
+    // Initial NumLock detection - trigger a synthetic keydown event
+    var checkInitialNumLock = function() {
+        // Listen for any key press to detect NumLock state
+        var initialCheckHandler = function(e) {
+            updateNumLockStatus(e);
+            document.removeEventListener('keydown', initialCheckHandler);
+        };
+        
+        // Add temporary listener
+        document.addEventListener('keydown', initialCheckHandler);
+        
+        // Fallback: If no key is pressed in 500ms, show waiting state
+        setTimeout(function() {
+            if (numLockIndicator.textContent === 'जाँच हो रही है...') {
+                numLockIndicator.textContent = 'कोई भी बटन दबाएं';
+                numLockIndicator.style.color = '#6366F1';
+            }
+        }, 500);
+    };
+    
+    // Start initial check
+    checkInitialNumLock();
+    
+    // Real-time NumLock monitoring on any keydown event
+    var globalNumLockMonitor = function(e) {
+        updateNumLockStatus(e);
+    };
+    
+    document.addEventListener('keydown', globalNumLockMonitor);
     
     // Focus phone input and select all text for easy editing
     phoneInput.focus();
@@ -250,12 +305,15 @@ ApiService.prototype.showConfirmationPopup = function(name, phone, isError) {
     window.__popupActive = true;
     console.log('🔒 Confirmation popup opened - Backspace enabled for editing (window.__popupActive = true)');
     
-    // Cleanup function to clear popup flag
+    // Cleanup function to clear popup flag and remove NumLock listener
     var cleanupPopup = function() {
         if (window.__popupActive) {
             window.__popupActive = false;
             console.log('🔓 Confirmation popup closed - Backspace returns to global behavior (window.__popupActive = false)');
         }
+        // Remove NumLock monitoring listener
+        document.removeEventListener('keydown', globalNumLockMonitor);
+        console.log('🔌 NumLock monitor removed');
     };
     
     // Ensure cleanup happens even if overlay is removed other ways
