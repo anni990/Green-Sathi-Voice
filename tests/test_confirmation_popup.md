@@ -36,7 +36,7 @@
 8. Press **Enter**
    - Console shows: `🔓 Phone confirmed - clearing popup flag (window.__popupActive = false)`
    - Popup closes
-   - Audio plays: "धन्यवाद! आपकी जानकारी सहेज ली गई है।"
+   - Audio plays: "धन्यवाद! आपकी जानकारी प्राप्त हो गई है।"
    - Proceeds to language selection
 
 ### Test Case 2: Failed Extraction (Error Flow)

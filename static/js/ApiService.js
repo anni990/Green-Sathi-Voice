@@ -91,7 +91,7 @@ ApiService.prototype.showConfirmationPopup = function(name, phone, isError) {
     
     // Build modal content
     var titleText = isError ? '⚠️ जानकारी दर्ज करें' : '✅ जानकारी की पुष्टि करें';
-    var instructionText = isError ? 'कृपया अपना 10 अंकों का फ़ोन नंबर टाइप करें' : 'यदि सही है तो Enter दबाएं। गलत है तो Backspace से संपादित करें।';
+    var instructionText = isError ? 'कृपया अपना 10 अंकों का फ़ोन नंबर दर्ज करें' : 'यदि सही है तो Enter दबाएं। गलत है तो Backspace से संपादित करें।';
     
     modal.innerHTML = '<h2 style="color:#16A34A;margin-bottom:20px;text-align:center;">' + titleText + '</h2>' +
         '<div style="margin-bottom:20px;">' +
@@ -102,7 +102,7 @@ ApiService.prototype.showConfirmationPopup = function(name, phone, isError) {
             '</div>' +
             '<div style="background:#FEF3C7;padding:15px;border-radius:10px;">' +
                 '<p style="color:#92400E;font-weight:600;margin-bottom:8px;">📱 फ़ोन नंबर:</p>' +
-                '<input type="tel" id="phoneInputConfirm" value="' + phone + '" placeholder="9876543210" maxlength="10" ' +
+                '<input type="tel" id="phoneInputConfirm" value="' + phone + '" placeholder="फ़ोन नंबर दर्ज करें" maxlength="10" ' +
                 'style="width:100%;padding:12px;font-size:22px;border:2px solid #F59E0B;border-radius:8px;text-align:center;' +
                 'box-sizing:border-box;font-weight:700;background:white;"/>' +
             '</div>' +
@@ -212,17 +212,17 @@ ApiService.prototype.showConfirmationPopup = function(name, phone, isError) {
         document.body.removeChild(overlay);
         
         // Play confirmation audio and proceed
-        self.app.uiController.updateStatus('processing', 'जानकारी सहेजी जा रही है...');
+        self.app.uiController.updateStatus('processing', 'जानकारी प्राप्ती की जा रही है...');
         var confirmedAudioUrl = '/api/voice/static_audio/details_confirmed/hindi';
         self.app.audioManager.playAudioFromUrl(confirmedAudioUrl).then(function() {
-            self.app.uiController.updateStatus('ready', 'जानकारी सहेजी गई!');
+            self.app.uiController.updateStatus('ready', 'जानकारी प्राप्ती हो गई!');
             // Wait 1 second then proceed to language selection
             setTimeout(function() {
                 self.app.startLanguageCollection();
             }, 1000);
         }).catch(function(err) {
             console.error('Error playing confirmed audio:', err);
-            self.app.uiController.updateStatus('ready', 'जानकारी सहेजी गई!');
+            self.app.uiController.updateStatus('ready', 'जानकारी प्राप्ती हो गई!');
             setTimeout(function() {
                 self.app.startLanguageCollection();
             }, 1000);

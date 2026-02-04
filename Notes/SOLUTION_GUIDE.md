@@ -102,7 +102,7 @@ python test_improved_extraction.py
 ### Option A: Add Text Input Fallback
 ```javascript
 // Add text input option in the UI for manual entry
-<input type="text" placeholder="फोन नंबर टाइप करें" />
+<input type="text" placeholder="फोन नंबर दर्ज करें" />
 ```
 
 ### Option B: Number Confirmation

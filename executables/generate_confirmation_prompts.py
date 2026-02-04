@@ -18,15 +18,15 @@ os.makedirs(output_dir, exist_ok=True)
 # Define prompts for confirmation flow (Kiosk with numerical keyboard only)
 prompts = {
     'confirm_details': {
-        'hi': 'कृपया अपनी जानकारी की पुष्टि करें। यदि नाम और फ़ोन नंबर सही है तो एंटर दबाएं। नंबर गलत है तो बैकस्पेस से मिटाएं और सही नंबर टाइप करें।',
+        'hi': 'कृपया अपनी जानकारी की पुष्टि करें। यदि नाम और फ़ोन नंबर सही है तो एंटर दबाएं। नंबर गलत है तो बैकस्पेस से मिटाएं और सही नंबर दर्ज करें।',
         'file': 'static_confirm_details_hi.mp3'
     },
     'details_confirmed': {
-        'hi': 'धन्यवाद! आपकी जानकारी सहेज ली गई है।',
+        'hi': 'धन्यवाद! आपकी जानकारी प्राप्त हो गई है।',
         'file': 'static_details_confirmed_hi.mp3'
     },
     'edit_phone_hint': {
-        'hi': 'नंबर बदलने के लिए बैकस्पेस से मिटाएं और नया नंबर टाइप करें। फिर एंटर दबाएं।',
+        'hi': 'नंबर बदलने के लिए बैकस्पेस से मिटाएं और नया नंबर दर्ज करें। फिर एंटर दबाएं।',
         'file': 'static_edit_phone_hint_hi.mp3'
     }
 }
