@@ -19,10 +19,16 @@ KeyboardHandler.prototype.setupKeyboardListeners = function() {
 };
 
 KeyboardHandler.prototype.handleKeyboardInput = function(event) {
-    // Check if phone input popup is open - give it priority
+    // PRIORITY 1: Check if confirmation popup is active - let it handle its own events
+    if (window.__popupActive) {
+        // Allow popup to handle Enter for confirmation and Backspace for editing
+        // Do NOT prevent default or stop propagation here
+        return;
+    }
+    
+    // Check if old phone input popup is open - give it priority (backward compatibility)
     var phonePopup = document.getElementById('phoneInputOverlay');
     if (phonePopup) {
-        // Let the popup handle its own Enter/input events
         return;
     }
     

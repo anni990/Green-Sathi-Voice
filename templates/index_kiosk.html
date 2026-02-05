@@ -462,8 +462,16 @@
 
         // Keyboard listeners (set up immediately)
         document.addEventListener('keydown', function (event) {
-            // Backspace: Exit voice UI
+            // CRITICAL: Don't handle Backspace when popup is active - let it edit the phone input
+            if (window.__popupActive && event.key === 'Backspace') {
+                // Allow normal Backspace behavior in input field
+                console.log('⌨️ Backspace pressed - popup active, allowing normal edit behavior');
+                return;
+            }
+            
+            // Backspace: Exit voice UI (only when popup is NOT active)
             if (event.key === 'Backspace' && !landingPageActive) {
+                console.log('⌨️ Backspace pressed - no popup active, reloading page');
                 event.preventDefault();
                 window.location.reload();
             }

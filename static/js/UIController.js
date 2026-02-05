@@ -96,7 +96,7 @@ UIController.prototype.setupConversationLayout = function() {
     
     elements.mainContent.innerHTML = 
         '<div class="text-center">' +
-        '<p class="text-base lg:text-lg text-gray-700 font-medium mb-4">आपकी जानकारी सहेज ली गई है</p>' +
+        '<p class="text-base lg:text-lg text-gray-700 font-medium mb-4">आपकी जानकारी प्राप्त हो गई है</p>' +
         '<div class="bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-800 lg:hidden">' +
         '<p class="font-semibold mb-2 flex items-center"><i class="fas fa-check-circle mr-2"></i>तैयार!</p>' +
         '<p class="text-xs">अब आप बात कर सकते हैं।</p>' +

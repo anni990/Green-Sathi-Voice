@@ -86,7 +86,7 @@ ConversationManager.prototype.addTypingIndicator = function() {
         '<div class="w-2 h-2 bg-gray-500 rounded-full animate-pulse" style="animation-delay: 0.1s"></div>' +
         '<div class="w-2 h-2 bg-gray-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>' +
         '</div>' +
-        '<span class="ml-2 text-xs">टाइप कर रहा है...</span>' +
+        '<span class="ml-2 text-xs">दर्ज कर रहा है...</span>' +
         '</div>';
     
     typingDiv.appendChild(bubble);

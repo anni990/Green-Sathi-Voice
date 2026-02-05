@@ -56,24 +56,13 @@ ApiService.prototype.extractUserInfo = function(text) {
     .then(function(data) {
         if (!data) return;
         
-        if (data.fallback) {
-            return self.handleExtractionFallback(data.name);
-        }
-        
-        if (data.phone) {
-            self.app.stateManager.updateUserInfo('name', data.name || '');
-            self.app.stateManager.updateUserInfo('phone', data.phone);
-            
-            self.app.elementManager.setElementContent('userName', data.name || 'उपयोगकर्ता');
-            self.app.elementManager.setElementContent('userPhone', data.phone);
-            
-            self.app.uiController.updateStatus('ready', 'जानकारी मिल गई!');
-            
-            setTimeout(function() {
-                self.app.startLanguageCollection();
-            }, 1500);
+        // Always show confirmation popup - whether extraction succeeded or failed
+        if (data.fallback || !data.phone) {
+            // Failed extraction - show popup with error audio
+            self.showConfirmationPopup(data.name || '', '', true);
         } else {
-            return self.handleExtractionFallback(data.name);
+            // Successful extraction - show confirmation popup with success audio
+            self.showConfirmationPopup(data.name || '', data.phone, false);
         }
     })
     .catch(function(error) {
@@ -82,84 +71,253 @@ ApiService.prototype.extractUserInfo = function(text) {
     });
 };
 
-ApiService.prototype.handleExtractionFallback = function(name) {
-    this.showPhoneInputPopup(name);
-    
-    this.app.uiController.updateStatus('processing', 'कृपया ध्यान से सुनें...');
-    var audioUrl = '/api/voice/static_audio/extraction_error/hindi';
-    this.app.audioManager.playAudioFromUrl(audioUrl).catch(function(err) {
-        console.error('Error playing extraction error audio:', err);
-    });
-    
-    return Promise.resolve();
-};
-
-ApiService.prototype.showPhoneInputPopup = function(name) {
+/**
+ * Show confirmation popup for name/phone - works for both successful and failed extraction
+ * @param {string} name - Extracted or empty name
+ * @param {string} phone - Extracted phone (empty if failed)
+ * @param {boolean} isError - Whether this is an error case (play error audio)
+ */
+ApiService.prototype.showConfirmationPopup = function(name, phone, isError) {
     var self = this;
     
+    // Create overlay
     var overlay = document.createElement('div');
-    overlay.id = 'phoneInputOverlay';
+    overlay.id = 'phoneConfirmOverlay';
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);display:flex;justify-content:center;align-items:center;z-index:10000;';
     
+    // Create modal
     var modal = document.createElement('div');
-    modal.style.cssText = 'background:white;padding:30px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.3);max-width:400px;width:90%;';
+    modal.style.cssText = 'background:white;padding:30px;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,0.3);max-width:450px;width:90%;';
     
-    modal.innerHTML = '<h2 style="color:#16A34A;margin-bottom:20px;text-align:center;">📱 फ़ोन नंबर दर्ज करें</h2>' +
-        '<p style="margin-bottom:20px;text-align:center;color:#666;">कृपया अपना 10 अंकों का फ़ोन नंबर टाइप करें</p>' +
-        '<input type="tel" id="phoneInput" placeholder="9876543210" maxlength="10" style="width:100%;padding:15px;font-size:18px;border:2px solid #16A34A;border-radius:8px;text-align:center;margin-bottom:20px;box-sizing:border-box;"/>' +
-        '<button id="submitPhone" style="width:100%;padding:15px;background:#16A34A;color:white;border:none;border-radius:8px;font-size:18px;cursor:pointer;font-weight:bold;">जारी रखें →</button>' +
-        '<p id="phoneError" style="color:#DC2626;margin-top:10px;text-align:center;display:none;"></p>';
+    // Build modal content
+    var titleText = isError ? '⚠️ जानकारी दर्ज करें' : '✅ जानकारी की पुष्टि करें';
+    var instructionText = isError ? 'कृपया अपना 10 अंकों का फ़ोन नंबर दर्ज करें' : 'यदि सही है तो Enter दबाएं। गलत है तो Backspace से संपादित करें।';
+    
+    modal.innerHTML = '<h2 style="color:#16A34A;margin-bottom:20px;text-align:center;">' + titleText + '</h2>' +
+        '<div style="margin-bottom:20px;">' +
+            '<p style="text-align:center;color:#666;margin-bottom:15px;font-size:14px;">' + instructionText + '</p>' +
+            '<div id="numLockStatus" style="background:#E0E7FF;padding:10px;border-radius:8px;margin-bottom:10px;text-align:center;border:2px solid #6366F1;">' +
+                '<span style="font-weight:700;color:#4338CA;">NumLock:</span> ' +
+                '<span id="numLockIndicator" style="font-weight:800;font-size:16px;color:#6366F1;">जाँच हो रही है...</span>' +
+            '</div>' +
+            '<div style="background:#F0FDF4;padding:15px;border-radius:10px;margin-bottom:10px;">' +
+                '<p style="color:#166534;font-weight:600;margin-bottom:8px;">👤 नाम:</p>' +
+                '<p id="displayName" style="color:#15803D;font-size:20px;font-weight:700;text-align:center;">' + (name || 'उपयोगकर्ता') + '</p>' +
+            '</div>' +
+            '<div style="background:#FEF3C7;padding:15px;border-radius:10px;">' +
+                '<p style="color:#92400E;font-weight:600;margin-bottom:8px;">📱 फ़ोन नंबर:</p>' +
+                '<input type="tel" id="phoneInputConfirm" value="' + phone + '" placeholder="फ़ोन नंबर दर्ज करें" maxlength="10" ' +
+                'style="width:100%;padding:12px;font-size:22px;border:2px solid #F59E0B;border-radius:8px;text-align:center;' +
+                'box-sizing:border-box;font-weight:700;background:white;"/>' +
+            '</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:10px;">' +
+            '<button id="confirmBtn" style="flex:1;padding:15px;background:#16A34A;color:white;border:none;border-radius:8px;' +
+            'font-size:18px;cursor:pointer;font-weight:bold;">✓ पुष्टि करें (Enter)</button>' +
+        '</div>' +
+        '<p id="phoneConfirmError" style="color:#DC2626;margin-top:10px;text-align:center;display:none;font-weight:600;"></p>';
     
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
     
-    var phoneInput = document.getElementById('phoneInput');
-    var submitBtn = document.getElementById('submitPhone');
-    var errorMsg = document.getElementById('phoneError');
+    // Get elements
+    var phoneInput = document.getElementById('phoneInputConfirm');
+    var confirmBtn = document.getElementById('confirmBtn');
+    var errorMsg = document.getElementById('phoneConfirmError');
+    var numLockIndicator = document.getElementById('numLockIndicator');
+    var numLockStatus = document.getElementById('numLockStatus');
     
-    phoneInput.focus();
-    
-    var handleSubmit = function() {
-        var phone = phoneInput.value.trim();
+    // NumLock detection and real-time update
+    var updateNumLockStatus = function(e) {
+        var isNumLockOn = e.getModifierState && e.getModifierState('NumLock');
         
-        if (!/^[6-9]\d{9}$/.test(phone)) {
-            errorMsg.textContent = 'कृपया सही 10 अंकों का फ़ोन नंबर दर्ज करें';
-            errorMsg.style.display = 'block';
+        if (isNumLockOn) {
+            numLockIndicator.textContent = '✅ ON (चालू)';
+            numLockIndicator.style.color = '#16A34A';
+            numLockStatus.style.background = '#F0FDF4';
+            numLockStatus.style.borderColor = '#16A34A';
+            console.log('🔢 NumLock is ON');
+        } else {
+            numLockIndicator.textContent = '❌ OFF (बंद)';
+            numLockIndicator.style.color = '#DC2626';
+            numLockStatus.style.background = '#FEF2F2';
+            numLockStatus.style.borderColor = '#DC2626';
+            console.log('⚠️ NumLock is OFF');
+        }
+    };
+    
+    // Initial NumLock detection - trigger a synthetic keydown event
+    var checkInitialNumLock = function() {
+        // Listen for any key press to detect NumLock state
+        var initialCheckHandler = function(e) {
+            updateNumLockStatus(e);
+            document.removeEventListener('keydown', initialCheckHandler);
+        };
+        
+        // Add temporary listener
+        document.addEventListener('keydown', initialCheckHandler);
+        
+        // Fallback: If no key is pressed in 500ms, show waiting state
+        setTimeout(function() {
+            if (numLockIndicator.textContent === 'जाँच हो रही है...') {
+                numLockIndicator.textContent = 'कोई भी बटन दबाएं';
+                numLockIndicator.style.color = '#6366F1';
+            }
+        }, 500);
+    };
+    
+    // Start initial check
+    checkInitialNumLock();
+    
+    // Real-time NumLock monitoring on any keydown event
+    var globalNumLockMonitor = function(e) {
+        updateNumLockStatus(e);
+    };
+    
+    document.addEventListener('keydown', globalNumLockMonitor);
+    
+    // Focus phone input and select all text for easy editing
+    phoneInput.focus();
+    phoneInput.select();
+    
+    // Restrict input to numbers only (0-9)
+    phoneInput.addEventListener('keydown', function(e) {
+        // Allow: backspace, delete, tab, escape, enter, arrow keys
+        var allowedKeys = ['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
+        
+        // Allow if it's a control key
+        if (allowedKeys.indexOf(e.key) !== -1) {
             return;
         }
         
-        self.app.stateManager.updateUserInfo('name', name || '');
-        self.app.stateManager.updateUserInfo('phone', phone);
+        // Allow Ctrl+A, Ctrl+C, Ctrl+V, Ctrl+X
+        if ((e.ctrlKey || e.metaKey) && ['a', 'c', 'v', 'x'].indexOf(e.key.toLowerCase()) !== -1) {
+            return;
+        }
+        
+        // Block if not a number (0-9)
+        if (!/^[0-9]$/.test(e.key)) {
+            e.preventDefault();
+            console.log('⚠️ Blocked non-numeric key:', e.key);
+            return;
+        }
+    });
+    
+    // Additional filter on paste event
+    phoneInput.addEventListener('paste', function(e) {
+        e.preventDefault();
+        var pastedText = (e.clipboardData || window.clipboardData).getData('text');
+        var numbersOnly = pastedText.replace(/\D/g, ''); // Remove all non-digits
+        
+        if (numbersOnly) {
+            // Insert only the numeric part
+            var currentValue = phoneInput.value;
+            var selectionStart = phoneInput.selectionStart;
+            var newValue = currentValue.substring(0, selectionStart) + numbersOnly + currentValue.substring(phoneInput.selectionEnd);
+            phoneInput.value = newValue.substring(0, 10); // Limit to 10 digits
+            phoneInput.setSelectionRange(selectionStart + numbersOnly.length, selectionStart + numbersOnly.length);
+            console.log('📋 Pasted numbers only:', numbersOnly);
+        }
+    });
+    
+    // Play appropriate audio
+    this.app.uiController.updateStatus('processing', 'कृपया ध्यान से सुनें...');
+    if (isError) {
+        // Error case - play extraction error audio
+        var errorAudioUrl = '/api/voice/static_audio/extraction_error/hindi';
+        this.app.audioManager.playAudioFromUrl(errorAudioUrl).catch(function(err) {
+            console.error('Error playing extraction error audio:', err);
+        });
+    } else {
+        // Success case - play confirmation prompt
+        var confirmAudioUrl = '/api/voice/static_audio/confirm_details/hindi';
+        this.app.audioManager.playAudioFromUrl(confirmAudioUrl).then(function() {
+            self.app.uiController.updateStatus('ready', 'जानकारी की पुष्टि करें');
+        }).catch(function(err) {
+            console.error('Error playing confirmation audio:', err);
+            self.app.uiController.updateStatus('ready', 'जानकारी की पुष्टि करें');
+        });
+    }
+    
+    // Handle confirmation
+    var handleConfirm = function() {
+        var phoneValue = phoneInput.value.trim();
+        
+        // Validate phone number
+        if (!/^[6-9]\d{9}$/.test(phoneValue)) {
+            errorMsg.textContent = '❌ कृपया सही 10 अंकों का फ़ोन नंबर दर्ज करें (6-9 से शुरू)';
+            errorMsg.style.display = 'block';
+            phoneInput.focus();
+            phoneInput.select();
+            return;
+        }
+        
+        // Save data
+        self.app.stateManager.updateUserInfo('name', name || 'उपयोगकर्ता');
+        self.app.stateManager.updateUserInfo('phone', phoneValue);
         
         self.app.elementManager.setElementContent('userName', name || 'उपयोगकर्ता');
-        self.app.elementManager.setElementContent('userPhone', phone);
+        self.app.elementManager.setElementContent('userPhone', phoneValue);
         
+        // Clear popup flag BEFORE removing overlay
+        window.__popupActive = false;
+        console.log('🔓 Phone confirmed - clearing popup flag (window.__popupActive = false)');
+        
+        // Remove overlay
         document.body.removeChild(overlay);
         
-        self.app.uiController.updateStatus('ready', 'जानकारी मिल गई!');
-        
-        setTimeout(function() {
-            self.app.startLanguageCollection();
-        }, 1000);
+        // Play confirmation audio and proceed
+        self.app.uiController.updateStatus('processing', 'जानकारी प्राप्ती की जा रही है...');
+        var confirmedAudioUrl = '/api/voice/static_audio/details_confirmed/hindi';
+        self.app.audioManager.playAudioFromUrl(confirmedAudioUrl).then(function() {
+            self.app.uiController.updateStatus('ready', 'जानकारी प्राप्ती हो गई!');
+            // Wait 1 second then proceed to language selection
+            setTimeout(function() {
+                self.app.startLanguageCollection();
+            }, 1000);
+        }).catch(function(err) {
+            console.error('Error playing confirmed audio:', err);
+            self.app.uiController.updateStatus('ready', 'जानकारी प्राप्ती हो गई!');
+            setTimeout(function() {
+                self.app.startLanguageCollection();
+            }, 1000);
+        });
     };
     
-    submitBtn.addEventListener('click', handleSubmit);
+    // Button click handler
+    confirmBtn.addEventListener('click', handleConfirm);
     
-    phoneInput.addEventListener('keydown', function(e) {
+    // Keyboard event handler for popup
+    var popupKeyHandler = function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
             e.stopPropagation();
-            handleSubmit();
+            handleConfirm();
         }
-    });
+        // Allow Backspace for editing (default behavior)
+        // Do NOT stop propagation for Backspace - let it work normally in input field
+    };
     
-    overlay.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            e.stopPropagation();
-            handleSubmit();
+    phoneInput.addEventListener('keydown', popupKeyHandler);
+    overlay.addEventListener('keydown', popupKeyHandler);
+    
+    // Mark popup as active for KeyboardHandler
+    window.__popupActive = true;
+    console.log('🔒 Confirmation popup opened - Backspace enabled for editing (window.__popupActive = true)');
+    
+    // Cleanup function to clear popup flag and remove NumLock listener
+    var cleanupPopup = function() {
+        if (window.__popupActive) {
+            window.__popupActive = false;
+            console.log('🔓 Confirmation popup closed - Backspace returns to global behavior (window.__popupActive = false)');
         }
-    });
+        // Remove NumLock monitoring listener
+        document.removeEventListener('keydown', globalNumLockMonitor);
+        console.log('🔌 NumLock monitor removed');
+    };
+    
+    // Ensure cleanup happens even if overlay is removed other ways
+    overlay.addEventListener('DOMNodeRemoved', cleanupPopup);
 };
 
 ApiService.prototype.detectLanguage = function(text, attempt) {

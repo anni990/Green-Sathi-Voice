@@ -73,7 +73,7 @@ Thumbs.db
 # Audio files (temporary)
 temp_audio/
 *.wav
-*.mp3
+# *.mp3
 *.ogg
 *.flac
 
@@ -109,9 +109,6 @@ instance/
 config.ini
 config.json
 
-# Static audio files (will be generated)
-static/audio/*.mp3
-static/audio/*.wav
 
 # GCP creds file
 vertex-gemini-service.json
