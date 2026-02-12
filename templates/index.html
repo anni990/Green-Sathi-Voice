@@ -8,13 +8,32 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Green Sathi - Krishi Guru</title>
-    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/tailwind.min.css">
-    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/animate.min.css">
-    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/fontawesome.min.css">
-    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/style.css">
-    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/landing.css">
-    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/advertisment.css">
-    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/kiosk-mode.css">
+    
+    <!-- App Version & Cache Control -->
+    <script>
+        // APP VERSION - Increment this when deploying frontend changes
+        var APP_VERSION = "2.0.0";
+        
+        // Clear localStorage/sessionStorage on version change
+        if (localStorage.getItem("app_version") !== APP_VERSION) {
+            console.log('🔄 App version changed from ' + localStorage.getItem("app_version") + ' to ' + APP_VERSION);
+            console.log('🧹 Clearing local storage and session storage...');
+            localStorage.clear();
+            sessionStorage.clear();
+            localStorage.setItem("app_version", APP_VERSION);
+            console.log('✅ Storage cleared. New version: ' + APP_VERSION);
+        } else {
+            console.log('✅ App version ' + APP_VERSION + ' - No cache clear needed');
+        }
+    </script>
+    
+    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/tailwind.min.css?v=2.0.0">
+    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/animate.min.css?v=2.0.0">
+    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/fontawesome.min.css?v=2.0.0">
+    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/style.css?v=2.0.0">
+    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/landing.css?v=2.0.0">
+    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/advertisment.css?v=2.0.0">
+    <link rel="stylesheet" href="https://greensathi.aiproducts.tech/static/css/kiosk-mode.css?v=2.0.0">
 </head>
 
 <body class="min-h-screen">
@@ -529,20 +548,20 @@
     </script>
 
     <!-- JavaScript -->
-    <script src="https://greensathi.aiproducts.tech/static/js/DeviceAuthManager.js"></script>
+    <script src="https://greensathi.aiproducts.tech/static/js/DeviceAuthManager.js?v=2.0.0"></script>
     <script>
         // Initialize DeviceAuthManager in WEB-ONLY mode (UUID only, no Android ID check)
         var deviceAuth = new DeviceAuthManager({ mode: 'web-only' });
         window.deviceAuth = deviceAuth;
     </script>
-    <script src="https://greensathi.aiproducts.tech/static/js/ElementManager.js"></script>
-    <script src="https://greensathi.aiproducts.tech/static/js/StateManager.js"></script>
-    <script src="https://greensathi.aiproducts.tech/static/js/UIController.js"></script>
-    <script src="https://greensathi.aiproducts.tech/static/js/KeyboardHandler.js"></script>
-    <script src="https://greensathi.aiproducts.tech/static/js/AudioManager.js"></script>
-    <script src="https://greensathi.aiproducts.tech/static/js/ApiService.js"></script>
-    <script src="https://greensathi.aiproducts.tech/static/js/ConversationManager.js"></script>
-    <script src="https://greensathi.aiproducts.tech/static/js/app_modular.js"></script>
+    <script src="https://greensathi.aiproducts.tech/static/js/ElementManager.js?v=2.0.0"></script>
+    <script src="https://greensathi.aiproducts.tech/static/js/StateManager.js?v=2.0.0"></script>
+    <script src="https://greensathi.aiproducts.tech/static/js/UIController.js?v=2.0.0"></script>
+    <script src="https://greensathi.aiproducts.tech/static/js/KeyboardHandler.js?v=2.0.0"></script>
+    <script src="https://greensathi.aiproducts.tech/static/js/AudioManager.js?v=2.0.0"></script>
+    <script src="https://greensathi.aiproducts.tech/static/js/ApiService.js?v=2.0.0"></script>
+    <script src="https://greensathi.aiproducts.tech/static/js/ConversationManager.js?v=2.0.0"></script>
+    <script src="https://greensathi.aiproducts.tech/static/js/app_modular.js?v=2.0.0"></script>
 </body>
 
 </html>
