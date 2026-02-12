@@ -201,7 +201,7 @@
                 const config = await deviceAuth.fetchPipelineConfig();
                 if (config) {
                     document.getElementById('pipeline-type').value = config.pipeline_type || 'library';
-                    document.getElementById('llm-service').value = config.llm_service || 'gemini';
+                    document.getElementById('llm-service').value = config.llm_service || 'azure_openai';
                     updateDescriptions();
                 }
             } catch (error) {

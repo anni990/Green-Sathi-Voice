@@ -21,7 +21,7 @@ class DevicesController {
         try {
             this.showLoading();
 
-            const response = await adminApiService.getDevices(this.currentPage, this.perPage);
+            const response = await adminApiService.getDevices({ page: this.currentPage, limit: this.perPage });
 
             if (response.success) {
                 const { devices, total, page, total_pages } = response.data;
@@ -48,7 +48,7 @@ class DevicesController {
         if (!devices || devices.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="py-8 text-center text-gray-500">
+                    <td colspan="7" class="py-8 text-center text-gray-500">
                         <i class="fas fa-mobile-alt text-4xl mb-2"></i>
                         <p>No devices registered yet</p>
                     </td>
@@ -79,20 +79,23 @@ class DevicesController {
                     ${device.user_count || 0}
                 </td>
                 <td class="py-4 px-6">
+                    <div class="text-sm text-gray-600">${tableRenderer.formatDateTime(device.created_at)}</div>
+                </td>
+                <td class="py-4 px-6">
                     <div class="flex items-center space-x-2">
                         <button 
                             onclick="devicesController.showDeviceDetails('${device.device_id}')"
                             class="text-green-600 hover:text-green-700 font-medium text-sm"
                             title="Configure device"
                         >
-                            <i class="fas fa-cog mr-1"></i>Configure
+                            <i class="fas fa-cog mr-1"></i>
                         </button>
                         <button 
                             onclick="devicesController.confirmDeleteDevice('${device.device_id}', '${tableRenderer.escapeHtml(device.device_name)}', ${device.user_count || 0})"
                             class="text-red-600 hover:text-red-700 font-medium text-sm"
                             title="Delete device and all associated data"
                         >
-                            <i class="fas fa-trash mr-1"></i>Delete
+                            <i class="fas fa-trash mr-1"></i>
                         </button>
                     </div>
                 </td>
@@ -169,7 +172,7 @@ class DevicesController {
         if (tableBody) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="py-8 text-center text-gray-500">
+                    <td colspan="7" class="py-8 text-center text-gray-500">
                         <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                         <p>Loading...</p>
                     </td>

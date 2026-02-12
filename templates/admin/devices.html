@@ -5,11 +5,18 @@
 {% block page_subtitle %}Manage devices and pipeline configurations{% endblock %}
 
 {% block content %}
-<!-- Export Button -->
-<div class="mb-4 flex justify-end">
+<!-- Action Buttons -->
+<div class="mb-4 flex justify-end gap-3">
+    <a 
+        href="/admin/devices/bulk-actions"
+        class="bg-blue-200 hover:bg-blue-300 text-blue-600 font-semibold px-6 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+    >
+        <i class="fas fa-tasks"></i>
+        <span>Bulk Actions</span>
+    </a>
     <button 
         onclick="devicesController.showExportModal()"
-        class="bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
+        class="bg-green-200 hover:bg-green-300 text-green-600 font-semibold px-6 py-2 rounded-lg shadow-md transition-all duration-200 flex items-center space-x-2"
     >
         <i class="fas fa-file-export"></i>
         <span>Export Devices</span>
@@ -26,12 +33,13 @@
                     <th class="py-4 px-6 text-left text-gray-600 font-semibold">Pipeline Type</th>
                     <th class="py-4 px-6 text-left text-gray-600 font-semibold">LLM Service</th>
                     <th class="py-4 px-6 text-left text-gray-600 font-semibold">Users</th>
+                    <th class="py-4 px-6 text-left text-gray-600 font-semibold">Created At</th>
                     <th class="py-4 px-6 text-left text-gray-600 font-semibold">Actions</th>
                 </tr>
             </thead>
             <tbody id="devicesTable">
                 <tr>
-                    <td colspan="6" class="py-8 text-center text-gray-500">
+                    <td colspan="7" class="py-8 text-center text-gray-500">
                         <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                         <p>Loading...</p>
                     </td>

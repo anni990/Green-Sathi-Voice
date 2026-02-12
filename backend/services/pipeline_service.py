@@ -57,8 +57,8 @@ class PipelineService:
             # Get LLM service instance
             llm_service = self.llm_services.get(llm_service_name)
             if not llm_service:
-                logger.error(f"Invalid LLM service: {llm_service_name}, falling back to gemini")
-                llm_service = self.llm_services['gemini']
+                logger.error(f"Invalid LLM service: {llm_service_name}, falling back to azure_openai")
+                llm_service = self.llm_services.get('azure_openai') or self.llm_services['gemini']
             
             logger.info(f"***** PIPELINE CONFIG ***** Device: {device_id}, Type: {pipeline_type}, LLM: {llm_service_name} ({llm_service.__class__.__name__})")
             
@@ -79,8 +79,9 @@ class PipelineService:
             
         except Exception as e:
             logger.error(f"Error getting pipeline for device {device_id}: {e}")
-            # Fallback to default library pipeline with gemini
-            return LibraryPipeline(self.llm_services['gemini'])
+            # Fallback to default library pipeline with azure_openai
+            fallback_llm = self.llm_services.get('azure_openai') or self.llm_services['gemini']
+            return LibraryPipeline(fallback_llm)
     
     def clear_pipeline_cache(self, device_id=None):
         """

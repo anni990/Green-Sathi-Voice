@@ -28,7 +28,7 @@ DeviceAuthManager.prototype.loadFromStorage = function() {
     this.deviceId = localStorage.getItem('device_id');
     this.deviceName = localStorage.getItem('device_name');
     this.pipelineType = localStorage.getItem('pipeline_type') || 'library';
-    this.llmService = localStorage.getItem('llm_service') || 'vertex';
+    this.llmService = localStorage.getItem('llm_service') || 'azure_openai';
     this.source = localStorage.getItem('device_source') || 'web';
     this.isRegistered = !!(this.deviceId && localStorage.getItem('device_registered') === 'true');
 };
@@ -130,9 +130,9 @@ DeviceAuthManager.prototype.autoRegisterDevice = function() {
     // (Remove skip check - backend will handle existing devices)
     console.log('🔄 Auto-registering device (checking database):', this.deviceId);
     
-    // Use defaults: library + vertex (as specified by user)
+    // Use defaults: library + azure_openai (as specified by user)
     var requestPipelineType = this.pipelineType || 'library';
-    var requestLlmService = this.llmService || 'vertex';
+    var requestLlmService = this.llmService || 'azure_openai';
     
     return fetch('/api/device/auto_register', {
         method: 'POST',

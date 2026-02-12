@@ -13,8 +13,19 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from datetime import datetime
+import pytz
 from backend.models.database import db_manager
 import logging
+
+# IST Timezone
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_ist_time():
+    """Get current time in IST timezone (timezone-naive for MongoDB storage)"""
+    # Get UTC time, convert to IST, then remove timezone info
+    utc_time = datetime.utcnow()
+    ist_time = pytz.utc.localize(utc_time).astimezone(IST)
+    return ist_time.replace(tzinfo=None)  # Return naive datetime in IST
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,7 +34,7 @@ def cleanup_expired_sessions():
     """Remove expired admin sessions from database"""
     try:
         result = db_manager.admin_sessions.delete_many({
-            'expires_at': {'$lt': datetime.utcnow()}
+            'expires_at': {'$lt': get_ist_time()}
         })
         
         if result.deleted_count > 0:

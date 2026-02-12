@@ -14,8 +14,19 @@ sys.path.insert(0, str(project_root))
 
 import bcrypt
 from datetime import datetime
+import pytz
 from backend.models.database import db_manager
 import getpass
+
+# IST Timezone
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_ist_time():
+    """Get current time in IST timezone (timezone-naive for MongoDB storage)"""
+    # Get UTC time, convert to IST, then remove timezone info
+    utc_time = datetime.utcnow()
+    ist_time = pytz.utc.localize(utc_time).astimezone(IST)
+    return ist_time.replace(tzinfo=None)  # Return naive datetime in IST
 
 def hash_password(password):
     """Hash password using bcrypt"""
@@ -68,7 +79,7 @@ def setup_admin():
             {
                 '$set': {
                     'password_hash': password_hash,
-                    'updated_at': datetime.utcnow()
+                    'updated_at': get_ist_time()
                 }
             }
         )
@@ -77,8 +88,8 @@ def setup_admin():
         db_manager.admins.insert_one({
             'username': 'admin',
             'password_hash': password_hash,
-            'created_at': datetime.utcnow(),
-            'updated_at': datetime.utcnow()
+            'created_at': get_ist_time(),
+            'updated_at': get_ist_time()
         })
         print("✅ Admin user created successfully!")
     

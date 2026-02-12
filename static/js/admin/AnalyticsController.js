@@ -28,7 +28,7 @@ class AnalyticsController {
      */
     async loadDevices() {
         try {
-            const response = await adminApiService.getDevices(1, 100);
+            const response = await adminApiService.getDevices({ page: 1, limit: 100 });
             if (response.success && response.data.devices) {
                 this.devices = response.data.devices;
                 this.populateDeviceDropdown();
