@@ -1,0 +1,390 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Bulk Actions{% endblock %}
+{% block page_title %}Device Bulk Actions{% endblock %}
+{% block page_subtitle %}Perform bulk operations on multiple devices{% endblock %}
+
+{% block content %}
+<!-- Back Button -->
+<div class="mb-6">
+    <a href="/admin/devices" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all duration-200 shadow-sm">
+        <i class="fas fa-arrow-left mr-2 text-gray-600"></i>
+        <span class="text-gray-700 font-medium">Back to Devices</span>
+    </a>
+</div>
+
+<!-- Action Cards Grid -->
+<div class="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
+    <!-- Bulk Delete Card -->
+    <div class="glass-card rounded-2xl p-8 border-l-4 border-red-500 shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <!-- Header -->
+        <div class="flex items-start mb-6 pb-6 border-b border-gray-200">
+            <div class="bg-gradient-to-br from-red-100 to-red-50 p-4 rounded-xl mr-4 shadow-sm">
+                <i class="fas fa-trash-alt text-red-600 text-3xl"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-2xl font-bold text-gray-800 mb-1">Bulk Delete</h3>
+                <p class="text-sm text-gray-600">Remove multiple devices and their associated data permanently</p>
+            </div>
+        </div>
+        
+        <form id="bulkDeleteForm" class="space-y-5">
+            <!-- Filter Options -->
+            <div class="bg-gray-50 rounded-xl p-5 space-y-4">
+                <h4 class="font-semibold text-gray-800 text-sm uppercase tracking-wide mb-3">Filter Options</h4>
+                
+                <!-- Filter by Source -->
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                    <label class="flex items-center space-x-3 mb-3 cursor-pointer">
+                        <input type="checkbox" id="deleteBySource" class="w-5 h-5 text-red-600 rounded focus:ring-2 focus:ring-red-500">
+                        <span class="text-sm font-semibold text-gray-800">Filter by Source</span>
+                    </label>
+                    <select id="deleteSourceValue" disabled class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed transition-all">
+                        <option value="">Select source...</option>
+                    </select>
+                </div>
+
+                <!-- Filter by User Count -->
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                    <label class="flex items-center space-x-3 cursor-pointer">
+                        <input type="checkbox" id="deleteByUserCount" class="w-5 h-5 text-red-600 rounded focus:ring-2 focus:ring-red-500">
+                        <span class="text-sm font-semibold text-gray-800">Delete only devices with 0 users</span>
+                    </label>
+                    <p class="text-xs text-gray-500 mt-2 ml-8">Only removes devices with no registered users</p>
+                </div>
+            </div>
+
+            <!-- Warning Box -->
+            <div class="bg-gradient-to-r from-red-50 to-orange-50 border-2 border-red-300 rounded-xl p-5 shadow-sm">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-triangle text-red-600 text-2xl mr-3 mt-0.5"></i>
+                    <div>
+                        <p class="text-sm text-red-900 font-bold mb-1">⚠️ Critical Action - Cannot Be Undone!</p>
+                        <p class="text-xs text-red-800">All matching devices, users, and conversation history will be permanently deleted from the database.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button type="button" onclick="bulkActionsController.previewDelete()" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                    <i class="fas fa-eye"></i>
+                    <span>Preview</span>
+                </button>
+                <button type="submit" class="px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                    <i class="fas fa-trash"></i>
+                    <span>Execute Delete</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bulk Configure Card -->
+    <div class="glass-card rounded-2xl p-8 border-l-4 border-green-500 shadow-lg hover:shadow-xl transition-shadow duration-300">
+        <!-- Header -->
+        <div class="flex items-start mb-6 pb-6 border-b border-gray-200">
+            <div class="bg-gradient-to-br from-green-100 to-green-50 p-4 rounded-xl mr-4 shadow-sm">
+                <i class="fas fa-cog text-green-600 text-3xl"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-2xl font-bold text-gray-800 mb-1">Bulk Configure</h3>
+                <p class="text-sm text-gray-600">Update pipeline and LLM settings for multiple devices</p>
+            </div>
+        </div>
+        
+        <form id="bulkConfigureForm" class="space-y-5">
+            <!-- Configuration Settings -->
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 border border-green-200">
+                <h4 class="font-semibold text-gray-800 text-sm uppercase tracking-wide mb-4 flex items-center">
+                    <i class="fas fa-sliders-h mr-2 text-green-600"></i>
+                    Configuration Settings
+                </h4>
+                <div class="grid grid-cols-1 gap-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-project-diagram mr-1 text-green-600"></i>
+                            Pipeline Type
+                        </label>
+                        <select id="configPipelineType" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white">
+                            <option value="">No change</option>
+                            <option value="library">📚 Library (SpeechRecognition)</option>
+                            <option value="api">🌐 API (External Service)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            <i class="fas fa-brain mr-1 text-green-600"></i>
+                            LLM Service
+                        </label>
+                        <select id="configLLMService" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all bg-white">
+                            <option value="">No change</option>
+                            <option value="gemini">✨ Gemini</option>
+                            <option value="openai">🤖 OpenAI</option>
+                            <option value="azure_openai">☁️ Azure OpenAI</option>
+                            <option value="vertex">🔷 Vertex AI</option>
+                            <option value="dhenu">🐄 Dhenu</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Criteria -->
+            <div class="bg-gray-50 rounded-xl p-5 space-y-4">
+                <h4 class="font-semibold text-gray-800 text-sm uppercase tracking-wide mb-3 flex items-center">
+                    <i class="fas fa-filter mr-2 text-gray-600"></i>
+                    Target Devices - Apply To
+                </h4>
+                
+                <!-- Filter by Source -->
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                    <label class="flex items-center space-x-3 mb-3 cursor-pointer">
+                        <input type="checkbox" id="configBySource" class="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500">
+                        <span class="text-sm font-semibold text-gray-800">Filter by Source</span>
+                    </label>
+                    <select id="configSourceValue" disabled class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed transition-all">
+                        <option value="">Select source...</option>
+                    </select>
+                </div>
+
+                <!-- Filter by User Count -->
+                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                    <label class="flex items-center space-x-3 mb-3 cursor-pointer">
+                        <input type="checkbox" id="configByUserCount" class="w-5 h-5 text-green-600 rounded focus:ring-2 focus:ring-green-500">
+                        <span class="text-sm font-semibold text-gray-800">Filter by Minimum Users</span>
+                    </label>
+                    <input type="number" id="configMinUsers" min="0" placeholder="e.g., 5" disabled class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed transition-all">
+                    <p class="text-xs text-gray-500 mt-2">Only devices with this many users or more</p>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="bg-gradient-to-r from-blue-50 to-cyan-50 border-2 border-blue-300 rounded-xl p-4 shadow-sm">
+                <div class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-600 text-xl mr-3 mt-0.5"></i>
+                    <div>
+                        <p class="text-sm text-blue-900 font-bold mb-2">💡 Quick Tips</p>
+                        <ul class="text-xs text-blue-800 space-y-1.5">
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle mr-2 mt-0.5 text-blue-600"></i>
+                                <span>Select at least one configuration setting to apply</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle mr-2 mt-0.5 text-blue-600"></i>
+                                <span>Combine multiple filters for precise targeting</span>
+                            </li>
+                            <li class="flex items-start">
+                                <i class="fas fa-check-circle mr-2 mt-0.5 text-blue-600"></i>
+                                <span>Changes apply instantly to all matched devices</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+                <button type="button" onclick="bulkActionsController.previewConfigure()" class="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                    <i class="fas fa-eye"></i>
+                    <span>Preview</span>
+                </button>
+                <button type="submit" class="px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold flex items-center justify-center space-x-2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                    <i class="fas fa-cog"></i>
+                    <span>Execute Config</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Preview Results Card (Initially Hidden) -->
+<div id="previewResults" class="hidden glass-card rounded-2xl p-8 mb-8 shadow-xl border-2 border-purple-200 animate-fadeIn">
+    <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-purple-100">
+        <h3 class="text-2xl font-bold text-gray-800 flex items-center">
+            <i class="fas fa-eye mr-3 text-purple-600"></i>
+            <span id="previewTitle">Affected Devices</span>
+        </h3>
+        <button onclick="bulkActionsController.closePreview()" class="text-gray-500 hover:text-red-600 hover:bg-red-50 p-2 rounded-lg transition-all duration-200">
+            <i class="fas fa-times text-xl"></i>
+        </button>
+    </div>
+
+    <div id="previewContent" class="space-y-5">
+        <!-- Content will be populated by JavaScript -->
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="glass-card rounded-2xl p-8 text-center transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-blue-100">
+        <div class="bg-gradient-to-br from-blue-100 to-blue-50 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+            <i class="fas fa-mobile-alt text-blue-600 text-3xl"></i>
+        </div>
+        <p class="text-4xl font-bold text-gray-800 mb-2" id="totalDevices">--</p>
+        <p class="text-sm text-gray-600 font-medium uppercase tracking-wide">Total Devices</p>
+        <div class="mt-3 pt-3 border-t border-blue-100">
+            <p class="text-xs text-blue-600">
+                <i class="fas fa-info-circle mr-1"></i>
+                Registered in system
+            </p>
+        </div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-8 text-center transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-green-100">
+        <div class="bg-gradient-to-br from-green-100 to-green-50 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+            <i class="fas fa-users text-green-600 text-3xl"></i>
+        </div>
+        <p class="text-4xl font-bold text-gray-800 mb-2" id="totalUsers">--</p>
+        <p class="text-sm text-gray-600 font-medium uppercase tracking-wide">Total Users</p>
+        <div class="mt-3 pt-3 border-t border-green-100">
+            <p class="text-xs text-green-600">
+                <i class="fas fa-info-circle mr-1"></i>
+                Active user accounts
+            </p>
+        </div>
+    </div>
+
+    <div class="glass-card rounded-2xl p-8 text-center transform transition-all duration-300 hover:scale-105 hover:shadow-xl border border-purple-100">
+        <div class="bg-gradient-to-br from-purple-100 to-purple-50 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-md">
+            <i class="fas fa-database text-purple-600 text-3xl"></i>
+        </div>
+        <p class="text-4xl font-bold text-gray-800 mb-2" id="totalSources">--</p>
+        <p class="text-sm text-gray-600 font-medium uppercase tracking-wide">Unique Sources</p>
+        <div class="mt-3 pt-3 border-t border-purple-100">
+            <p class="text-xs text-purple-600">
+                <i class="fas fa-info-circle mr-1"></i>
+                Different origins
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fadeIn {
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    /* Enhanced glass card */
+    .glass-card {
+        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.95);
+    }
+
+    /* Smooth transitions for form elements */
+    select, input[type="number"] {
+        transition: all 0.2s ease;
+    }
+
+    select:focus, input[type="number"]:focus {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Checkbox hover effect */
+    input[type="checkbox"] {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    input[type="checkbox"]:hover {
+        transform: scale(1.1);
+    }
+
+    /* Button hover animations */
+    button {
+        position: relative;
+        overflow: hidden;
+    }
+
+    button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    button:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    /* Disabled state improvements */
+    select:disabled, input:disabled {
+        opacity: 0.6;
+    }
+
+    /* Stats card pulse animation on hover */
+    @keyframes pulse {
+        0%, 100% {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        50% {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+    }
+
+    .glass-card:hover {
+        animation: pulse 2s infinite;
+    }
+
+    /* Custom scrollbar for preview content */
+    #previewContent::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    #previewContent::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    #previewContent::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+    #previewContent::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Gradient text effect for headings */
+    .gradient-text {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+</style>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="/static/js/admin/AdminApiService.js"></script>
+<script src="/static/js/admin/BulkActionsController.js"></script>
+<script>
+    // Initialize bulk actions controller
+    const bulkActionsController = new BulkActionsController();
+    
+    // Load data on page load
+    document.addEventListener('DOMContentLoaded', () => {
+        bulkActionsController.init();
+    });
+</script>
+{% endblock %}

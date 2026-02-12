@@ -21,7 +21,7 @@ class DevicesController {
         try {
             this.showLoading();
 
-            const response = await adminApiService.getDevices(this.currentPage, this.perPage);
+            const response = await adminApiService.getDevices({ page: this.currentPage, limit: this.perPage });
 
             if (response.success) {
                 const { devices, total, page, total_pages } = response.data;
@@ -85,14 +85,14 @@ class DevicesController {
                             class="text-green-600 hover:text-green-700 font-medium text-sm"
                             title="Configure device"
                         >
-                            <i class="fas fa-cog mr-1"></i>Configure
+                            <i class="fas fa-cog mr-1"></i>
                         </button>
                         <button 
                             onclick="devicesController.confirmDeleteDevice('${device.device_id}', '${tableRenderer.escapeHtml(device.device_name)}', ${device.user_count || 0})"
                             class="text-red-600 hover:text-red-700 font-medium text-sm"
                             title="Delete device and all associated data"
                         >
-                            <i class="fas fa-trash mr-1"></i>Delete
+                            <i class="fas fa-trash mr-1"></i>
                         </button>
                     </div>
                 </td>

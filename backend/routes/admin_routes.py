@@ -115,6 +115,12 @@ def devices_page():
     """Devices management page"""
     return render_template('admin/devices.html')
 
+@admin_bp.route('/admin/devices/bulk-actions')
+@require_admin_auth()
+def bulk_actions_page():
+    """Bulk actions page"""
+    return render_template('admin/bulk_actions.html')
+
 @admin_bp.route('/admin/analytics')
 @require_admin_auth()
 def analytics_page():
@@ -302,12 +308,26 @@ def get_analytics():
 @admin_bp.route('/admin/api/devices')
 @require_admin_auth()
 def get_devices():
-    """API endpoint for devices list"""
+    """API endpoint for devices list with optional filters"""
     try:
         page = request.args.get('page', 1, type=int)
         limit = request.args.get('limit', 20, type=int)
         
-        devices_data = admin_service.get_devices_list(page, limit)
+        # Extract filter parameters
+        filters = {}
+        by_source = request.args.get('by_source')
+        if by_source:
+            filters['by_source'] = by_source
+        
+        by_user_count = request.args.get('by_user_count')
+        if by_user_count:
+            filters['by_user_count'] = by_user_count
+            if by_user_count == 'min_users':
+                min_users = request.args.get('min_users', type=int)
+                if min_users is not None:
+                    filters['min_users'] = min_users
+        
+        devices_data = admin_service.get_devices_list(page, limit, filters if filters else None)
         
         if devices_data and 'devices' in devices_data:
             # Convert all ObjectIds to strings
@@ -430,6 +450,78 @@ def export_devices_api():
             }), 400
     except Exception as e:
         logger.error(f"Error exporting devices: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error'}), 500
+
+@admin_bp.route('/admin/api/devices/sources', methods=['GET'])
+@require_admin_auth()
+def get_device_sources_api():
+    """API endpoint to get available device sources"""
+    try:
+        result = admin_service.get_available_sources()
+        
+        if result.get('success'):
+            return jsonify ({
+                'success': True,
+                'sources': result['sources']
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': result.get('error', 'Failed to get sources')
+            }), 400
+    except Exception as e:
+        logger.error(f"Error getting device sources: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error'}), 500
+
+@admin_bp.route('/admin/api/devices/bulk-delete', methods=['POST'])
+@require_admin_auth()
+def bulk_delete_devices_api():
+    """API endpoint for bulk device deletion"""
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('criteria'):
+            return jsonify({'success': False, 'message': 'Criteria required'}), 400
+        
+        criteria = data['criteria']
+        
+        result = admin_service.bulk_delete_devices(criteria)
+        
+        if result.get('success'):
+            return jsonify(result), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': result.get('error', 'Failed to delete devices')
+            }), 400
+    except Exception as e:
+        logger.error(f"Error bulk deleting devices: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error'}), 500
+
+@admin_bp.route('/admin/api/devices/bulk-configure', methods=['POST'])
+@require_admin_auth()
+def bulk_configure_devices_api():
+    """API endpoint for bulk device configuration"""
+    try:
+        data = request.get_json()
+        
+        if not data or not data.get('criteria') or not data.get('config'):
+            return jsonify({'success': False, 'message': 'Criteria and config required'}), 400
+        
+        criteria = data['criteria']
+        config = data['config']
+        
+        result = admin_service.bulk_configure_devices(criteria, config)
+        
+        if result.get('success'):
+            return jsonify(result), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': result.get('error', 'Failed to configure devices')
+            }), 400
+    except Exception as e:
+        logger.error(f"Error bulk configuring devices: {e}")
         return jsonify({'success': False, 'message': 'Internal server error'}), 500
 
 @admin_bp.route('/admin/api/change-password', methods=['POST'])

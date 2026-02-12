@@ -12,6 +12,11 @@ class AdminApiService {
      */
     async request(endpoint, options = {}) {
         try {
+            // Debug log for POST requests
+            if (options.method === 'POST' && options.body) {
+                console.log(`[API Request] ${options.method} ${this.baseUrl}${endpoint}`, JSON.parse(options.body));
+            }
+            
             const response = await fetch(`${this.baseUrl}${endpoint}`, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -27,6 +32,11 @@ class AdminApiService {
             }
 
             const data = await response.json();
+            
+            // Debug log response
+            if (options.method === 'POST') {
+                console.log(`[API Response] ${options.method} ${this.baseUrl}${endpoint}`, data);
+            }
 
             if (!response.ok) {
                 throw new Error(data.message || 'Request failed');
@@ -80,9 +90,18 @@ class AdminApiService {
     }
 
     // Device APIs
-    async getDevices(page = 1, limit = 20) {
-        const params = new URLSearchParams({ page, limit });
-        return this.request(`/devices?${params}`);
+    async getDevices(params = {}) {
+        const { page = 1, limit = 20, ...rest } = params;
+        const urlParams = new URLSearchParams({ page, limit });
+        
+        // Add any additional parameters (for filtering)
+        Object.keys(rest).forEach(key => {
+            if (rest[key] !== undefined && rest[key] !== null) {
+                urlParams.append(key, rest[key]);
+            }
+        });
+        
+        return this.request(`/devices?${urlParams}`);
     }
 
     async getDeviceDetails(deviceId) {
@@ -106,6 +125,24 @@ class AdminApiService {
         return this.request('/devices/export', {
             method: 'POST',
             body: JSON.stringify({ filters })
+        });
+    }
+
+    async getDeviceSources() {
+        return this.request('/devices/sources');
+    }
+
+    async bulkDeleteDevices(criteria) {
+        return this.request('/devices/bulk-delete', {
+            method: 'POST',
+            body: JSON.stringify({ criteria })
+        });
+    }
+
+    async bulkConfigureDevices(criteria, config) {
+        return this.request('/devices/bulk-configure', {
+            method: 'POST',
+            body: JSON.stringify({ criteria, config })
         });
     }
 

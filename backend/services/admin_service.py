@@ -337,9 +337,76 @@ class AdminService:
             logger.error(f"Failed to get conversation analytics: {e}")
             return None
     
-    def get_devices_list(self, page=1, limit=20):
-        """Get paginated devices list"""
-        return db_manager.get_all_devices(page, limit)
+    def get_devices_list(self, page=1, limit=20, filters=None):
+        """Get paginated devices list with optional filters"""
+        if filters:
+            # Build filter criteria
+            match_stage = {}
+            
+            # Filter by source
+            if filters.get('by_source'):
+                match_stage['source'] = filters['by_source']
+            
+            # Filter by user count
+            if filters.get('by_user_count'):
+                if filters['by_user_count'] == 'zero_users':
+                    # Will be filtered after aggregation
+                    pass
+                elif filters['by_user_count'] == 'min_users' and 'min_users' in filters:
+                    # Will be filtered after aggregation
+                    pass
+            
+            # Build aggregation pipeline
+            pipeline = [
+                {'$match': match_stage} if match_stage else {'$match': {}},
+                {
+                    '$lookup': {
+                        'from': 'users',
+                        'localField': 'device_id',
+                        'foreignField': 'device_id',
+                        'as': 'users'
+                    }
+                },
+                {
+                    '$addFields': {
+                        'user_count': {'$size': '$users'}
+                    }
+                },
+                {'$project': {'users': 0}}  # Remove users array
+            ]
+            
+            # Add user count filter
+            if filters.get('by_user_count') == 'zero_users':
+                pipeline.append({'$match': {'user_count': 0}})
+            elif filters.get('by_user_count') == 'min_users' and 'min_users' in filters:
+                pipeline.append({'$match': {'user_count': {'$gte': int(filters['min_users'])}}})
+            
+            # Add sorting
+            pipeline.append({'$sort': {'created_at': -1}})
+            
+            # Get total count
+            count_pipeline = pipeline + [{'$count': 'total'}]
+            count_result = list(db_manager.devices.aggregate(count_pipeline))
+            total = count_result[0]['total'] if count_result else 0
+            
+            # Add pagination
+            skip = (page - 1) * limit
+            pipeline.extend([
+                {'$skip': skip},
+                {'$limit': limit}
+            ])
+            
+            devices = list(db_manager.devices.aggregate(pipeline))
+            
+            return {
+                'devices': devices,
+                'total': total,
+                'page': page,
+                'pages': (total + limit - 1) // limit
+            }
+        else:
+            # No filters, use normal pagination
+            return db_manager.get_all_devices(page, limit)
     
     def get_device_details(self, device_id):
         """Get detailed device information"""
@@ -463,6 +530,181 @@ class AdminService:
             }
         except Exception as e:
             logger.error(f"Failed to export devices data: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    def get_available_sources(self):
+        """Get list of unique sources from devices collection"""
+        try:
+            sources = db_manager.devices.distinct('source')
+            return {
+                'success': True,
+                'sources': [s for s in sources if s]  # Filter out None/empty values
+            }
+        except Exception as e:
+            logger.error(f"Failed to get available sources: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    def bulk_delete_devices(self, criteria):
+        """Bulk delete devices based on criteria"""
+        try:
+            query = {}
+            
+            # Build query based on criteria
+            if criteria.get('by_source'):
+                query['source'] = criteria['by_source']
+            
+            if criteria.get('by_user_count') and criteria['by_user_count'] == 'zero_users':
+                # We need to use aggregation to find devices with 0 users
+                pipeline = [
+                    {
+                        '$lookup': {
+                            'from': 'users',
+                            'localField': 'device_id',
+                            'foreignField': 'device_id',
+                            'as': 'users'
+                        }
+                    },
+                    {
+                        '$addFields': {
+                            'user_count': {'$size': '$users'}
+                        }
+                    },
+                    {
+                        '$match': {'user_count': 0}
+                    },
+                    {
+                        '$project': {'device_id': 1}
+                    }
+                ]
+                
+                # Apply source filter if specified
+                if query:
+                    pipeline.insert(0, {'$match': query})
+                
+                devices_to_delete = list(db_manager.devices.aggregate(pipeline))
+                device_ids = [d['device_id'] for d in devices_to_delete]
+            else:
+                # Get all devices matching the query
+                devices_to_delete = list(db_manager.devices.find(query, {'device_id': 1}))
+                device_ids = [d['device_id'] for d in devices_to_delete]
+            
+            if not device_ids:
+                return {
+                    'success': True,
+                    'message': 'No devices match the criteria',
+                    'summary': {
+                        'devices_deleted': 0,
+                        'users_deleted': 0,
+                        'conversations_deleted': 0
+                    }
+                }
+            
+            # Delete each device with cascade
+            total_devices = 0
+            total_users = 0
+            total_conversations = 0
+            
+            for device_id in device_ids:
+                result = db_manager.delete_device_with_cascade(device_id)
+                if result.get('success'):
+                    total_devices += 1
+                    total_users += result.get('users_deleted', 0)
+                    total_conversations += result.get('conversations_deleted', 0)
+            
+            logger.info(f"Bulk delete completed: {total_devices} devices, {total_users} users, {total_conversations} conversations")
+            
+            return {
+                'success': True,
+                'message': f'Successfully deleted {total_devices} devices',
+                'summary': {
+                    'devices_deleted': total_devices,
+                    'users_deleted': total_users,
+                    'conversations_deleted': total_conversations
+                }
+            }
+        except Exception as e:
+            logger.error(f"Failed to bulk delete devices: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    def bulk_configure_devices(self, criteria, config):
+        """Bulk update device configurations based on criteria"""
+        try:
+            query = {}
+            
+            # Build query based on criteria
+            if criteria.get('by_source'):
+                query['source'] = criteria['by_source']
+            
+            if criteria.get('by_user_count') and criteria.get('min_users'):
+                # Use aggregation to find devices with user count >= min_users
+                pipeline = [
+                    {
+                        '$lookup': {
+                            'from': 'users',
+                            'localField': 'device_id',
+                            'foreignField': 'device_id',
+                            'as': 'users'
+                        }
+                    },
+                    {
+                        '$addFields': {
+                            'user_count': {'$size': '$users'}
+                        }
+                    },
+                    {
+                        '$match': {'user_count': {'$gte': int(criteria['min_users'])}}
+                    },
+                    {
+                        '$project': {'device_id': 1}
+                    }
+                ]
+                
+                # Apply source filter if specified
+                if query:
+                    pipeline.insert(0, {'$match': query})
+                
+                devices_to_update = list(db_manager.devices.aggregate(pipeline))
+                device_ids = [d['device_id'] for d in devices_to_update]
+            else:
+                # Get all devices matching the query
+                devices_to_update = list(db_manager.devices.find(query, {'device_id': 1}))
+                device_ids = [d['device_id'] for d in devices_to_update]
+            
+            if not device_ids:
+                return {
+                    'success': True,
+                    'message': 'No devices match the criteria',
+                    'devices_updated': 0
+                }
+            
+            # Build update document
+            update_doc = {}
+            if config.get('pipeline_type'):
+                update_doc['pipeline_type'] = config['pipeline_type']
+            if config.get('llm_service'):
+                update_doc['llm_service'] = config['llm_service']
+            
+            if not update_doc:
+                return {
+                    'success': False,
+                    'error': 'No configuration provided'
+                }
+            
+            # Update all matching devices
+            result = db_manager.devices.update_many(
+                {'device_id': {'$in': device_ids}},
+                {'$set': update_doc}
+            )
+            
+            logger.info(f"Bulk configure completed: {result.modified_count} devices updated")
+            
+            return {
+                'success': True,
+                'message': f'Successfully updated {result.modified_count} devices',
+                'devices_updated': result.modified_count
+            }
+        except Exception as e:
+            logger.error(f"Failed to bulk configure devices: {e}")
             return {'success': False, 'error': str(e)}
 
 # Global admin service instance
