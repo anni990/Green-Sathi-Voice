@@ -15,7 +15,18 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../.
 
 from backend.models.database import db_manager
 from datetime import datetime
+import pytz
 import uuid
+
+# IST Timezone
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_ist_time():
+    """Get current time in IST timezone (timezone-naive for MongoDB storage)"""
+    # Get UTC time, convert to IST, then remove timezone info
+    utc_time = datetime.utcnow()
+    ist_time = pytz.utc.localize(utc_time).astimezone(IST)
+    return ist_time.replace(tzinfo=None)  # Return naive datetime in IST
 
 def generate_migration_device_id(numeric_id):
     """Generate a stable device ID for migration from numeric ID"""
@@ -124,7 +135,7 @@ def migrate_devices(dry_run=True):
                     '$set': {
                         'device_id': new_id,
                         'source': 'migrated',
-                        'last_active': datetime.utcnow()
+                        'last_active': get_ist_time()
                     },
                     '$unset': {
                         'password_hash': '',

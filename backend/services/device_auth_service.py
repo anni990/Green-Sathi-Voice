@@ -3,12 +3,23 @@ import bcrypt
 import secrets
 import logging
 from datetime import datetime, timedelta
+import pytz
 from functools import wraps
 from flask import request, jsonify
 from backend.models.database import db_manager
 from backend.utils.config import Config
 
 logger = logging.getLogger(__name__)
+
+# IST Timezone
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_ist_time():
+    """Get current time in IST timezone (timezone-naive for MongoDB storage)"""
+    # Get UTC time, convert to IST, then remove timezone info
+    utc_time = datetime.utcnow()
+    ist_time = pytz.utc.localize(utc_time).astimezone(IST)
+    return ist_time.replace(tzinfo=None)  # Return naive datetime in IST
 
 class DeviceAuthService:
     """Handles device authentication, token generation, and session management"""
@@ -60,7 +71,7 @@ class DeviceAuthService:
             logger.warning(f"Invalid token: {e}")
             return None
     
-    def register_device(self, device_name, password, pipeline_type='library', llm_service='gemini'):
+    def register_device(self, device_name, password, pipeline_type='library', llm_service='azure_openai'):
         """Register a new device with pipeline configuration"""
         try:
             # Validate inputs

@@ -1,9 +1,20 @@
 from pymongo import MongoClient
 from datetime import datetime
+import pytz
 import logging
 from backend.utils.config import Config
 
 logger = logging.getLogger(__name__)
+
+# IST Timezone
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_ist_time():
+    """Get current time in IST timezone (timezone-naive for MongoDB storage)"""
+    # Get UTC time, convert to IST, then remove timezone info
+    utc_time = datetime.utcnow()
+    ist_time = pytz.utc.localize(utc_time).astimezone(IST)
+    return ist_time.replace(tzinfo=None)  # Return naive datetime in IST
 
 class DatabaseManager:
     """Handles MongoDB database operations"""
@@ -29,8 +40,8 @@ class DatabaseManager:
                 'phone': phone,
                 'language': language,
                 'device_id': device_id,
-                'created_at': datetime.utcnow(),
-                'updated_at': datetime.utcnow()
+                'created_at': get_ist_time(),
+                'updated_at': get_ist_time()
             }
             
             # Add name only if provided
@@ -44,7 +55,7 @@ class DatabaseManager:
                 update_data = {
                     'language': language,
                     'device_id': device_id,
-                    'updated_at': datetime.utcnow()
+                    'updated_at': get_ist_time()
                 }
                 # Only update name if provided
                 if name:
@@ -86,7 +97,7 @@ class DatabaseManager:
                 'session_id': session_id,
                 'user_input': user_input,
                 'bot_response': bot_response,
-                'timestamp': datetime.utcnow()
+                'timestamp': get_ist_time()
             }
             result = self.conversations.insert_one(conversation_data)
             return result.inserted_id
@@ -119,14 +130,14 @@ class DatabaseManager:
             ]))
             
             # Recent users (last 7 days)
-            from datetime import datetime, timedelta
-            seven_days_ago = datetime.utcnow() - timedelta(days=7)
+            from datetime import timedelta
+            seven_days_ago = get_ist_time() - timedelta(days=7)
             recent_users = self.users.count_documents({
                 "created_at": {"$gte": seven_days_ago}
             })
             
             # Users by date (last 30 days)
-            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+            thirty_days_ago = get_ist_time() - timedelta(days=30)
             daily_users = list(self.users.aggregate([
                 {"$match": {"created_at": {"$gte": thirty_days_ago}}},
                 {"$group": {
@@ -152,8 +163,8 @@ class DatabaseManager:
             total_conversations = self.conversations.count_documents({})
             
             # Conversations by date (last 30 days)
-            from datetime import datetime, timedelta
-            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+            from datetime import timedelta
+            thirty_days_ago = get_ist_time() - timedelta(days=30)
             daily_conversations = list(self.conversations.aggregate([
                 {"$match": {"timestamp": {"$gte": thirty_days_ago}}},
                 {"$group": {
@@ -412,8 +423,8 @@ class DatabaseManager:
             ]))
             
             # Active devices (logged in within last 7 days)
-            from datetime import datetime, timedelta
-            seven_days_ago = datetime.utcnow() - timedelta(days=7)
+            from datetime import timedelta
+            seven_days_ago = get_ist_time() - timedelta(days=7)
             active_devices = self.devices.count_documents({
                 "last_login": {"$gte": seven_days_ago}
             })
@@ -445,7 +456,7 @@ class DatabaseManager:
             logger.error(f"Failed to get next device ID: {e}")
             return Config.DEVICE_ID_START
     
-    def create_device(self, device_id, device_name, password_hash, access_token, refresh_token, pipeline_type='library', llm_service='gemini'):
+    def create_device(self, device_id, device_name, password_hash, access_token, refresh_token, pipeline_type='library', llm_service='azure_openai'):
         """Create a new device record"""
         try:
             device_data = {
@@ -456,8 +467,8 @@ class DatabaseManager:
                 'refresh_token': refresh_token,
                 'pipeline_type': pipeline_type,  # 'library' or 'api'
                 'llm_service': llm_service,  # 'gemini', 'openai', 'azure_openai', 'vertex'
-                'created_at': datetime.utcnow(),
-                'last_login': datetime.utcnow()
+                'created_at': get_ist_time(),
+                'last_login': get_ist_time()
             }
             
             result = self.devices.insert_one(device_data)
@@ -482,7 +493,7 @@ class DatabaseManager:
             logger.error(f"Failed to get device by Android ID: {e}")
             return None
     
-    def create_device_for_android_id(self, android_id, source='android-webview', pipeline_type='library', llm_service='gemini'):
+    def create_device_for_android_id(self, android_id, source='android-webview', pipeline_type='library', llm_service='azure_openai'):
         """Create a new device record using Android ID as device_id (no auth)"""
         try:
             device_name = f"Device-{android_id[:8]}" if len(android_id) > 8 else f"Device-{android_id}"
@@ -493,8 +504,8 @@ class DatabaseManager:
                 'source': source,  # 'android-webview' or 'web'
                 'pipeline_type': pipeline_type,
                 'llm_service': llm_service,
-                'created_at': datetime.utcnow(),
-                'last_active': datetime.utcnow()
+                'created_at': get_ist_time(),
+                'last_active': get_ist_time()
             }
             
             result = self.devices.insert_one(device_data)
@@ -509,7 +520,7 @@ class DatabaseManager:
         try:
             result = self.devices.update_one(
                 {'device_id': device_id},
-                {'$set': {'last_active': datetime.utcnow()}}
+                {'$set': {'last_active': get_ist_time()}}
             )
             return result.modified_count > 0
         except Exception as e:
@@ -534,7 +545,7 @@ class DatabaseManager:
                     '$set': {
                         'access_token': access_token,
                         'refresh_token': refresh_token,
-                        'last_login': datetime.utcnow()
+                        'last_login': get_ist_time()
                     }
                 }
             )

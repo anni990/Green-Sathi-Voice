@@ -48,7 +48,7 @@ class DevicesController {
         if (!devices || devices.length === 0) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="py-8 text-center text-gray-500">
+                    <td colspan="7" class="py-8 text-center text-gray-500">
                         <i class="fas fa-mobile-alt text-4xl mb-2"></i>
                         <p>No devices registered yet</p>
                     </td>
@@ -77,6 +77,9 @@ class DevicesController {
                 </td>
                 <td class="py-4 px-6 text-gray-600">
                     ${device.user_count || 0}
+                </td>
+                <td class="py-4 px-6">
+                    <div class="text-sm text-gray-600">${tableRenderer.formatDateTime(device.created_at)}</div>
                 </td>
                 <td class="py-4 px-6">
                     <div class="flex items-center space-x-2">
@@ -169,7 +172,7 @@ class DevicesController {
         if (tableBody) {
             tableBody.innerHTML = `
                 <tr>
-                    <td colspan="6" class="py-8 text-center text-gray-500">
+                    <td colspan="7" class="py-8 text-center text-gray-500">
                         <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
                         <p>Loading...</p>
                     </td>

@@ -310,7 +310,7 @@ def testing_llm():
     try:
         data = request.get_json()
         query = data.get('query', '')
-        llm_service_name = data.get('llm_service', 'gemini')
+        llm_service_name = data.get('llm_service', 'azure_openai')
         language = data.get('language', 'hindi')
         operation = data.get('operation', 'generate_response')
         

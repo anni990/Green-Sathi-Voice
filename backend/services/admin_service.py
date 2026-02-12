@@ -3,10 +3,21 @@ import bcrypt
 import secrets
 import logging
 from datetime import datetime, timedelta
+import pytz
 from backend.models.database import db_manager
 from backend.utils.config import Config
 
 logger = logging.getLogger(__name__)
+
+# IST Timezone
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_ist_time():
+    """Get current time in IST timezone (timezone-naive for MongoDB storage)"""
+    # Get UTC time, convert to IST, then remove timezone info
+    utc_time = datetime.utcnow()
+    ist_time = pytz.utc.localize(utc_time).astimezone(IST)
+    return ist_time.replace(tzinfo=None)  # Return naive datetime in IST
 
 class AdminService:
     """Handles admin authentication and management operations with secure database storage"""
@@ -27,8 +38,8 @@ class AdminService:
                 db_manager.admins.insert_one({
                     'username': 'admin',
                     'password_hash': default_password,
-                    'created_at': datetime.utcnow(),
-                    'updated_at': datetime.utcnow()
+                    'created_at': get_ist_time(),
+                    'updated_at': get_ist_time()
                 })
                 logger.info("Default admin user created with username: admin, password: 123456")
         except Exception as e:
@@ -90,8 +101,8 @@ class AdminService:
             db_manager.admin_sessions.insert_one({
                 'username': username,
                 'token': token,
-                'login_time': datetime.utcnow(),
-                'expires_at': datetime.utcnow() + timedelta(seconds=self.session_expiry),
+                'login_time': get_ist_time(),
+                'expires_at': get_ist_time() + timedelta(seconds=self.session_expiry),
                 'ip_address': None  # Can be added from request context
             })
             
@@ -113,7 +124,7 @@ class AdminService:
             # Verify token exists in database and not expired
             session = db_manager.admin_sessions.find_one({
                 'token': token,
-                'expires_at': {'$gt': datetime.utcnow()}
+                'expires_at': {'$gt': get_ist_time()}
             })
             
             if session:
@@ -173,7 +184,7 @@ class AdminService:
                 {
                     '$set': {
                         'password_hash': new_password_hash,
-                        'updated_at': datetime.utcnow()
+                        'updated_at': get_ist_time()
                     }
                 }
             )
@@ -241,11 +252,11 @@ class AdminService:
     def get_conversation_analytics(self, days=30, device_id=None):
         """Get detailed conversation analytics with optional device filtering"""
         try:
-            from datetime import datetime, timedelta
+            from datetime import timedelta
             from bson import ObjectId
             
             # Get conversations from last N days
-            start_date = datetime.utcnow() - timedelta(days=days)
+            start_date = get_ist_time() - timedelta(days=days)
             
             # Build match criteria
             match_criteria = {'timestamp': {'$gte': start_date}}

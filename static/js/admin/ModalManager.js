@@ -158,9 +158,9 @@ class ModalManager {
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">LLM Service</label>
                                         <select id="llmService" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
-                                            <option value="gemini" ${device.llm_service === 'gemini' ? 'selected' : ''}>Gemini (Default)</option>
+                                            <option value="azure_openai" ${device.llm_service === 'azure_openai' ? 'selected' : ''}>Azure OpenAI (Default)</option>
+                                            <option value="gemini" ${device.llm_service === 'gemini' ? 'selected' : ''}>Gemini</option>
                                             <option value="openai" ${device.llm_service === 'openai' ? 'selected' : ''}>OpenAI</option>
-                                            <option value="azure_openai" ${device.llm_service === 'azure_openai' ? 'selected' : ''}>Azure OpenAI</option>
                                             <option value="vertex" ${device.llm_service === 'vertex' ? 'selected' : ''}>Vertex AI</option>
                                             <option value="dhenu" ${device.llm_service === 'dhenu' ? 'selected' : ''}>Dhenu</option>
                                         </select>

@@ -52,8 +52,8 @@ def auto_register_device():
                 'already_registered': True,
                 'device_id': existing_device['device_id'],
                 'device_name': existing_device.get('device_name', f"Device-{android_id[:8]}"),
-                'pipeline_type': existing_device.get('pipeline_type', 'library'),
-                'llm_service': existing_device.get('llm_service', 'vertex')
+                'pipeline_type': existing_device.get('pipeline_type', Config.DEFAULT_PIPELINE_TYPE),
+                'llm_service': existing_device.get('llm_service', Config.DEFAULT_LLM_SERVICE_TYPE)
             }), 200
         
         # Create new device
