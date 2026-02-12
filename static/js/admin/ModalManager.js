@@ -59,7 +59,7 @@ class ModalManager {
             }
 
             const modalHtml = `
-                <div id="userConversationsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                <div id="userConversationsModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
                     <div class="glass-card rounded-xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
                         <div class="p-6 border-b border-gray-200 flex-shrink-0">
                             <div class="flex items-center justify-between">
@@ -115,7 +115,7 @@ class ModalManager {
             const device = response.data;
 
             const modalHtml = `
-                <div id="deviceDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                <div id="deviceDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
                     <div class="glass-card rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
                         <div class="p-6 border-b border-gray-200">
                             <div class="flex items-center justify-between">
@@ -264,6 +264,293 @@ class ModalManager {
             this.currentModal.remove();
             this.currentModal = null;
         }
+    }
+
+    /**
+     * Show delete device confirmation modal
+     */
+    showDeleteDeviceConfirmation(deviceId, deviceName, userCount) {
+        const modalHtml = `
+            <div id="deleteDeviceModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
+                <div class="glass-card rounded-xl max-w-md w-full">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-red-600 flex items-center">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                Confirm Delete Device
+                            </h3>
+                            <button onclick="modalManager.closeModal()" class="p-2 rounded-lg hover:bg-gray-100">
+                                <i class="fas fa-times text-gray-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                            <p class="text-sm text-red-800 font-semibold mb-2">⚠️ WARNING: This action cannot be undone!</p>
+                            <p class="text-sm text-red-700">You are about to permanently delete:</p>
+                        </div>
+                        
+                        <div class="space-y-3 mb-6">
+                            <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                                <span class="text-sm font-medium text-gray-700">Device:</span>
+                                <span class="text-sm font-semibold text-gray-900">${tableRenderer.escapeHtml(deviceName)}</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                                <span class="text-sm font-medium text-gray-700">Users:</span>
+                                <span class="text-sm font-semibold text-gray-900">${userCount} user(s)</span>
+                            </div>
+                            <div class="flex items-center justify-between bg-gray-50 rounded-lg p-3">
+                                <span class="text-sm font-medium text-gray-700">Conversations:</span>
+                                <span class="text-sm font-semibold text-gray-900">All associated conversations</span>
+                            </div>
+                        </div>
+
+                        <div class="flex space-x-3">
+                            <button onclick="modalManager.closeModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
+                                <i class="fas fa-times mr-2"></i>Cancel
+                            </button>
+                            <button onclick="devicesController.deleteDevice('${deviceId}'); modalManager.closeModal();" class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium">
+                                <i class="fas fa-trash mr-2"></i>Delete Forever
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal
+        this.closeModal();
+
+        // Add new modal
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        this.currentModal = document.getElementById('deleteDeviceModal');
+
+        // Close on outside click
+        this.currentModal.addEventListener('click', (e) => {
+            if (e.target === this.currentModal) {
+                this.closeModal();
+            }
+        });
+    }
+
+    /**
+     * Show export devices modal
+     */
+    showExportDevicesModal() {
+        const modalHtml = `
+            <div id="exportDevicesModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
+                <div class="glass-card rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                    <div class="p-6 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                <i class="fas fa-file-export mr-2"></i>Export Devices Data
+                            </h3>
+                            <button onclick="modalManager.closeModal()" class="p-2 rounded-lg hover:bg-gray-100">
+                                <i class="fas fa-times text-gray-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <form id="exportDevicesForm" class="space-y-6">
+                            <!-- Filter by Source -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-filter mr-1"></i>Filter by Source
+                                </label>
+                                <select id="exportSourceFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                    <option value="all">All Devices</option>
+                                    <option value="android-webview">Android WebView Only</option>
+                                    <option value="web">Web Only</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter by Pipeline Type -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-cogs mr-1"></i>Filter by Pipeline Type
+                                </label>
+                                <select id="exportPipelineFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                    <option value="all">All Pipeline Types</option>
+                                    <option value="library">Library (SpeechRecognition)</option>
+                                    <option value="api">API (External Service)</option>
+                                </select>
+                            </div>
+
+                            <!-- Filter by LLM Service -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-robot mr-1"></i>Filter by LLM Service
+                                </label>
+                                <select id="exportLLMFilter" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500">
+                                    <option value="all">All LLM Services</option>
+                                    <option value="gemini">Gemini</option>
+                                    <option value="openai">OpenAI</option>
+                                    <option value="azure_openai">Azure OpenAI</option>
+                                    <option value="vertex">Vertex AI</option>
+                                    <option value="dhenu">Dhenu</option>
+                                </select>
+                            </div>
+
+                            <!-- Select Columns -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-columns mr-1"></i>Select Columns to Export
+                                </label>
+                                <div class="grid grid-cols-2 gap-2 bg-gray-50 p-3 rounded-lg">
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="export-column" value="device_id" checked>
+                                        <span class="text-sm">Device ID</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="export-column" value="device_name" checked>
+                                        <span class="text-sm">Device Name</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="export-column" value="pipeline_type" checked>
+                                        <span class="text-sm">Pipeline Type</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="export-column" value="llm_service" checked>
+                                        <span class="text-sm">LLM Service</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="export-column" value="source" checked>
+                                        <span class="text-sm">Source</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="export-column" value="user_count" checked>
+                                        <span class="text-sm">User Count</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="export-column" value="created_at" checked>
+                                        <span class="text-sm">Created At</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer">
+                                        <input type="checkbox" class="export-column" value="last_login">
+                                        <span class="text-sm">Last Login</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="flex space-x-3 pt-4 border-t border-gray-200">
+                                <button type="button" onclick="modalManager.closeModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
+                                    <i class="fas fa-times mr-2"></i>Cancel
+                                </button>
+                                <button type="submit" class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">
+                                    <i class="fas fa-eye mr-2"></i>Preview & Export
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal
+        this.closeModal();
+
+        // Add new modal
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        this.currentModal = document.getElementById('exportDevicesModal');
+
+        // Handle form submission
+        document.getElementById('exportDevicesForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const filters = {
+                source: document.getElementById('exportSourceFilter').value,
+                pipeline_type: document.getElementById('exportPipelineFilter').value,
+                llm_service: document.getElementById('exportLLMFilter').value,
+                columns: Array.from(document.querySelectorAll('.export-column:checked')).map(cb => cb.value)
+            };
+
+            if (filters.columns.length === 0) {
+                showNotification('Please select at least one column to export', 'warning');
+                return;
+            }
+
+            devicesController.exportDevices(filters);
+        });
+
+        // Close on outside click
+        this.currentModal.addEventListener('click', (e) => {
+            if (e.target === this.currentModal) {
+                this.closeModal();
+            }
+        });
+    }
+
+    /**
+     * Show export preview modal
+     */
+    showExportPreview(devices, total, filters) {
+        const previewRows = devices.slice(0, 10); // Show first 10 rows
+        const columns = Object.keys(devices[0] || {});
+
+        const previewTableHtml = `
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-xs">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            ${columns.map(col => `<th class="px-2 py-2 text-left font-semibold text-gray-700">${col}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${previewRows.map(device => `
+                            <tr class="border-b border-gray-200">
+                                ${columns.map(col => `<td class="px-2 py-2">${tableRenderer.escapeHtml(String(device[col] || ''))}</td>`).join('')}
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            </div>
+            ${devices.length > 10 ? `<p class="text-sm text-gray-600 text-center mt-2">... and ${devices.length - 10} more rows</p>` : ''}
+        `;
+
+        const modalHtml = `
+            <div id="exportPreviewModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9999] flex items-center justify-center p-4">
+                <div class="glass-card rounded-xl max-w-5xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                    <div class="p-6 border-b border-gray-200 flex-shrink-0">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-800">Export Preview</h3>
+                                <p class="text-sm text-gray-600">${total} devices will be exported</p>
+                            </div>
+                            <button onclick="modalManager.closeModal()" class="p-2 rounded-lg hover:bg-gray-100">
+                                <i class="fas fa-times text-gray-500"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6 overflow-y-auto flex-1">
+                        ${previewTableHtml}
+                    </div>
+                    <div class="p-6 border-t border-gray-200 flex-shrink-0">
+                        <div class="flex space-x-3">
+                            <button onclick="modalManager.closeModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium">
+                                <i class="fas fa-times mr-2"></i>Cancel
+                            </button>
+                            <button onclick="devicesController.downloadExportData(${JSON.stringify(devices).replace(/"/g, '&quot;')}, ${JSON.stringify(filters).replace(/"/g, '&quot;')}); modalManager.closeModal();" class="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">
+                                <i class="fas fa-download mr-2"></i>Download CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Remove existing modal
+        this.closeModal();
+
+        // Add new modal
+        document.body.insertAdjacentHTML('beforeend', modalHtml);
+        this.currentModal = document.getElementById('exportPreviewModal');
+
+        // Close on outside click
+        this.currentModal.addEventListener('click', (e) => {
+            if (e.target === this.currentModal) {
+                this.closeModal();
+            }
+        });
     }
 }
 

@@ -96,6 +96,19 @@ class AdminApiService {
         });
     }
 
+    async deleteDevice(deviceId) {
+        return this.request(`/devices/${deviceId}`, {
+            method: 'DELETE'
+        });
+    }
+
+    async exportDevices(filters = {}) {
+        return this.request('/devices/export', {
+            method: 'POST',
+            body: JSON.stringify({ filters })
+        });
+    }
+
     // Settings APIs
     async changePassword(currentPassword, newPassword, confirmPassword) {
         return this.request('/change-password', {

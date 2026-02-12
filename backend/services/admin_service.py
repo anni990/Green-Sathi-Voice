@@ -369,6 +369,101 @@ class AdminService:
         except Exception as e:
             logger.error(f"Failed to update device pipeline: {e}")
             return False
+    
+    def delete_device(self, device_id):
+        """Delete device and all associated data (CASCADE DELETE)"""
+        try:
+            logger.info(f"Admin requesting cascade delete for device: {device_id}")
+            result = db_manager.delete_device_with_cascade(device_id)
+            
+            if result.get('success'):
+                logger.info(f"Successfully deleted device {device_id} with {result['users_deleted']} users and {result['conversations_deleted']} conversations")
+            else:
+                logger.error(f"Failed to delete device {device_id}: {result.get('error')}")
+            
+            return result
+        except Exception as e:
+            logger.error(f"Failed to delete device: {e}")
+            return {'success': False, 'error': str(e)}
+    
+    def export_devices_data(self, filters=None):
+        """Export devices data with optional filters"""
+        try:
+            # Build query based on filters
+            query = {}
+            
+            if filters:
+                # Filter by source (android-webview, web, etc.)
+                if filters.get('source') and filters['source'] != 'all':
+                    query['source'] = filters['source']
+                
+                # Filter by pipeline_type
+                if filters.get('pipeline_type') and filters['pipeline_type'] != 'all':
+                    query['pipeline_type'] = filters['pipeline_type']
+                
+                # Filter by llm_service
+                if filters.get('llm_service') and filters['llm_service'] != 'all':
+                    query['llm_service'] = filters['llm_service']
+            
+            # Get devices with user count
+            pipeline = [
+                {'$match': query},
+                {
+                    '$lookup': {
+                        'from': 'users',
+                        'localField': 'device_id',
+                        'foreignField': 'device_id',
+                        'as': 'users'
+                    }
+                },
+                {
+                    '$addFields': {
+                        'user_count': {'$size': '$users'}
+                    }
+                },
+                {
+                    '$project': {
+                        'users': 0,  # Remove the users array
+                        'password_hash': 0,  # Don't expose password hash
+                        'access_token': 0,  # Don't expose tokens
+                        'refresh_token': 0
+                    }
+                },
+                {
+                    '$sort': {'created_at': -1}
+                }
+            ]
+            
+            devices = list(db_manager.devices.aggregate(pipeline))
+            
+            # Select columns based on filter
+            selected_columns = filters.get('columns', ['device_id', 'device_name', 'pipeline_type', 'llm_service', 'source', 'user_count', 'created_at']) if filters else ['device_id', 'device_name', 'pipeline_type', 'llm_service', 'source', 'user_count', 'created_at']
+            
+            # Filter each device to only include selected columns
+            filtered_devices = []
+            for device in devices:
+                filtered_device = {}
+                for col in selected_columns:
+                    if col in device:
+                        value = device[col]
+                        # Convert datetime to string
+                        if isinstance(value, datetime):
+                            filtered_device[col] = value.strftime('%Y-%m-%d %H:%M:%S')
+                        else:
+                            filtered_device[col] = value
+                    else:
+                        filtered_device[col] = None
+                filtered_devices.append(filtered_device)
+            
+            return {
+                'success': True,
+                'devices': filtered_devices,
+                'total': len(filtered_devices),
+                'filters_applied': filters or {}
+            }
+        except Exception as e:
+            logger.error(f"Failed to export devices data: {e}")
+            return {'success': False, 'error': str(e)}
 
 # Global admin service instance
 admin_service = AdminService()

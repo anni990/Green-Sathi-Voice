@@ -376,6 +376,62 @@ def update_device_pipeline_api(device_id):
         logger.error(f"Error updating device pipeline: {e}")
         return jsonify({'success': False, 'message': 'Internal server error'}), 500
 
+@admin_bp.route('/admin/api/devices/<device_id>', methods=['DELETE'])
+@require_admin_auth()
+def delete_device_api(device_id):
+    """API endpoint to delete device and all associated data (CASCADE)"""
+    try:
+        logger.info(f"Admin requesting delete for device: {device_id}")
+        
+        result = admin_service.delete_device(device_id)
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'message': f"Device deleted successfully. Removed {result['users_deleted']} users and {result['conversations_deleted']} conversations.",
+                'data': {
+                    'users_deleted': result['users_deleted'],
+                    'conversations_deleted': result['conversations_deleted'],
+                    'total_deleted': result['total_deleted']
+                }
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': result.get('error', 'Failed to delete device')
+            }), 400
+    except Exception as e:
+        logger.error(f"Error deleting device: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error'}), 500
+
+@admin_bp.route('/admin/api/devices/export', methods=['POST'])
+@require_admin_auth()
+def export_devices_api():
+    """API endpoint to export devices data with filters"""
+    try:
+        data = request.get_json() or {}
+        filters = data.get('filters', {})
+        
+        result = admin_service.export_devices_data(filters)
+        
+        if result.get('success'):
+            return jsonify({
+                'success': True,
+                'data': {
+                    'devices': result['devices'],
+                    'total': result['total'],
+                    'filters_applied': result['filters_applied']
+                }
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'message': result.get('error', 'Failed to export devices')
+            }), 400
+    except Exception as e:
+        logger.error(f"Error exporting devices: {e}")
+        return jsonify({'success': False, 'message': 'Internal server error'}), 500
+
 @admin_bp.route('/admin/api/change-password', methods=['POST'])
 @require_admin_auth()
 def change_password():
