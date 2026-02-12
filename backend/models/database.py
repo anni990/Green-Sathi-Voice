@@ -598,6 +598,44 @@ class DatabaseManager:
             logger.error(f"Failed to update device pipeline config: {e}")
             return False
     
+    def delete_device_with_cascade(self, device_id):
+        """Delete device and all associated users and conversations (CASCADE DELETE)"""
+        try:
+            logger.info(f"Starting cascade delete for device: {device_id}")
+            
+            # Step 1: Get all users associated with this device
+            users = list(self.users.find({'device_id': device_id}))
+            user_ids = [user['_id'] for user in users]
+            
+            logger.info(f"Found {len(user_ids)} users associated with device {device_id}")
+            
+            # Step 2: Delete all conversations for these users
+            conversations_result = self.conversations.delete_many({'user_id': {'$in': user_ids}})
+            logger.info(f"Deleted {conversations_result.deleted_count} conversations")
+            
+            # Step 3: Delete all users associated with this device
+            users_result = self.users.delete_many({'device_id': device_id})
+            logger.info(f"Deleted {users_result.deleted_count} users")
+            
+            # Step 4: Delete the device itself
+            device_result = self.devices.delete_one({'device_id': device_id})
+            logger.info(f"Deleted device: {device_result.deleted_count} device(s)")
+            
+            # Return summary of deletion
+            return {
+                'success': True,
+                'device_deleted': device_result.deleted_count > 0,
+                'users_deleted': users_result.deleted_count,
+                'conversations_deleted': conversations_result.deleted_count,
+                'total_deleted': device_result.deleted_count + users_result.deleted_count + conversations_result.deleted_count
+            }
+        except Exception as e:
+            logger.error(f"Failed to cascade delete device {device_id}: {e}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
+    
     def close_connection(self):
         """Close database connection"""
         if self.client:
