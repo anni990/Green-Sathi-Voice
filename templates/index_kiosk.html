@@ -487,6 +487,19 @@
 
     <!-- JavaScript -->
     <!-- CRITICAL: Initialize Android ID BEFORE DeviceAuthManager -->
+    <!-- 
+        IMPORTANT: Device Registration Flow (Database-Centric Approach)
+        =================================================================
+        1. This script ALWAYS gets FRESH Android ID from DeviceBridge (no cache)
+        2. DeviceAuthManager ALWAYS calls backend /api/device/auto_register
+        3. Backend checks current database for this Android ID:
+           - If exists: Returns existing device info + updates last_active
+           - If not exists: Creates new device registration
+        4. Result: When you switch MongoDB databases, devices automatically
+           re-register because backend doesn't find them in new database
+        
+        NO localStorage priority for Android ID - always fresh from hardware!
+    -->
     <script>
         // --- Android device bootstrap (MUST RUN FIRST) ---
         console.log('🔍 Checking for Android WebView...');
@@ -497,13 +510,14 @@
         };
 
         // PRIORITY 1: Try to get Android ID from WebView interface (DeviceBridge)
+        // ALWAYS FRESH - not cached in localStorage or cookies
         try {
             if (window.DeviceBridge && typeof DeviceBridge.getAndroidId === 'function') {
                 var androidId = DeviceBridge.getAndroidId();
                 if (androidId && androidId !== 'unknown' && androidId.trim() !== '') {
                     window.__DEVICE_CONTEXT__.deviceId = androidId;
                     window.__DEVICE_CONTEXT__.source = 'android-webview';
-                    console.log('✅ Android ID detected and set BEFORE DeviceAuthManager:', androidId);
+                    console.log('✅ Android ID detected (FRESH from hardware):', androidId);
                 } else {
                     console.warn('⚠️ Android ID returned "unknown" or empty - will use UUID fallback');
                 }
@@ -515,7 +529,7 @@
             console.log('ℹ️ Will use UUID fallback');
         }
         
-        console.log('📱 Device context initialized:', window.__DEVICE_CONTEXT__);
+        console.log('📱 Device context initialized (no cache, always fresh):', window.__DEVICE_CONTEXT__);
     </script>
     
     <!-- NOW load DeviceAuthManager - it will check window.__DEVICE_CONTEXT__ -->
@@ -562,7 +576,11 @@
             setupLoginPopup();
             setupExitButton();
             
-            // Auto-register device after DeviceAuthManager is loaded
+            // CRITICAL: Auto-register device EVERY TIME page loads
+            // This ensures device exists in current database (handles DB migrations)
+            // Backend will check if device exists:
+            //   - Found: Return existing info + update last_active
+            //   - Not found: Create new registration
             autoRegisterDeviceOnLoad();
             
             console.log('✅ UI functions initialized');

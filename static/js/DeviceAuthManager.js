@@ -35,24 +35,26 @@ DeviceAuthManager.prototype.loadFromStorage = function() {
 
 /**
  * Initialize device ID from Android WebView or generate UUID fallback
- * CRITICAL: Only saves to localStorage AFTER backend confirms registration
+ * CRITICAL: ALWAYS gets fresh Android ID (no localStorage priority)
+ * This ensures device re-registers when database changes
  */
 DeviceAuthManager.prototype.initDeviceId = function() {
     var self = this;
     
-    // Priority 1: Check if already in localStorage (fully registered device)
-    if (this.deviceId && this.isRegistered) {
-        console.log('✅ Device ID loaded from storage:', this.deviceId);
-        return;
-    }
-    
-    // Priority 2: Check Android WebView injection (ONLY if mode allows it)
+    // Priority 1: ALWAYS check Android WebView first (fresh ID, no cache)
     if (this.mode !== 'web-only' && window.__DEVICE_CONTEXT__ && window.__DEVICE_CONTEXT__.deviceId) {
         this.deviceId = window.__DEVICE_CONTEXT__.deviceId;
         this.source = 'android-webview';
         this.deviceName = 'Device-' + this.deviceId.substring(0, 8);
-        // DON'T save yet - will save after backend confirms registration
-        console.log('📱 Android ID detected:', this.deviceId);
+        // Reset registration flag to force backend check
+        this.isRegistered = false;
+        console.log('📱 Android ID detected (fresh):', this.deviceId);
+        return;
+    }
+    
+    // Priority 2: Check localStorage only as fallback (for web browsers)
+    if (this.deviceId && this.isRegistered) {
+        console.log('✅ Device ID loaded from storage (web fallback):', this.deviceId);
         return;
     }
     
@@ -62,7 +64,8 @@ DeviceAuthManager.prototype.initDeviceId = function() {
     this.deviceId = this.generateUUID();
     this.source = 'web';
     this.deviceName = 'Web-' + this.deviceId.substring(0, 8);
-    // DON'T save yet - will save after backend confirms registration
+    // Reset registration flag to force backend check
+    this.isRegistered = false;
     console.log('🌐 UUID generated for web (mode: ' + this.mode + '):', this.deviceId);
 };
 
@@ -112,7 +115,8 @@ DeviceAuthManager.prototype.saveToStorage = function() {
 
 /**
  * Auto-register device with backend
- * CRITICAL: Only saves to localStorage AFTER backend confirms success
+ * CRITICAL: ALWAYS calls backend to verify device exists in current database
+ * This ensures device re-registers when database changes
  */
 DeviceAuthManager.prototype.autoRegisterDevice = function() {
     var self = this;
@@ -122,13 +126,9 @@ DeviceAuthManager.prototype.autoRegisterDevice = function() {
         return Promise.resolve({ success: false, error: 'No device ID' });
     }
     
-    // If already registered, skip
-    if (this.isRegistered) {
-        console.log('✅ Device already registered, skipping:', this.deviceId);
-        return Promise.resolve({ success: true, already_registered: true });
-    }
-    
-    console.log('🔄 Auto-registering device:', this.deviceId);
+    // ALWAYS call backend to verify device exists in current database
+    // (Remove skip check - backend will handle existing devices)
+    console.log('🔄 Auto-registering device (checking database):', this.deviceId);
     
     // Use defaults: library + vertex (as specified by user)
     var requestPipelineType = this.pipelineType || 'library';
