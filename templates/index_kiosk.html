@@ -5,32 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=962, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Green Sathi - Krishi Guru (Kiosk Mode)</title>
-    
-    <!-- App Version & Cache Control -->
-    <script>
-        // APP VERSION - Increment this when deploying frontend changes
-        var APP_VERSION = "2.0.0";
-        
-        // Clear localStorage/sessionStorage on version change
-        if (localStorage.getItem("app_version") !== APP_VERSION) {
-            console.log('🔄 App version changed from ' + localStorage.getItem("app_version") + ' to ' + APP_VERSION);
-            console.log('🧹 Clearing local storage and session storage...');
-            localStorage.clear();
-            sessionStorage.clear();
-            localStorage.setItem("app_version", APP_VERSION);
-            console.log('✅ Storage cleared. New version: ' + APP_VERSION);
-        } else {
-            console.log('✅ App version ' + APP_VERSION + ' - No cache clear needed');
-        }
-    </script>
-    
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.min.css') }}?v=2.0.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/animate.min.css') }}?v=2.0.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome.min.css') }}?v=2.0.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2.0.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}?v=2.0.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/advertisment.css') }}?v=2.0.0">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/kiosk-fixed.css') }}?v=2.0.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tailwind.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/animate.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/advertisment.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/kiosk-fixed.css') }}">
 </head>
 
 <body class="min-h-screen">
@@ -366,7 +347,7 @@
             // Now load and initialize app_modular.js
             console.log('📦 Loading app_modular.js...');
             var script = document.createElement('script');
-            script.src = "{{ url_for('static', filename='js/app_modular.js') }}?v=2.0.0";
+            script.src = "{{ url_for('static', filename='js/app_modular.js') }}";
             script.onload = function() {
                 console.log('✅ app_modular.js loaded');
                 // Manually instantiate VoiceBotApp since DOMContentLoaded already fired
@@ -552,14 +533,14 @@
     </script>
     
     <!-- NOW load DeviceAuthManager - it will check window.__DEVICE_CONTEXT__ -->
-    <script src="{{ url_for('static', filename='js/DeviceAuthManager.js') }}?v=2.0.0"></script>
-    <script src="{{ url_for('static', filename='js/ElementManager.js') }}?v=2.0.0"></script>
-    <script src="{{ url_for('static', filename='js/StateManager.js') }}?v=2.0.0"></script>
-    <script src="{{ url_for('static', filename='js/UIController.js') }}?v=2.0.0"></script>
-    <script src="{{ url_for('static', filename='js/KeyboardHandler.js') }}?v=2.0.0"></script>
-    <script src="{{ url_for('static', filename='js/AudioManager.js') }}?v=2.0.0"></script>
-    <script src="{{ url_for('static', filename='js/ApiService.js') }}?v=2.0.0"></script>
-    <script src="{{ url_for('static', filename='js/ConversationManager.js') }}?v=2.0.0"></script>
+    <script src="{{ url_for('static', filename='js/DeviceAuthManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ElementManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/StateManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/UIController.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/KeyboardHandler.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/AudioManager.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ApiService.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ConversationManager.js') }}"></script>
     <!-- Don't load app_modular.js yet - will load after UI transition -->
     
     <!-- Initialize after all modules loaded -->
